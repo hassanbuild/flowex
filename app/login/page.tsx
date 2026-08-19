@@ -37,6 +37,9 @@ export default function LoginPage() {
   const [loginError, setLoginError] =
     useState("");
 
+  const [isGoogleLoading, setIsGoogleLoading] =
+    useState(false);
+
   /*
     ================= RETURN PATH =================
 
@@ -160,6 +163,50 @@ export default function LoginPage() {
       );
 
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (isLoggingIn || isGoogleLoading) {
+      return;
+    }
+
+    setLoginError("");
+    setIsGoogleLoading(true);
+
+    try {
+      if (returnTo) {
+        sessionStorage.setItem(
+          AUTH_RETURN_KEY,
+          returnTo
+        );
+      } else {
+        sessionStorage.removeItem(
+          AUTH_RETURN_KEY
+        );
+      }
+
+      const redirectPath =
+        returnTo || "/";
+
+      const { error } =
+        await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo:
+              `${window.location.origin}${redirectPath}`,
+          },
+        });
+
+      if (error) {
+        setLoginError(error.message);
+        setIsGoogleLoading(false);
+      }
+    } catch {
+      setLoginError(
+        "Something went wrong while connecting to Google. Please try again."
+      );
+      setIsGoogleLoading(false);
     }
   };
 
@@ -349,9 +396,13 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                className="w-full rounded-xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-slate-200 dark:hover:bg-slate-900"
+                onClick={handleGoogleLogin}
+                disabled={isLoggingIn || isGoogleLoading}
+                className="w-full rounded-xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-slate-200 dark:hover:bg-slate-900"
               >
-                Continue with Google
+                {isGoogleLoading
+                  ? "Connecting to Google..."
+                  : "Continue with Google"}
               </button>
 
             </div>

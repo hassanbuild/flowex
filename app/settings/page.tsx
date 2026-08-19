@@ -3,21 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useAppTheme } from "@/components/AppThemeProvider";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function SettingsPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const { plan } = useAppAccount();
   const { theme, setTheme } = useAppTheme();
-
-  const [accessChecked, setAccessChecked] = useState(false);
 
   const [promotionalEmails, setPromotionalEmails] = useState(true);
   const [productUpdates, setProductUpdates] = useState(true);
@@ -39,18 +34,6 @@ export default function SettingsPage() {
         ? "/dashboard"
         : "/home";
 
-  useEffect(() => {
-    const savedLogin = localStorage.getItem(
-      "flowex-is-logged-in"
-    );
-
-    if (savedLogin !== "true") {
-      router.replace("/");
-      return;
-    }
-
-    setAccessChecked(true);
-  }, [router]);
 
   useEffect(() => {
     const saved = localStorage.getItem("flowex-settings");
@@ -99,12 +82,10 @@ export default function SettingsPage() {
     alert("Settings saved!");
   };
 
-  if (!accessChecked) {
-    return null;
-  }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <RouteGuard access="signed-in">
+      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
 
       {/* ================= NAVBAR ================= */}
 
@@ -333,7 +314,8 @@ export default function SettingsPage() {
 
       </section>
 
-    </main>
+      </main>
+    </RouteGuard>
   );
 }
 

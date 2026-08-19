@@ -31,23 +31,31 @@ type AccountContextType = {
   setPlan: (plan: Plan) => void;
   setIsLoggedIn: (loggedIn: boolean) => void;
 
-  saveAccount: () => void;
+  saveAccount: () => Promise<void>;
 };
 
-const AccountContext = createContext<AccountContextType | undefined>(
-  undefined
-);
+const AccountContext =
+  createContext<AccountContextType | undefined>(
+    undefined
+  );
 
 export function AppAccountProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [supabase] = useState(() => createClient());
+  const [supabase] = useState(() =>
+    createClient()
+  );
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
 
   const [profileImage, setProfileImage] =
     useState<string | null>(null);
@@ -61,255 +69,396 @@ export function AppAccountProvider({
   const [authReady, setAuthReady] =
     useState(false);
 
+  /*
+    ================= LOAD FLOWEX ACCOUNT =================
+
+    Auth tells us WHO the user is.
+
+    profiles tells us:
+    - full name
+    - phone
+    - avatar
+
+    subscriptions tells us:
+    - free
+    - trial
+    - pro
+
+    Supabase is now the real source of truth.
+  */
+
+  const loadAccountData = async (
+    userId: string,
+    userEmail: string,
+    metadataName: string,
+    metadataAvatar: string | null
+  ) => {
+    try {
+      const [
+        profileResult,
+        subscriptionResult,
+      ] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select(
+            "full_name, phone, avatar_url"
+          )
+          .eq("id", userId)
+          .single(),
+
+        supabase
+          .from("subscriptions")
+          .select("plan")
+          .eq("user_id", userId)
+          .single(),
+      ]);
+
+      /* ================= PROFILE ================= */
+
+      if (profileResult.error) {
+        console.error(
+          "Flowex profile load error:",
+          profileResult.error.message
+        );
+
+        setName(
+          metadataName ||
+            "Flowex User"
+        );
+
+        setPhone("");
+
+        setProfileImage(
+          metadataAvatar
+        );
+      } else {
+        const profile =
+          profileResult.data;
+
+        setName(
+          profile.full_name ||
+            metadataName ||
+            "Flowex User"
+        );
+
+        setPhone(
+          profile.phone || ""
+        );
+
+        setProfileImage(
+          profile.avatar_url ||
+            metadataAvatar ||
+            null
+        );
+      }
+
+      /* ================= EMAIL ================= */
+
+      setEmail(
+        userEmail
+      );
+
+      /* ================= SUBSCRIPTION ================= */
+
+      if (subscriptionResult.error) {
+        console.error(
+          "Flowex subscription load error:",
+          subscriptionResult.error.message
+        );
+
+        /*
+          Safe fallback:
+          if subscription data cannot be verified,
+          Flowex treats the user as Free.
+        */
+
+        setPlanState(
+          "free"
+        );
+      } else {
+        const databasePlan =
+          subscriptionResult.data?.plan;
+
+        if (
+          databasePlan === "free" ||
+          databasePlan === "trial" ||
+          databasePlan === "pro"
+        ) {
+          setPlanState(
+            databasePlan
+          );
+        } else {
+          setPlanState(
+            "free"
+          );
+        }
+      }
+    } catch (error) {
+      console.error(
+        "Flowex account load error:",
+        error
+      );
+
+      /*
+        Never grant premium access because of
+        a database/network failure.
+      */
+
+      setName(
+        metadataName ||
+          "Flowex User"
+      );
+
+      setEmail(
+        userEmail
+      );
+
+      setPhone("");
+
+      setProfileImage(
+        metadataAvatar
+      );
+
+      setPlanState(
+        "free"
+      );
+    } finally {
+      setAuthReady(
+        true
+      );
+    }
+  };
+
   useEffect(() => {
     /*
-      Supabase now owns the real login state.
+      Supabase owns the real authentication state.
 
-      INITIAL_SESSION runs when the browser client
-      finishes checking whether a valid session exists.
+      INITIAL_SESSION checks the existing session
+      when Flowex first loads.
 
-      SIGNED_IN / SIGNED_OUT keep Flowex synchronized
-      whenever authentication changes.
+      SIGNED_IN / SIGNED_OUT keep the provider
+      synchronized as auth changes.
     */
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        const user = session?.user ?? null;
+    } =
+      supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          const user =
+            session?.user ?? null;
 
-        /* ================= SIGNED OUT ================= */
+          /* ================= SIGNED OUT ================= */
 
-        if (!user) {
-          setIsLoggedInState(false);
-
-          setName("");
-          setEmail("");
-          setPhone("");
-          setProfileImage(null);
-
-          setPlanState("free");
-
-          setAuthReady(true);
-
-          return;
-        }
-
-        /* ================= SIGNED IN ================= */
-
-        setIsLoggedInState(true);
-
-        const userId = user.id;
-
-        const userEmail =
-          user.email || "";
-
-        const metadataName =
-          typeof user.user_metadata?.full_name === "string"
-            ? user.user_metadata.full_name
-            : "";
-
-        const metadataAvatar =
-          typeof user.user_metadata?.avatar_url === "string"
-            ? user.user_metadata.avatar_url
-            : null;
-
-        const previousUserId =
-          localStorage.getItem(
-            "flowex-auth-user-id"
-          );
-
-        /*
-          If a completely different Supabase user
-          has signed in, start them on the Free plan.
-
-          This prevents old Trial / Pro test values
-          from leaking into a newly created account.
-        */
-
-        const isNewAuthenticatedUser =
-          previousUserId !== userId;
-
-        if (isNewAuthenticatedUser) {
-          localStorage.setItem(
-            "flowex-auth-user-id",
-            userId
-          );
-
-          localStorage.setItem(
-            "flowex-plan",
-            "free"
-          );
-
-          localStorage.removeItem(
-            "flowex-account"
-          );
-
-          setPlanState("free");
-
-          setName(
-            metadataName || "Flowex User"
-          );
-
-          setEmail(userEmail);
-
-          setPhone("");
-
-          setProfileImage(
-            metadataAvatar
-          );
-        } else {
-          /* ================= EXISTING ACCOUNT ================= */
-
-          const savedPlan =
-            localStorage.getItem(
-              "flowex-plan"
+          if (!user) {
+            setIsLoggedInState(
+              false
             );
 
-          if (
-            savedPlan === "free" ||
-            savedPlan === "trial" ||
-            savedPlan === "pro"
-          ) {
-            setPlanState(savedPlan);
-          } else {
-            setPlanState("free");
-
-            localStorage.setItem(
-              "flowex-plan",
-              "free"
-            );
-          }
-
-          const savedAccount =
-            localStorage.getItem(
-              "flowex-account"
-            );
-
-          if (savedAccount) {
-            try {
-              const data =
-                JSON.parse(savedAccount);
-
-              setName(
-                data.name ||
-                  metadataName ||
-                  "Flowex User"
-              );
-
-              setEmail(
-                userEmail
-              );
-
-              setPhone(
-                data.phone || ""
-              );
-
-              setProfileImage(
-                data.profileImage ||
-                  metadataAvatar ||
-                  null
-              );
-            } catch {
-              setName(
-                metadataName ||
-                  "Flowex User"
-              );
-
-              setEmail(userEmail);
-
-              setPhone("");
-
-              setProfileImage(
-                metadataAvatar
-              );
-            }
-          } else {
-            setName(
-              metadataName ||
-                "Flowex User"
-            );
-
-            setEmail(userEmail);
-
+            setName("");
+            setEmail("");
             setPhone("");
 
             setProfileImage(
-              metadataAvatar
+              null
             );
+
+            setPlanState(
+              "free"
+            );
+
+            /*
+              Remove remaining obsolete local
+              account compatibility values.
+
+              Authentication and plan access are
+              now controlled by Supabase.
+            */
+
+            localStorage.removeItem(
+              "flowex-account"
+            );
+
+            localStorage.removeItem(
+              "flowex-auth-user-id"
+            );
+
+            setAuthReady(
+              true
+            );
+
+            return;
           }
+
+          /* ================= SIGNED IN ================= */
+
+          setIsLoggedInState(
+            true
+          );
+
+          setAuthReady(
+            false
+          );
+
+          const userEmail =
+            user.email || "";
+
+          const metadataName =
+            typeof user.user_metadata
+              ?.full_name === "string"
+              ? user.user_metadata.full_name
+              : "";
+
+          const metadataAvatar =
+            typeof user.user_metadata
+              ?.avatar_url === "string"
+              ? user.user_metadata.avatar_url
+              : null;
+
+          /*
+            Load the authenticated user's real
+            Flowex profile and subscription
+            directly from Supabase.
+          */
+
+          void loadAccountData(
+            user.id,
+            userEmail,
+            metadataName,
+            metadataAvatar
+          );
         }
-
-        /*
-          Keep these old values temporarily because
-          some existing Flowex pages still reference
-          them while we migrate the frontend.
-
-          They are no longer the authority for login.
-          Supabase is.
-        */
-
-        localStorage.setItem(
-          "flowex-is-logged-in",
-          "true"
-        );
-
-        setAuthReady(true);
-      }
-    );
+      );
 
     return () => {
       subscription.unsubscribe();
     };
   }, [supabase]);
 
-  /* ================= SAVE ACCOUNT ================= */
+  /*
+    ================= SAVE ACCOUNT =================
 
-  const saveAccount = () => {
-    localStorage.setItem(
-      "flowex-account",
-      JSON.stringify({
-        name,
-        email,
-        phone,
-        profileImage,
-      })
-    );
-  };
+    Save profile information directly to Supabase.
 
-  /* ================= SET PLAN ================= */
+    The authenticated user can update only their
+    own profile because of RLS.
+  */
+
+  const saveAccount =
+    async () => {
+      const {
+        data: {
+          user,
+        },
+        error: userError,
+      } =
+        await supabase.auth.getUser();
+
+      if (
+        userError ||
+        !user
+      ) {
+        console.error(
+          "Flowex save account error:",
+          userError?.message ||
+            "No authenticated user."
+        );
+
+        return;
+      }
+
+      const {
+        error,
+      } =
+        await supabase
+          .from("profiles")
+          .update({
+            full_name:
+              name.trim(),
+            phone:
+              phone.trim(),
+            avatar_url:
+              profileImage,
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            user.id
+          );
+
+      if (error) {
+        console.error(
+          "Flowex profile update error:",
+          error.message
+        );
+
+        return;
+      }
+
+      /*
+        Keep Supabase Auth metadata aligned with
+        the profile name.
+
+        Email remains controlled by Auth itself.
+      */
+
+      const {
+        error: metadataError,
+      } =
+        await supabase.auth.updateUser({
+          data: {
+            full_name:
+              name.trim(),
+            avatar_url:
+              profileImage,
+          },
+        });
+
+      if (metadataError) {
+        console.error(
+          "Flowex auth metadata update error:",
+          metadataError.message
+        );
+      }
+    };
+
+  /*
+    ================= PLAN SETTER =================
+
+    Kept temporarily so existing components compile.
+
+    IMPORTANT:
+    this does NOT write to the database.
+
+    Users cannot grant themselves Trial/Pro from
+    frontend code anymore.
+
+    Later, payment webhook/backend logic will be
+    responsible for subscription changes.
+  */
 
   const setPlan = (
-    newPlan: Plan
+    _newPlan: Plan
   ) => {
-    setPlanState(newPlan);
-
-    localStorage.setItem(
-      "flowex-plan",
-      newPlan
+    console.warn(
+      "Flowex plan changes must come from trusted backend subscription logic."
     );
   };
 
-  /* ================= LEGACY LOGIN SETTER ================= */
+  /*
+    ================= LEGACY LOGIN SETTER =================
+
+    Kept temporarily so older components compile.
+
+    Real login state comes only from Supabase Auth.
+  */
 
   const setIsLoggedIn = (
-    loggedIn: boolean
+    _loggedIn: boolean
   ) => {
-    /*
-      Kept temporarily so existing components
-      don't break during migration.
-
-      Real authentication state is now controlled
-      by Supabase's session.
-    */
-
-    setIsLoggedInState(
-      loggedIn
-    );
-
-    localStorage.setItem(
-      "flowex-is-logged-in",
-      String(loggedIn)
+    console.warn(
+      "Flowex login state is controlled by Supabase Auth."
     );
   };
 
@@ -344,7 +493,9 @@ export function AppAccountProvider({
 
 export function useAppAccount() {
   const context =
-    useContext(AccountContext);
+    useContext(
+      AccountContext
+    );
 
   if (!context) {
     throw new Error(

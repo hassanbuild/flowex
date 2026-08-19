@@ -2,29 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function BillingPage() {
   const { plan } = useAppAccount();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [accessChecked, setAccessChecked] = useState(false);
 
-  useEffect(() => {
-    const savedLogin = localStorage.getItem(
-      "flowex-is-logged-in"
-    );
-
-    if (savedLogin !== "true") {
-      router.replace("/");
-      return;
-    }
-
-    setAccessChecked(true);
-  }, [router]);
 
   const hasPremiumAccess =
     plan === "trial" || plan === "pro";
@@ -65,12 +51,10 @@ export default function BillingPage() {
       ? "Monthly"
       : "—";
 
-  if (!accessChecked) {
-    return null;
-  }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <RouteGuard access="signed-in">
+      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
 
       {/* NAVBAR */}
 
@@ -338,6 +322,7 @@ export default function BillingPage() {
 
       </section>
 
-    </main>
+      </main>
+    </RouteGuard>
   );
 }

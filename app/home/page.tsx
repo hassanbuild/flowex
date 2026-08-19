@@ -1,73 +1,102 @@
 "use client";
-import { useFlowexLogout } from "@/components/useFlowexLogout";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+import { useFlowexLogout } from "@/components/useFlowexLogout";
 import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function Home() {
-  const { logout, isLoggingOut } = useFlowexLogout();
-  const router = useRouter();
-  const { theme, toggleTheme } = useAppTheme();
-  const { name, email, profileImage, plan } = useAppAccount();
+  const {
+    logout,
+    isLoggingOut,
+  } = useFlowexLogout();
 
-  const [accessChecked, setAccessChecked] = useState(false);
-  const [leadsCount, setLeadsCount] = useState(0);
-  const [replyTime, setReplyTime] = useState(0);
-  const [successRate, setSuccessRate] = useState(0);
+  const {
+    theme,
+    toggleTheme,
+  } = useAppTheme();
 
+  const {
+    name,
+    email,
+    profileImage,
+    plan,
+  } = useAppAccount();
 
-  useEffect(() => {
-    const savedLogin = localStorage.getItem("flowex-is-logged-in");
-    const savedPlan = localStorage.getItem("flowex-plan");
+  const [leadsCount, setLeadsCount] =
+    useState(0);
 
-    if (savedLogin !== "true") {
-      router.replace("/");
-      return;
-    }
+  const [replyTime, setReplyTime] =
+    useState(0);
 
-    if (savedPlan === "trial" || savedPlan === "pro") {
-      router.replace("/dashboard");
-      return;
-    }
-
-    setAccessChecked(true);
-  }, [router]);
+  const [successRate, setSuccessRate] =
+    useState(0);
 
   useEffect(() => {
-  const duration = 1400;
-  const steps = 40;
-  const intervalTime = duration / steps;
+    const duration = 1400;
+    const steps = 40;
+    const intervalTime =
+      duration / steps;
 
-  let currentStep = 0;
+    let currentStep = 0;
 
-  const counter = setInterval(() => {
-    currentStep += 1;
+    const counter =
+      setInterval(() => {
+        currentStep += 1;
 
-    const progress = currentStep / steps;
+        const progress =
+          currentStep / steps;
 
-    setLeadsCount(Math.round(127 * progress));
-    setReplyTime(Number((1.8 * progress).toFixed(1)));
-    setSuccessRate(Math.round(99 * progress));
+        setLeadsCount(
+          Math.round(
+            127 * progress
+          )
+        );
 
-    if (currentStep >= steps) {
-      setLeadsCount(127);
-      setReplyTime(1.8);
-      setSuccessRate(99);
-      clearInterval(counter);
-    }
-  }, intervalTime);
+        setReplyTime(
+          Number(
+            (
+              1.8 * progress
+            ).toFixed(1)
+          )
+        );
 
-  return () => clearInterval(counter);
+        setSuccessRate(
+          Math.round(
+            99 * progress
+          )
+        );
+
+        if (
+          currentStep >=
+          steps
+        ) {
+          setLeadsCount(127);
+          setReplyTime(1.8);
+          setSuccessRate(99);
+
+          clearInterval(
+            counter
+          );
+        }
+      }, intervalTime);
+
+    return () =>
+      clearInterval(
+        counter
+      );
   }, []);
 
-  const firstName = name.trim().split(" ")[0] || "there";
+  const firstName =
+    name.trim().split(" ")[0] ||
+    "there";
 
-  if (!accessChecked) {
-    return null;
-  }
+  return (
+    <RouteGuard access="free">
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#fbfcfd] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
@@ -999,6 +1028,8 @@ export default function Home() {
   </div>
 </footer>
 
-    </main>
+          </main>
+
+    </RouteGuard>
   );
 }

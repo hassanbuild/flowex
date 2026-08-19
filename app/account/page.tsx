@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
+import RouteGuard from "@/components/RouteGuard";
 
 const avatars = [
   "/avatars/avatar-1.png",
@@ -14,7 +15,6 @@ const avatars = [
 ];
 
 export default function AccountPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const {
@@ -23,7 +23,6 @@ export default function AccountPage() {
     phone,
     profileImage,
     plan,
-    isLoggedIn,
     setName,
     setEmail,
     setPhone,
@@ -31,19 +30,8 @@ export default function AccountPage() {
     saveAccount,
   } = useAppAccount();
 
-  const [accessChecked, setAccessChecked] = useState(false);
   const [showAvatars, setShowAvatars] = useState(false);
 
-  useEffect(() => {
-    const savedLogin = localStorage.getItem("flowex-is-logged-in");
-
-    if (savedLogin !== "true") {
-      router.replace("/");
-      return;
-    }
-
-    setAccessChecked(true);
-  }, [router]);
 
   const saveChanges = () => {
     saveAccount();
@@ -84,12 +72,10 @@ export default function AccountPage() {
         ? "7-day trial"
         : "No active plan";
 
-  if (!accessChecked || !isLoggedIn) {
-    return null;
-  }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <RouteGuard access="signed-in">
+      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
 
       {/* ================= NAVBAR ================= */}
 
@@ -386,6 +372,7 @@ export default function AccountPage() {
 
       </section>
 
-    </main>
+      </main>
+    </RouteGuard>
   );
 }

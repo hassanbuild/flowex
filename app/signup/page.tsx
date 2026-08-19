@@ -51,6 +51,9 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
+  const [isGoogleLoading, setIsGoogleLoading] =
+    useState(false);
+
   /*
     ================= RETURN PATH =================
 
@@ -219,6 +222,54 @@ export default function SignupPage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    if (isSubmitting || isGoogleLoading) {
+      return;
+    }
+
+    setSignupError("");
+    setPasswordError("");
+    setIsGoogleLoading(true);
+
+    try {
+      const supabase =
+        createClient();
+
+      if (returnTo) {
+        sessionStorage.setItem(
+          AUTH_RETURN_KEY,
+          returnTo
+        );
+      } else {
+        sessionStorage.removeItem(
+          AUTH_RETURN_KEY
+        );
+      }
+
+      const redirectPath =
+        returnTo || "/";
+
+      const { error } =
+        await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo:
+              `${window.location.origin}${redirectPath}`,
+          },
+        });
+
+      if (error) {
+        setSignupError(error.message);
+        setIsGoogleLoading(false);
+      }
+    } catch {
+      setSignupError(
+        "Something went wrong while connecting to Google. Please try again."
+      );
+      setIsGoogleLoading(false);
     }
   };
 
@@ -642,9 +693,13 @@ export default function SignupPage() {
 
                 <button
                   type="button"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-slate-200 dark:hover:bg-slate-900"
+                  onClick={handleGoogleSignup}
+                  disabled={isSubmitting || isGoogleLoading}
+                  className="w-full rounded-xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-slate-200 dark:hover:bg-slate-900"
                 >
-                  Continue with Google
+                  {isGoogleLoading
+                    ? "Connecting to Google..."
+                    : "Continue with Google"}
                 </button>
 
                 <p className="mt-6 text-center text-xs leading-5 text-gray-400 dark:text-slate-500">

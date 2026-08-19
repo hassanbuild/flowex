@@ -2,16 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function DashboardPage() {
-  const router = useRouter();
-
-  const { theme, toggleTheme } = useAppTheme();
+  const { theme, toggleTheme } =
+    useAppTheme();
 
   const {
     name,
@@ -25,37 +24,6 @@ export default function DashboardPage() {
     isLoggingOut,
   } = useFlowexLogout();
 
-  const [accessChecked, setAccessChecked] =
-    useState(false);
-
-  useEffect(() => {
-    const savedLogin =
-      localStorage.getItem("flowex-is-logged-in");
-
-    const savedPlan =
-      localStorage.getItem("flowex-plan");
-
-    if (savedLogin !== "true") {
-      router.replace("/");
-      return;
-    }
-
-    if (savedPlan === "free") {
-      router.replace("/home");
-      return;
-    }
-
-    if (
-      savedPlan === "trial" ||
-      savedPlan === "pro"
-    ) {
-      setAccessChecked(true);
-      return;
-    }
-
-    router.replace("/home");
-  }, [router]);
-
   const planName =
     plan === "trial"
       ? "Flowex Pro Trial"
@@ -63,11 +31,9 @@ export default function DashboardPage() {
         ? "Flowex Pro"
         : "Free";
 
-  if (!accessChecked) {
-    return null;
-  }
-
   return (
+    <RouteGuard access="premium">
+      
     <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
 
       {/* ================= NAVBAR ================= */}
@@ -544,5 +510,7 @@ export default function DashboardPage() {
       </footer>
 
     </main>
+
+   </RouteGuard>
   );
 }
