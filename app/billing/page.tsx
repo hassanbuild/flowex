@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
 
-export default function BillingPage() {
+function BillingPageContent() {
   const { plan } = useAppAccount();
   const searchParams = useSearchParams();
 
@@ -324,5 +325,13 @@ export default function BillingPage() {
 
       </main>
     </RouteGuard>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={null}>
+      <BillingPageContent />
+    </Suspense>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
 
-export default function UpgradePage() {
+function UpgradePageContent() {
   const { plan } = useAppAccount();
 
   const searchParams = useSearchParams();
@@ -192,5 +193,13 @@ export default function UpgradePage() {
       </main>
 
     </RouteGuard>
+  );
+}
+
+export default function UpgradePage() {
+  return (
+    <Suspense fallback={null}>
+      <UpgradePageContent />
+    </Suspense>
   );
 }

@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useAppTheme } from "@/components/AppThemeProvider";
 import RouteGuard from "@/components/RouteGuard";
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const searchParams = useSearchParams();
 
   const { plan } = useAppAccount();
@@ -318,6 +318,16 @@ export default function SettingsPage() {
     </RouteGuard>
   );
 }
+
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SettingsPageContent />
+    </Suspense>
+  );
+}
+
 
 function SettingRow({
   title,

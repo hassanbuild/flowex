@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
+  Suspense,
   useState,
 } from "react";
 import {
@@ -17,7 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 const AUTH_RETURN_KEY =
   "flowex-auth-return-to";
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -717,5 +718,13 @@ export default function SignupPage() {
       </main>
 
     </RouteGuard>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageContent />
+    </Suspense>
   );
 }
