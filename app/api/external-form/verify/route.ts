@@ -2,7 +2,6 @@ import { lookup } from "dns/promises";
 import { isIP } from "net";
 
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -317,53 +316,96 @@ async function inspectRenderedForm(
     throw new Error("UNSAFE_URL");
   }
 
+  /*
+    Browser packages are imported only when POST verification
+    actually needs them. DELETE / unlink therefore never loads
+    Chromium.
+  */
+  const [
+    { default: puppeteer },
+    { default: chromium },
+  ] =
+    await Promise.all([
+      import("puppeteer-core"),
+      import("@sparticuz/chromium-min"),
+    ]);
+
+  const chromiumPackUrl =
+    process.env.CHROMIUM_REMOTE_EXEC_PATH ||
+    "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
+
+  const executablePath =
+    await chromium.executablePath(
+      chromiumPackUrl
+    );
+
   const browser =
-    await chromium.launch({
-      headless: true,
+    await puppeteer.launch({
+      args:
+        await puppeteer.defaultArgs({
+          args: chromium.args,
+          headless: "shell",
+        }),
+
+      executablePath,
+
+      headless: "shell",
+
+      defaultViewport: {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+        isLandscape: false,
+      },
     });
 
   try {
-    const context =
-      await browser.newContext({
-        userAgent:
-          "Flowex-Form-Verifier/1.0",
+    const page =
+      await browser.newPage();
 
-        viewport: {
-          width: 1280,
-          height: 900,
-        },
-      });
+    await page.setUserAgent(
+      "Flowex-Form-Verifier/1.0"
+    );
 
-    await context.route(
-      "**/*",
-      async (route) => {
+    /*
+      Keep the same protection against the browser being used
+      to reach localhost/private/internal network addresses.
+    */
+    await page.setRequestInterception(
+      true
+    );
+
+    page.on(
+      "request",
+      async (request) => {
         const requestUrl =
-          route.request().url();
+          request.url();
 
         if (
           requestUrl.startsWith("data:") ||
           requestUrl.startsWith("blob:")
         ) {
-          await route.continue();
+          await request.continue();
           return;
         }
 
         const safe =
-          await isSafePublicUrl(requestUrl);
+          await isSafePublicUrl(
+            requestUrl
+          );
 
         if (!safe) {
-          await route.abort(
+          await request.abort(
             "blockedbyclient"
           );
           return;
         }
 
-        await route.continue();
+        await request.continue();
       }
     );
-
-    const page =
-      await context.newPage();
 
     await page.goto(
       sourceUrl,
@@ -376,8 +418,12 @@ async function inspectRenderedForm(
       }
     );
 
-    await page.waitForTimeout(
-      1800
+    await new Promise(
+      (resolve) =>
+        setTimeout(
+          resolve,
+          1800
+        )
     );
 
     const finalUrl =
@@ -392,118 +438,123 @@ async function inspectRenderedForm(
     }
 
     const rawFields =
-      await page
-        .locator(
-          "input, textarea, select"
-        )
-        .evaluateAll(
-          (elements) =>
-            elements
-              .filter(
-                (element) => {
-                  const htmlElement =
-                    element as HTMLElement;
+      await page.$$eval(
+        "input, textarea, select",
+        (elements) =>
+          elements
+            .filter(
+              (element) => {
+                const htmlElement =
+                  element as HTMLElement;
 
-                  const style =
-                    window.getComputedStyle(
-                      htmlElement
+                const style =
+                  window.getComputedStyle(
+                    htmlElement
+                  );
+
+                const rect =
+                  htmlElement.getBoundingClientRect();
+
+                return (
+                  style.display !== "none" &&
+                  style.visibility !== "hidden" &&
+                  Number(style.opacity) !== 0 &&
+                  rect.width > 0 &&
+                  rect.height > 0 &&
+                  !(
+                    element as HTMLInputElement
+                  ).disabled
+                );
+              }
+            )
+            .map(
+              (element) => {
+                const input =
+                  element as
+                    | HTMLInputElement
+                    | HTMLTextAreaElement
+                    | HTMLSelectElement;
+
+                const id =
+                  input.id || "";
+
+                let label = "";
+
+                if (id) {
+                  const explicit =
+                    document.querySelector(
+                      `label[for="${CSS.escape(
+                        id
+                      )}"]`
                     );
 
-                  const rect =
-                    htmlElement.getBoundingClientRect();
-
-                  return (
-                    style.display !== "none" &&
-                    style.visibility !== "hidden" &&
-                    Number(style.opacity) !== 0 &&
-                    rect.width > 0 &&
-                    rect.height > 0 &&
-                    !(
-                      element as HTMLInputElement
-                    ).disabled
-                  );
-                }
-              )
-              .map(
-                (element) => {
-                  const input =
-                    element as
-                      | HTMLInputElement
-                      | HTMLTextAreaElement
-                      | HTMLSelectElement;
-
-                  const id =
-                    input.id || "";
-
-                  let label = "";
-
-                  if (id) {
-                    const explicit =
-                      document.querySelector(
-                        `label[for="${CSS.escape(
-                          id
-                        )}"]`
-                      );
-
-                    if (explicit) {
-                      label =
-                        explicit.textContent ||
-                        "";
-                    }
+                  if (explicit) {
+                    label =
+                      explicit.textContent ||
+                      "";
                   }
-
-                  if (!label) {
-                    const parentLabel =
-                      input.closest("label");
-
-                    if (parentLabel) {
-                      label =
-                        parentLabel.textContent ||
-                        "";
-                    }
-                  }
-
-                  return {
-                    tag:
-                      input.tagName.toLowerCase(),
-
-                    inputType:
-                      input instanceof HTMLInputElement
-                        ? input.type || "text"
-                        : "",
-
-                    name:
-                      input.getAttribute("name") ||
-                      "",
-
-                    id,
-
-                    placeholder:
-                      input.getAttribute(
-                        "placeholder"
-                      ) || "",
-
-                    ariaLabel:
-                      input.getAttribute(
-                        "aria-label"
-                      ) || "",
-
-                    label:
-                      label
-                        .replace(/\s+/g, " ")
-                        .trim(),
-
-                    required:
-                      input.hasAttribute(
-                        "required"
-                      ) ||
-                      input.getAttribute(
-                        "aria-required"
-                      ) === "true",
-                  };
                 }
-              )
-        ) as BrowserField[];
+
+                if (!label) {
+                  const parentLabel =
+                    input.closest(
+                      "label"
+                    );
+
+                  if (
+                    parentLabel
+                  ) {
+                    label =
+                      parentLabel.textContent ||
+                      "";
+                  }
+                }
+
+                return {
+                  tag:
+                    input.tagName.toLowerCase(),
+
+                  inputType:
+                    input instanceof HTMLInputElement
+                      ? input.type || "text"
+                      : "",
+
+                  name:
+                    input.getAttribute(
+                      "name"
+                    ) || "",
+
+                  id,
+
+                  placeholder:
+                    input.getAttribute(
+                      "placeholder"
+                    ) || "",
+
+                  ariaLabel:
+                    input.getAttribute(
+                      "aria-label"
+                    ) || "",
+
+                  label:
+                    label
+                      .replace(
+                        /\s+/g,
+                        " "
+                      )
+                      .trim(),
+
+                  required:
+                    input.hasAttribute(
+                      "required"
+                    ) ||
+                    input.getAttribute(
+                      "aria-required"
+                    ) === "true",
+                };
+              }
+            )
+      ) as BrowserField[];
 
     const detected:
       DetectedField[] = [];
@@ -514,7 +565,9 @@ async function inspectRenderedForm(
         index
       ) => {
         const type =
-          inferFieldType(field);
+          inferFieldType(
+            field
+          );
 
         if (!type) {
           return;
@@ -538,7 +591,9 @@ async function inspectRenderedForm(
         DetectedField
       >();
 
-    for (const field of detected) {
+    for (
+      const field of detected
+    ) {
       unique.set(
         `${field.key.toLowerCase()}:${field.type}`,
         field
@@ -551,7 +606,10 @@ async function inspectRenderedForm(
       fields:
         [
           ...unique.values(),
-        ].slice(0, 50),
+        ].slice(
+          0,
+          50
+        ),
     };
   } finally {
     await browser.close();
