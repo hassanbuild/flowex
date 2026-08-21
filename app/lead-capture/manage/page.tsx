@@ -1,3 +1,6 @@
+
+
+
 "use client";
 
 import Image from "next/image";
@@ -416,6 +419,9 @@ export default function ManageLeadCapturePage() {
     useState(false);
 
   const [copiedFormLink, setCopiedFormLink] =
+    useState(false);
+
+  const [isDeletingLeadFlow, setIsDeletingLeadFlow] =
     useState(false);
 
   const [storageType, setStorageType] =
@@ -1595,83 +1601,104 @@ export default function ManageLeadCapturePage() {
   };
 
   const toggleAutomationActive =
+    () => {
+      setActive(
+        (current) =>
+          !current
+      );
+    };
+
+
+  const deleteLeadFlow =
     async () => {
       if (
         !leadFlowId ||
-        !flowReady
+        !flowReady ||
+        isDeletingLeadFlow
       ) {
         return;
       }
 
-      const nextActive =
-        !active;
-
-      const {
-        data: {
-          user,
-        },
-        error: userError,
-      } =
-        await supabase.auth.getUser();
-
-      if (
-        userError ||
-        !user
-      ) {
-        alert(
-          "Your session could not be verified."
+      const confirmed =
+        window.confirm(
+          "Delete this Lead Flow? This will permanently remove its forms, sources, and leads."
         );
+
+      if (!confirmed) {
         return;
       }
 
-      const {
-        error,
-      } =
-        await supabase
-          .from("lead_flows")
-          .update({
-            active:
-              nextActive,
+      setIsDeletingLeadFlow(
+        true
+      );
 
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq(
-            "id",
-            leadFlowId
-          )
-          .eq(
-            "user_id",
-            user.id
+      try {
+        const {
+          data: {
+            user,
+          },
+          error: userError,
+        } =
+          await supabase.auth.getUser();
+
+        if (
+          userError ||
+          !user
+        ) {
+          alert(
+            "Your session could not be verified."
+          );
+          return;
+        }
+
+        const {
+          error,
+        } =
+          await supabase
+            .from("lead_flows")
+            .delete()
+            .eq(
+              "id",
+              leadFlowId
+            )
+            .eq(
+              "user_id",
+              user.id
+            );
+
+        if (error) {
+          alert(
+            "Flowex could not delete this Lead Flow."
+          );
+          return;
+        }
+
+        localStorage.removeItem(
+          `flowex-lead-capture:${leadFlowId}`
+        );
+
+        const selectedFlow =
+          localStorage.getItem(
+            "flowex-selected-lead-flow"
           );
 
-      if (error) {
-        alert(
-          "Flowex could not update this automation."
+        if (
+          selectedFlow ===
+          leadFlowId
+        ) {
+          localStorage.removeItem(
+            "flowex-selected-lead-flow"
+          );
+        }
+
+        router.replace(
+          "/lead-capture/dashboard"
         );
-        return;
+      } finally {
+        setIsDeletingLeadFlow(
+          false
+        );
       }
-
-      setActive(
-        nextActive
-      );
-
-      localStorage.setItem(
-        `flowex-lead-capture:${leadFlowId}`,
-        JSON.stringify({
-          active:
-            nextActive,
-          sourceType,
-          storageType,
-          storageDestination,
-          replyType,
-          customReply,
-          companyEmail,
-          followUpEnabled,
-          followUpDelay,
-          followUpMessage,
-        })
-      );
     };
 
   const saveChanges = async () => {
@@ -1834,17 +1861,32 @@ export default function ManageLeadCapturePage() {
 
             </div>
 
-            <button
-              type="button"
-              onClick={toggleAutomationActive}
-              className={`rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
-                active
-                  ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                  : "bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-white shadow-md"
-              }`}
-            >
-              {active ? "Pause Automation" : "Resume Automation"}
-            </button>
+            <div className="flex flex-wrap gap-3">
+
+              <button
+                type="button"
+                onClick={toggleAutomationActive}
+                className={`rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
+                  active
+                    ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                    : "bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-white shadow-md"
+                }`}
+              >
+                {active ? "Pause Automation" : "Resume Automation"}
+              </button>
+
+              <button
+                type="button"
+                onClick={deleteLeadFlow}
+                disabled={isDeletingLeadFlow}
+                className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+              >
+                {isDeletingLeadFlow
+                  ? "Deleting..."
+                  : "Delete Lead Flow"}
+              </button>
+
+            </div>
 
           </div>
 

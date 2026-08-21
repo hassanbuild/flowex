@@ -92,7 +92,7 @@ export default function DashboardPage() {
           await supabase
             .from("leads")
             .select(
-              "id",
+              "*",
               {
                 count: "exact",
                 head: true,
@@ -106,6 +106,13 @@ export default function DashboardPage() {
               "created_at",
               startOfToday.toISOString()
             );
+
+        if (error) {
+          console.error(
+            "Flowex dashboard lead count error:",
+            error.message
+          );
+        }
 
         if (cancelled) {
           return;
