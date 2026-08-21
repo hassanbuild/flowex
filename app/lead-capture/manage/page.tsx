@@ -269,8 +269,16 @@ function shortSlugSuffix() {
 }
 
 export default function ManageLeadCapturePage() {
-  const { plan } = useAppAccount();
+  const {
+    plan,
+    authReady,
+  } = useAppAccount();
+
   const router = useRouter();
+
+  const [leadFlowId, setLeadFlowId] = useState("");
+  const [leadFlowName, setLeadFlowName] = useState("");
+  const [flowReady, setFlowReady] = useState(false);
 
   const [supabase] = useState(() =>
     createClient()
@@ -280,10 +288,69 @@ export default function ManageLeadCapturePage() {
     plan === "trial" || plan === "pro";
 
   useEffect(() => {
-    if (!hasPremiumAccess) {
+    if (
+      !authReady ||
+      !hasPremiumAccess
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadSelectedFlow = async () => {
+      const flowId = new URLSearchParams(window.location.search).get("flowId")?.trim() || "";
+
+      if (!flowId) {
+        router.replace("/lead-capture/dashboard");
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const { data, error } = await supabase
+        .from("lead_flows")
+        .select("id, name")
+        .eq("id", flowId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error || !data) {
+        router.replace("/lead-capture/dashboard");
+        return;
+      }
+
+      setLeadFlowId(data.id);
+      setLeadFlowName(data.name || "Lead Flow");
+      setFlowReady(true);
+    };
+
+    void loadSelectedFlow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authReady,
+    hasPremiumAccess,
+    router,
+    supabase,
+  ]);
+
+  useEffect(() => {
+    if (
+      authReady &&
+      !hasPremiumAccess
+    ) {
       router.replace("/home");
     }
-  }, [hasPremiumAccess, router]);
+  }, [
+    authReady,
+    hasPremiumAccess,
+    router,
+  ]);
 
   const [active, setActive] = useState(true);
 
@@ -378,8 +445,60 @@ export default function ManageLeadCapturePage() {
     );
 
   useEffect(() => {
+    if (
+      !flowReady ||
+      !leadFlowId
+    ) {
+      return;
+    }
+
+    /*
+      Each Lead Flow must start with a clean UI state.
+      Without this reset, React can keep Flow 1's form/source
+      visible while Flow 2 has no source yet.
+    */
+    setActive(true);
+    setSourceType("flowex");
+
+    setExternalSourceId(null);
+    setExternalPublicKey("");
+    setExternalUrl("");
+    setExternalVerified(false);
+    setExternalDetectedFields([]);
+    setExternalSourceError("");
+    setExternalCaptureConnected(false);
+    setCopiedLovableSetup(false);
+
+    setFlowexFormSourceId(null);
+    setFlowexFormSlug("");
+    setFlowexFormTitle("");
+    setFlowexFormFields([]);
+    setSelectedFlowexField("");
+    setFormCustomizerError("");
+    setCopiedFormLink(false);
+
+    setStorageType("sheets");
+    setStorageDestination("");
+    setReplyType("instant");
+    setCustomReply(
+      "Thanks for reaching out. We’ve received your message and will get back to you shortly."
+    );
+    setCompanyEmail("");
+    setFollowUpEnabled(true);
+    setFollowUpDelay("24");
+    setFollowUpMessage(
+      "Just following up in case you missed our previous message. Let us know if you have any questions."
+    );
+  }, [
+    flowReady,
+    leadFlowId,
+  ]);
+
+  useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+
     const saved = localStorage.getItem(
-      "flowex-lead-capture"
+      `flowex-lead-capture:${leadFlowId}`
     );
 
     if (!saved) return;
@@ -424,9 +543,11 @@ export default function ManageLeadCapturePage() {
         data.flowexFormFields
       );
     }
-  }, []);
+  }, [flowReady, leadFlowId]);
 
   useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+
     let cancelled = false;
 
     const loadSavedFlowexForm = async () => {
@@ -461,6 +582,7 @@ export default function ManageLeadCapturePage() {
             "source_type",
             "flowex_form"
           )
+          .eq("lead_flow_id", leadFlowId)
           .order(
             "updated_at",
             {
@@ -517,9 +639,11 @@ export default function ManageLeadCapturePage() {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, flowReady, leadFlowId]);
 
   useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+
     let cancelled = false;
 
     const loadExternalSource = async () => {
@@ -554,6 +678,7 @@ export default function ManageLeadCapturePage() {
             "source_type",
             "external_form"
           )
+          .eq("lead_flow_id", leadFlowId)
           .order(
             "updated_at",
             {
@@ -616,7 +741,7 @@ export default function ManageLeadCapturePage() {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, flowReady, leadFlowId]);
 
   const connectExternalForm = async () => {
     if (
@@ -701,6 +826,8 @@ export default function ManageLeadCapturePage() {
 
                 sourceId:
                   externalSourceId,
+
+                leadFlowId,
               }),
           }
         );
@@ -1258,6 +1385,7 @@ export default function ManageLeadCapturePage() {
               "user_id",
               user.id
             )
+            .eq("lead_flow_id", leadFlowId)
             .select(
               "id, slug"
             )
@@ -1344,6 +1472,9 @@ export default function ManageLeadCapturePage() {
               .insert({
                 user_id:
                   user.id,
+
+                lead_flow_id:
+                  leadFlowId,
 
                 name:
                   flowexFormTitle.trim(),
@@ -1465,6 +1596,11 @@ export default function ManageLeadCapturePage() {
   };
 
   const saveChanges = () => {
+    if (!leadFlowId) {
+      alert("Select a Lead Flow first.");
+      return;
+    }
+
     if (
       sourceType === "external" &&
       (
@@ -1499,14 +1635,18 @@ export default function ManageLeadCapturePage() {
     };
 
     localStorage.setItem(
-      "flowex-lead-capture",
+      `flowex-lead-capture:${leadFlowId}`,
       JSON.stringify(automationData)
     );
 
     alert("Automation saved successfully!");
   };
 
-  if (!hasPremiumAccess) {
+  if (
+    !authReady ||
+    !hasPremiumAccess ||
+    !flowReady
+  ) {
     return null;
   }
 
@@ -1568,7 +1708,7 @@ export default function ManageLeadCapturePage() {
               </p>
 
               <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
-                Automation Flow
+                {leadFlowName || "Automation Flow"}
               </h1>
 
               <p className="mt-2 max-w-xl text-gray-500 app-dark:text-slate-400">

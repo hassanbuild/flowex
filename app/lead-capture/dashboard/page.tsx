@@ -17,6 +17,7 @@ export default function LeadCaptureDashboard() {
     email,
     profileImage,
     plan,
+    authReady,
   } = useAppAccount();
 
   const {
@@ -84,16 +85,26 @@ export default function LeadCaptureDashboard() {
     plan === "trial" || plan === "pro";
 
   useEffect(() => {
-    if (!hasPremiumAccess) {
+    if (
+      authReady &&
+      !hasPremiumAccess
+    ) {
       router.replace("/home");
     }
-  }, [hasPremiumAccess, router]);
+  }, [
+    authReady,
+    hasPremiumAccess,
+    router,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadLeadFlows = async () => {
-      if (!hasPremiumAccess) {
+      if (
+        !authReady ||
+        !hasPremiumAccess
+      ) {
         return;
       }
 
@@ -221,6 +232,7 @@ export default function LeadCaptureDashboard() {
       cancelled = true;
     };
   }, [
+    authReady,
     hasPremiumAccess,
     supabase,
   ]);
@@ -644,7 +656,10 @@ export default function LeadCaptureDashboard() {
     supabase,
   ]);
 
-  if (!hasPremiumAccess) {
+  if (
+    !authReady ||
+    !hasPremiumAccess
+  ) {
     return null;
   }
 
