@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(
   request: Request
@@ -68,6 +69,7 @@ export async function POST(
   let body:
     {
       sourceId?: unknown;
+      leadFlowId?: unknown;
     };
 
   try {
@@ -86,6 +88,12 @@ export async function POST(
       }
     );
   }
+
+  const leadFlowId =
+    typeof body.leadFlowId === "string" &&
+    body.leadFlowId.trim()
+      ? body.leadFlowId.trim()
+      : null;
 
   if (
     typeof body.sourceId !==
@@ -112,7 +120,7 @@ export async function POST(
     await supabase
       .from("lead_sources")
       .select(
-        "id, public_key, config"
+        "id, public_key, config, lead_flow_id"
       )
       .eq(
         "id",
@@ -127,6 +135,23 @@ export async function POST(
         "external_form"
       )
       .maybeSingle();
+
+  if (
+    source &&
+    leadFlowId &&
+    source.lead_flow_id !== leadFlowId
+  ) {
+    return NextResponse.json(
+      {
+        connected: false,
+        error:
+          "This form does not belong to the selected Lead Flow.",
+      },
+      {
+        status: 404,
+      }
+    );
+  }
 
   if (
     sourceError ||
@@ -225,56 +250,70 @@ export async function POST(
     const page =
       await browser.newPage();
 
-    await page.goto(
-      config.source_url,
-      {
-        waitUntil:
-          "domcontentloaded",
+    /*
+      A newly published Lovable project can take a moment to
+      become visible everywhere. Handle that delay inside Flowex
+      instead of making the user click Check Connection repeatedly.
+    */
+    for (
+      let attempt = 1;
+      attempt <= 3 &&
+      !connected;
+      attempt += 1
+    ) {
+      await page.goto(
+        config.source_url,
+        {
+          waitUntil:
+            "domcontentloaded",
 
-        timeout:
-          15000,
-      }
-    );
-
-    await new Promise(
-      (resolve) =>
-        setTimeout(
-          resolve,
-          1500
-        )
-    );
-
-    connected =
-      await page.evaluate(
-        (publicKey) => {
-          return Array.from(
-            document.querySelectorAll(
-              "script[data-flowex-key]"
-            )
-          ).some(
-            (script) => {
-              const src =
-                script.getAttribute(
-                  "src"
-                ) || "";
-
-              const key =
-                script.getAttribute(
-                  "data-flowex-key"
-                ) || "";
-
-              return (
-                key ===
-                  publicKey &&
-                src.includes(
-                  "/flowex-capture.js"
-                )
-              );
-            }
-          );
-        },
-        source.public_key
+          timeout:
+            15000,
+        }
       );
+
+      await new Promise(
+        (resolve) =>
+          setTimeout(
+            resolve,
+            attempt === 1
+              ? 1200
+              : 2000
+          )
+      );
+
+      connected =
+        await page.evaluate(
+          (publicKey) => {
+            return Array.from(
+              document.querySelectorAll(
+                "script[data-flowex-key]"
+              )
+            ).some(
+              (script) => {
+                const src =
+                  script.getAttribute(
+                    "src"
+                  ) || "";
+
+                const key =
+                  script.getAttribute(
+                    "data-flowex-key"
+                  ) || "";
+
+                return (
+                  key ===
+                    publicKey &&
+                  src.includes(
+                    "/flowex-capture.js"
+                  )
+                );
+              }
+            );
+          },
+          source.public_key
+        );
+    }
   } catch (error) {
     console.error(
       "Flowex connection check browser error:",

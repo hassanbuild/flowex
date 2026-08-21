@@ -6,10 +6,12 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 type VerifyBody = {
   url?: unknown;
   sourceId?: unknown;
+  leadFlowId?: unknown;
 };
 
 type DetectedField = {
@@ -600,6 +602,25 @@ async function inspectRenderedForm(
       );
     }
 
+    const captureKeys =
+      await page.$$eval(
+        "script[data-flowex-key]",
+        (scripts) =>
+          scripts
+            .filter((script) =>
+              (script.getAttribute("src") || "").includes(
+                "/flowex-capture.js"
+              )
+            )
+            .map(
+              (script) =>
+                script.getAttribute(
+                  "data-flowex-key"
+                ) || ""
+            )
+            .filter(Boolean)
+      );
+
     return {
       finalUrl,
 
@@ -610,6 +631,8 @@ async function inspectRenderedForm(
           0,
           50
         ),
+
+      captureKeys,
     };
   } finally {
     await browser.close();
@@ -731,6 +754,7 @@ export async function POST(
     {
       finalUrl: string;
       fields: DetectedField[];
+      captureKeys: string[];
     };
 
   try {
@@ -793,21 +817,176 @@ export async function POST(
     auth;
 
   const sourceId =
-    typeof body.sourceId ===
-      "string" &&
+    typeof body.sourceId === "string" &&
     body.sourceId.trim()
       ? body.sourceId.trim()
       : null;
 
+  const leadFlowId =
+    typeof body.leadFlowId === "string" &&
+    body.leadFlowId.trim()
+      ? body.leadFlowId.trim()
+      : null;
+
+  if (!leadFlowId) {
+    return NextResponse.json(
+      {
+        verified: false,
+        error:
+          "A Lead Flow must be selected before connecting this form.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const {
+    data: leadFlow,
+    error: leadFlowError,
+  } =
+    await supabase
+      .from("lead_flows")
+      .select("id")
+      .eq("id", leadFlowId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+  if (
+    leadFlowError ||
+    !leadFlow
+  ) {
+    return NextResponse.json(
+      {
+        verified: false,
+        error:
+          "The selected Lead Flow could not be verified.",
+      },
+      {
+        status: 404,
+      }
+    );
+  }
+
+  /*
+    Keep one source/public_key for the same Lovable form.
+
+    We first try the sourceId supplied by the UI. If that is not
+    available (for example after Unlink), we look for an existing
+    source owned by this user whose URL matches this form OR whose
+    public_key is already installed on the rendered page.
+  */
+  let existing:
+    | {
+        id: string;
+        public_key: string;
+        config: unknown;
+      }
+    | null = null;
+
+  if (sourceId) {
+    const {
+      data: existingById,
+    } =
+      await supabase
+        .from("lead_sources")
+        .select(
+          "id, public_key, config, lead_flow_id"
+        )
+        .eq(
+          "id",
+          sourceId
+        )
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "lead_flow_id",
+          leadFlowId
+        )
+        .eq(
+          "source_type",
+          "external_form"
+        )
+        .maybeSingle();
+
+    existing =
+      existingById || null;
+  }
+
+  if (!existing) {
+    const {
+      data: candidates,
+    } =
+      await supabase
+        .from("lead_sources")
+        .select(
+          "id, public_key, config, lead_flow_id"
+        )
+        .eq(
+          "user_id",
+          user.id
+        )
+        .eq(
+          "lead_flow_id",
+          leadFlowId
+        )
+        .eq(
+          "source_type",
+          "external_form"
+        );
+
+    existing =
+      candidates?.find(
+        (candidate) => {
+          const candidateConfig =
+            candidate.config as {
+              source_url?: unknown;
+            } | null;
+
+          const sameUrl =
+            typeof candidateConfig?.source_url ===
+              "string" &&
+            candidateConfig.source_url ===
+              inspected.finalUrl;
+
+          const keyAlreadyInstalled =
+            inspected.captureKeys.includes(
+              candidate.public_key
+            );
+
+          return (
+            sameUrl ||
+            keyAlreadyInstalled
+          );
+        }
+      ) || null;
+  }
+
+  const captureConnected =
+    !!existing &&
+    inspected.captureKeys.includes(
+      existing.public_key
+    );
+
   const config = {
+    ...(
+      existing?.config &&
+      typeof existing.config ===
+        "object"
+        ? existing.config
+        : {}
+    ),
+
     source_url:
       inspected.finalUrl,
 
     capture_connected:
-      false,
+      captureConnected,
   };
 
-  if (sourceId) {
+  if (existing) {
     const {
       data,
       error,
@@ -815,6 +994,9 @@ export async function POST(
       await supabase
         .from("lead_sources")
         .update({
+          lead_flow_id:
+            leadFlowId,
+
           name:
             "External Form",
 
@@ -840,13 +1022,15 @@ export async function POST(
         })
         .eq(
           "id",
-          sourceId
+          existing.id
         )
         .eq(
           "user_id",
           user.id
         )
-        .select("id, public_key")
+        .select(
+          "id, public_key"
+        )
         .single();
 
     if (
@@ -880,6 +1064,8 @@ export async function POST(
           inspected.finalUrl,
 
         detectedFields,
+
+        captureConnected,
       }
     );
   }
@@ -893,6 +1079,9 @@ export async function POST(
       .insert({
         user_id:
           user.id,
+
+        lead_flow_id:
+          leadFlowId,
 
         name:
           "External Form",
@@ -914,7 +1103,9 @@ export async function POST(
         last_test_payload:
           null,
       })
-      .select("id, public_key")
+      .select(
+        "id, public_key"
+      )
       .single();
 
   if (
@@ -948,6 +1139,8 @@ export async function POST(
         inspected.finalUrl,
 
       detectedFields,
+
+      captureConnected: false,
     }
   );
 }
@@ -1023,7 +1216,16 @@ export async function DELETE(
   } =
     await supabase
       .from("lead_sources")
-      .delete()
+      .update({
+        enabled:
+          false,
+
+        verified:
+          false,
+
+        updated_at:
+          new Date().toISOString(),
+      })
       .eq(
         "id",
         body.sourceId.trim()

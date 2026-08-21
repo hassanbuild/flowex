@@ -13,6 +13,7 @@ type IntakePayload = Record<string, unknown>;
 type SourceRow = {
   id: string;
   user_id: string;
+  lead_flow_id: string | null;
   public_key: string;
   source_type: "flowex_form" | "external_form";
   enabled: boolean;
@@ -29,6 +30,7 @@ type DetectedField = {
 type NormalizedLead = {
   sourceId: string;
   userId: string;
+  leadFlowId: string | null;
   sourceType: "flowex_form" | "external_form";
   receivedAt: string;
   contact: {
@@ -279,6 +281,7 @@ async function getSource(publicKey: string) {
       `
         id,
         user_id,
+        lead_flow_id,
         public_key,
         source_type,
         enabled,
@@ -546,6 +549,7 @@ export async function POST(
   const lead: NormalizedLead = {
     sourceId: source.id,
     userId: source.user_id,
+    leadFlowId: source.lead_flow_id,
     sourceType: source.source_type,
     receivedAt: new Date().toISOString(),
     contact: {
@@ -556,17 +560,75 @@ export async function POST(
   };
 
   /*
-    Flowex has now received and normalized the real submission.
+    Save the normalized lead inside Flowex first.
 
-    We intentionally do NOT insert this lead into a Flowex leads
-    table. The next step is to pass this `lead` object into the
-    customer's selected destination + reply/notification/follow-up
-    engine.
+    Later automation steps (storage destination, instant reply,
+    team notification and follow-up) can all work from this same
+    persisted lead record.
   */
+  const supabase =
+    createAdminClient();
+
+  const {
+    data: savedLead,
+    error: saveLeadError,
+  } =
+    await supabase
+      .from("leads")
+      .insert({
+        user_id:
+          lead.userId,
+
+        lead_flow_id:
+          lead.leadFlowId,
+
+        source_id:
+          lead.sourceId,
+
+        source_type:
+          lead.sourceType,
+
+        email:
+          lead.contact.email,
+
+        phone:
+          lead.contact.phone,
+
+        fields:
+          lead.fields,
+
+        created_at:
+          lead.receivedAt,
+      })
+      .select("id")
+      .single();
+
+  if (
+    saveLeadError ||
+    !savedLead
+  ) {
+    console.error(
+      "Flowex lead save error:",
+      saveLeadError?.message ||
+        "Unknown lead save error"
+    );
+
+    return json(
+      {
+        success: false,
+        error:
+          "Flowex received this lead but could not save it.",
+      },
+      500,
+      allowedOrigin
+    );
+  }
 
   console.log("Flowex lead received:", {
+    leadId: savedLead.id,
     sourceId: lead.sourceId,
     sourceType: lead.sourceType,
+    leadFlowId: lead.leadFlowId,
     receivedAt: lead.receivedAt,
     fieldCount: Object.keys(lead.fields).length,
     hasEmail: !!lead.contact.email,

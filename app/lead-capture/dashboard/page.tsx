@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LeadCaptureDashboard() {
   const { theme, toggleTheme } = useAppTheme();
@@ -25,6 +26,60 @@ export default function LeadCaptureDashboard() {
 
   const router = useRouter();
 
+  const [supabase] = useState(() =>
+    createClient()
+  );
+
+  const [leadFlows, setLeadFlows] =
+    useState<
+      {
+        id: string;
+        name: string;
+        slot: number;
+      }[]
+    >([]);
+
+  const [selectedLeadFlowId, setSelectedLeadFlowId] =
+    useState("");
+
+  const [isLoadingLeadFlows, setIsLoadingLeadFlows] =
+    useState(true);
+
+  const [isCreatingLeadFlow, setIsCreatingLeadFlow] =
+    useState(false);
+
+  const [leadFlowError, setLeadFlowError] =
+    useState("");
+
+  const [leadsToday, setLeadsToday] =
+    useState(0);
+
+  const [totalLeads, setTotalLeads] =
+    useState(0);
+
+  const [recentLeads, setRecentLeads] =
+    useState<
+      {
+        id: string;
+        name: string;
+        email: string;
+        time: string;
+        status: string;
+      }[]
+    >([]);
+
+  const [activity, setActivity] =
+    useState<
+      {
+        title: string;
+        detail: string;
+        time: string;
+      }[]
+    >([]);
+
+  const [isLoadingLeadData, setIsLoadingLeadData] =
+    useState(false);
+
   const hasPremiumAccess =
     plan === "trial" || plan === "pro";
 
@@ -34,55 +89,560 @@ export default function LeadCaptureDashboard() {
     }
   }, [hasPremiumAccess, router]);
 
-  const recentLeads = [
-    {
-      name: "Acme Marketing",
-      email: "hello@acme.com",
-      time: "2 min ago",
-      status: "Replied",
-    },
-    {
-      name: "Northstar Realty",
-      email: "leads@northstar.com",
-      time: "12 min ago",
-      status: "Replied",
-    },
-    {
-      name: "Apex Consulting",
-      email: "hello@apex.com",
-      time: "28 min ago",
-      status: "Replied",
-    },
-    {
-      name: "Nova Studio",
-      email: "contact@nova.com",
-      time: "41 min ago",
-      status: "Replied",
-    },
-  ];
+  useEffect(() => {
+    let cancelled = false;
 
-  const activity = [
-    {
-      title: "Instant reply sent",
-      detail: "Acme Marketing",
-      time: "2 min ago",
-    },
-    {
-      title: "Lead saved",
-      detail: "Northstar Realty",
-      time: "12 min ago",
-    },
-    {
-      title: "Team notified",
-      detail: "Apex Consulting",
-      time: "28 min ago",
-    },
-    {
-      title: "Follow-up scheduled",
-      detail: "Nova Studio",
-      time: "41 min ago",
-    },
-  ];
+    const loadLeadFlows = async () => {
+      if (!hasPremiumAccess) {
+        return;
+      }
+
+      setIsLoadingLeadFlows(true);
+      setLeadFlowError("");
+
+      const {
+        data: {
+          user,
+        },
+        error: userError,
+      } =
+        await supabase.auth.getUser();
+
+      if (
+        cancelled ||
+        userError ||
+        !user
+      ) {
+        if (!cancelled) {
+          setLeadFlowError(
+            "Flowex could not load your Lead Flows."
+          );
+          setIsLoadingLeadFlows(false);
+        }
+
+        return;
+      }
+
+      let {
+        data,
+        error,
+      } =
+        await supabase
+          .from("lead_flows")
+          .select("id, name, slot")
+          .eq("user_id", user.id)
+          .order("slot", {
+            ascending: true,
+          });
+
+      if (
+        !cancelled &&
+        !error &&
+        (!data || data.length === 0)
+      ) {
+        const {
+          data: created,
+          error: createError,
+        } =
+          await supabase
+            .from("lead_flows")
+            .insert({
+              user_id: user.id,
+              name: "Lead Flow 1",
+              slot: 1,
+            })
+            .select("id, name, slot")
+            .single();
+
+        if (
+          createError ||
+          !created
+        ) {
+          setLeadFlowError(
+            "Flowex could not create your first Lead Flow."
+          );
+          setIsLoadingLeadFlows(false);
+          return;
+        }
+
+        data = [created];
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      if (
+        error ||
+        !data
+      ) {
+        setLeadFlowError(
+          "Flowex could not load your Lead Flows."
+        );
+        setIsLoadingLeadFlows(false);
+        return;
+      }
+
+      setLeadFlows(data);
+
+      const savedLeadFlowId =
+        localStorage.getItem(
+          "flowex-selected-lead-flow"
+        );
+
+      const validSavedFlow =
+        data.find(
+          (flow) =>
+            flow.id === savedLeadFlowId
+        );
+
+      const nextSelectedId =
+        validSavedFlow?.id ||
+        data[0]?.id ||
+        "";
+
+      setSelectedLeadFlowId(
+        nextSelectedId
+      );
+
+      if (nextSelectedId) {
+        localStorage.setItem(
+          "flowex-selected-lead-flow",
+          nextSelectedId
+        );
+      }
+
+      setIsLoadingLeadFlows(false);
+    };
+
+    void loadLeadFlows();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    hasPremiumAccess,
+    supabase,
+  ]);
+
+  const selectLeadFlow = (
+    leadFlowId: string
+  ) => {
+    setSelectedLeadFlowId(
+      leadFlowId
+    );
+
+    localStorage.setItem(
+      "flowex-selected-lead-flow",
+      leadFlowId
+    );
+  };
+
+  const createLeadFlow = async () => {
+    if (
+      isCreatingLeadFlow ||
+      leadFlows.length >= 3
+    ) {
+      return;
+    }
+
+    setLeadFlowError("");
+    setIsCreatingLeadFlow(true);
+
+    try {
+      const {
+        data: {
+          user,
+        },
+        error: userError,
+      } =
+        await supabase.auth.getUser();
+
+      if (
+        userError ||
+        !user
+      ) {
+        setLeadFlowError(
+          "Your session could not be verified."
+        );
+        return;
+      }
+
+      const usedSlots =
+        new Set(
+          leadFlows.map(
+            (flow) => flow.slot
+          )
+        );
+
+      const nextSlot =
+        [1, 2, 3].find(
+          (slot) =>
+            !usedSlots.has(slot)
+        );
+
+      if (!nextSlot) {
+        return;
+      }
+
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from("lead_flows")
+          .insert({
+            user_id: user.id,
+            name: `Lead Flow ${nextSlot}`,
+            slot: nextSlot,
+          })
+          .select("id, name, slot")
+          .single();
+
+      if (
+        error ||
+        !data
+      ) {
+        setLeadFlowError(
+          error?.message ||
+            "Flowex could not create this Lead Flow."
+        );
+        return;
+      }
+
+      const nextFlows =
+        [
+          ...leadFlows,
+          data,
+        ].sort(
+          (a, b) =>
+            a.slot - b.slot
+        );
+
+      setLeadFlows(
+        nextFlows
+      );
+
+      selectLeadFlow(
+        data.id
+      );
+    } finally {
+      setIsCreatingLeadFlow(
+        false
+      );
+    }
+  };
+
+  const selectedLeadFlow =
+    leadFlows.find(
+      (flow) =>
+        flow.id ===
+        selectedLeadFlowId
+    ) || leadFlows[0] || null;
+
+  const manageHref =
+    selectedLeadFlow
+      ? `/lead-capture/manage?flowId=${encodeURIComponent(
+          selectedLeadFlow.id
+        )}`
+      : "/lead-capture/manage";
+
+  const leadsHref =
+    selectedLeadFlow
+      ? `/lead-capture/leads?flowId=${encodeURIComponent(
+          selectedLeadFlow.id
+        )}`
+      : "/lead-capture/leads";
+
+
+  const formatLeadTime = (
+    createdAt: string
+  ) => {
+    const created =
+      new Date(createdAt);
+
+    const diffMs =
+      Date.now() -
+      created.getTime();
+
+    const minutes =
+      Math.max(
+        0,
+        Math.floor(
+          diffMs / 60000
+        )
+      );
+
+    if (minutes < 1) {
+      return "Just now";
+    }
+
+    if (minutes < 60) {
+      return `${minutes} min ago`;
+    }
+
+    const hours =
+      Math.floor(
+        minutes / 60
+      );
+
+    if (hours < 24) {
+      return `${hours}h ago`;
+    }
+
+    const days =
+      Math.floor(
+        hours / 24
+      );
+
+    return `${days}d ago`;
+  };
+
+  const getLeadDisplayName = (
+    fields: Record<string, unknown> | null,
+    email: string | null,
+    phone: string | null
+  ) => {
+    const entries =
+      Object.entries(
+        fields || {}
+      );
+
+    const preferred =
+      entries.find(
+        ([key, value]) => {
+          if (
+            typeof value !==
+              "string" ||
+            !value.trim()
+          ) {
+            return false;
+          }
+
+          const lower =
+            key.toLowerCase();
+
+          return (
+            lower.includes(
+              "name"
+            ) ||
+            lower.includes(
+              "company"
+            )
+          );
+        }
+      );
+
+    if (
+      preferred &&
+      typeof preferred[1] ===
+        "string"
+    ) {
+      return preferred[1];
+    }
+
+    return (
+      email ||
+      phone ||
+      "New Lead"
+    );
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLeadData =
+      async () => {
+        if (
+          !selectedLeadFlowId
+        ) {
+          setLeadsToday(0);
+          setTotalLeads(0);
+          setRecentLeads([]);
+          setActivity([]);
+          return;
+        }
+
+        setIsLoadingLeadData(
+          true
+        );
+
+        const {
+          data: {
+            user,
+          },
+        } =
+          await supabase.auth.getUser();
+
+        if (
+          cancelled ||
+          !user
+        ) {
+          if (!cancelled) {
+            setIsLoadingLeadData(
+              false
+            );
+          }
+
+          return;
+        }
+
+        const startOfToday =
+          new Date();
+
+        startOfToday.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        const [
+          totalResult,
+          todayResult,
+          recentResult,
+        ] =
+          await Promise.all([
+            supabase
+              .from("leads")
+              .select(
+                "id",
+                {
+                  count: "exact",
+                  head: true,
+                }
+              )
+              .eq(
+                "user_id",
+                user.id
+              )
+              .eq(
+                "lead_flow_id",
+                selectedLeadFlowId
+              ),
+
+            supabase
+              .from("leads")
+              .select(
+                "id",
+                {
+                  count: "exact",
+                  head: true,
+                }
+              )
+              .eq(
+                "user_id",
+                user.id
+              )
+              .eq(
+                "lead_flow_id",
+                selectedLeadFlowId
+              )
+              .gte(
+                "created_at",
+                startOfToday.toISOString()
+              ),
+
+            supabase
+              .from("leads")
+              .select(
+                "id, email, phone, fields, created_at"
+              )
+              .eq(
+                "user_id",
+                user.id
+              )
+              .eq(
+                "lead_flow_id",
+                selectedLeadFlowId
+              )
+              .order(
+                "created_at",
+                {
+                  ascending: false,
+                }
+              )
+              .limit(4),
+          ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setTotalLeads(
+          totalResult.count || 0
+        );
+
+        setLeadsToday(
+          todayResult.count || 0
+        );
+
+        const mappedLeads =
+          (
+            recentResult.data || []
+          ).map(
+            (lead) => ({
+              id:
+                lead.id,
+
+              name:
+                getLeadDisplayName(
+                  lead.fields as Record<
+                    string,
+                    unknown
+                  > | null,
+                  lead.email,
+                  lead.phone
+                ),
+
+              email:
+                lead.email ||
+                lead.phone ||
+                "No contact",
+
+              time:
+                formatLeadTime(
+                  lead.created_at
+                ),
+
+              status:
+                "Captured",
+            })
+          );
+
+        setRecentLeads(
+          mappedLeads
+        );
+
+        setActivity(
+          mappedLeads.map(
+            (lead) => ({
+              title:
+                "Lead captured",
+
+              detail:
+                lead.name,
+
+              time:
+                lead.time,
+            })
+          )
+        );
+
+        setIsLoadingLeadData(
+          false
+        );
+      };
+
+    void loadLeadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedLeadFlowId,
+    supabase,
+  ]);
 
   if (!hasPremiumAccess) {
     return null;
@@ -247,14 +807,72 @@ export default function LeadCaptureDashboard() {
 
             </div>
 
-            <Link
-              href="/lead-capture/manage"
-              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
-            >
-              Manage Automation
-            </Link>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+              <select
+                value={selectedLeadFlowId}
+                onChange={(event) =>
+                  selectLeadFlow(
+                    event.target.value
+                  )
+                }
+                disabled={
+                  isLoadingLeadFlows ||
+                  leadFlows.length === 0
+                }
+                className="min-w-[170px] rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+              >
+                {isLoadingLeadFlows ? (
+                  <option>
+                    Loading Lead Flows...
+                  </option>
+                ) : (
+                  leadFlows.map(
+                    (flow) => (
+                      <option
+                        key={flow.id}
+                        value={flow.id}
+                      >
+                        {flow.name}
+                      </option>
+                    )
+                  )
+                )}
+              </select>
+
+              <button
+                type="button"
+                onClick={createLeadFlow}
+                disabled={
+                  isCreatingLeadFlow ||
+                  isLoadingLeadFlows ||
+                  leadFlows.length >= 3
+                }
+                className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              >
+                {isCreatingLeadFlow
+                  ? "Creating..."
+                  : leadFlows.length >= 3
+                    ? "3/3 Lead Flows"
+                    : "+ Create Lead Flow"}
+              </button>
+
+              <Link
+                href={manageHref}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+              >
+                Manage Automation
+              </Link>
+
+            </div>
 
           </div>
+
+          {leadFlowError && (
+            <p className="mt-4 text-sm font-medium text-red-500 app-dark:text-red-400">
+              {leadFlowError}
+            </p>
+          )}
 
           {/* ================= STATS ================= */}
 
@@ -271,11 +889,11 @@ export default function LeadCaptureDashboard() {
               <div className="mt-3 flex items-end justify-between">
 
                 <h2 className="text-3xl font-black app-dark:text-white">
-                  18
+                  {isLoadingLeadData ? "—" : leadsToday}
                 </h2>
 
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                  +12%
+                <span className="text-xs text-gray-400 app-dark:text-slate-500">
+                  Today
                 </span>
 
               </div>
@@ -293,7 +911,7 @@ export default function LeadCaptureDashboard() {
               <div className="mt-3 flex items-end justify-between">
 
                 <h2 className="text-3xl font-black app-dark:text-white">
-                  127
+                  {isLoadingLeadData ? "—" : totalLeads}
                 </h2>
 
                 <span className="text-xs text-gray-400 app-dark:text-slate-500">
@@ -315,11 +933,11 @@ export default function LeadCaptureDashboard() {
               <div className="mt-3 flex items-end justify-between">
 
                 <h2 className="text-3xl font-black app-dark:text-white">
-                  1.8s
+                  —
                 </h2>
 
-                <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-600 app-dark:bg-cyan-500/10 app-dark:text-cyan-400">
-                  Fast
+                <span className="text-xs text-gray-400 app-dark:text-slate-500">
+                  Coming next
                 </span>
 
               </div>
@@ -367,7 +985,7 @@ export default function LeadCaptureDashboard() {
                   <span className="h-3 w-3 rounded-full bg-emerald-500" />
 
                   <h2 className="text-xl font-bold app-dark:text-white">
-                    Lead Capture Automation
+                    {selectedLeadFlow?.name || "Lead Capture Automation"}
                   </h2>
 
                 </div>
@@ -385,7 +1003,7 @@ export default function LeadCaptureDashboard() {
                 </span>
 
                 <Link
-                  href="/lead-capture/manage"
+                  href={manageHref}
                   className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                 >
                   Manage
@@ -420,7 +1038,7 @@ export default function LeadCaptureDashboard() {
                 </div>
 
                 <Link
-                  href="/lead-capture/leads"
+                  href={leadsHref}
                   className="text-sm font-semibold text-gray-500 transition hover:text-gray-900 app-dark:text-slate-400 app-dark:hover:text-white"
                 >
                   View All
@@ -430,38 +1048,46 @@ export default function LeadCaptureDashboard() {
 
               <div className="mt-5 divide-y divide-gray-100 app-dark:divide-slate-800">
 
-                {recentLeads.map((lead) => (
-                  <div
-                    key={lead.email}
-                    className="flex items-center justify-between gap-4 py-4"
-                  >
+                {recentLeads.length === 0 ? (
+                  <p className="py-6 text-sm text-gray-400 app-dark:text-slate-500">
+                    {isLoadingLeadData
+                      ? "Loading leads..."
+                      : "No leads captured in this Lead Flow yet."}
+                  </p>
+                ) : (
+                  recentLeads.map((lead) => (
+                    <div
+                      key={lead.id}
+                      className="flex items-center justify-between gap-4 py-4"
+                    >
 
-                    <div className="min-w-0">
+                      <div className="min-w-0">
 
-                      <p className="font-semibold app-dark:text-white">
-                        {lead.name}
-                      </p>
+                        <p className="font-semibold app-dark:text-white">
+                          {lead.name}
+                        </p>
 
-                      <p className="truncate text-sm text-gray-500 app-dark:text-slate-400">
-                        {lead.email}
-                      </p>
+                        <p className="truncate text-sm text-gray-500 app-dark:text-slate-400">
+                          {lead.email}
+                        </p>
+
+                      </div>
+
+                      <div className="shrink-0 text-right">
+
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          {lead.status}
+                        </span>
+
+                        <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
+                          {lead.time}
+                        </p>
+
+                      </div>
 
                     </div>
-
-                    <div className="shrink-0 text-right">
-
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                        {lead.status}
-                      </span>
-
-                      <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
-                        {lead.time}
-                      </p>
-
-                    </div>
-
-                  </div>
-                ))}
+                  ))
+                )}
 
               </div>
 
@@ -481,34 +1107,42 @@ export default function LeadCaptureDashboard() {
 
               <div className="mt-5 space-y-3">
 
-                {activity.map((item) => (
-                  <div
-                    key={`${item.title}-${item.detail}`}
-                    className="flex gap-3 rounded-2xl bg-gray-50 p-4 transition-colors duration-300 app-dark:bg-[#0b0f14]"
-                  >
+                {activity.length === 0 ? (
+                  <p className="text-sm text-gray-400 app-dark:text-slate-500">
+                    {isLoadingLeadData
+                      ? "Loading activity..."
+                      : "No recent activity for this Lead Flow yet."}
+                  </p>
+                ) : (
+                  activity.map((item) => (
+                    <div
+                      key={`${item.title}-${item.detail}-${item.time}`}
+                      className="flex gap-3 rounded-2xl bg-gray-50 p-4 transition-colors duration-300 app-dark:bg-[#0b0f14]"
+                    >
 
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                      ✓
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        ✓
+                      </div>
+
+                      <div>
+
+                        <p className="font-semibold app-dark:text-white">
+                          {item.title}
+                        </p>
+
+                        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                          {item.detail}
+                        </p>
+
+                        <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                          {item.time}
+                        </p>
+
+                      </div>
+
                     </div>
-
-                    <div>
-
-                      <p className="font-semibold app-dark:text-white">
-                        {item.title}
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                        {item.detail}
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
-                        {item.time}
-                      </p>
-
-                    </div>
-
-                  </div>
-                ))}
+                  ))
+                )}
 
               </div>
 

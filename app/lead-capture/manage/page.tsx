@@ -732,7 +732,9 @@ export default function ManageLeadCapturePage() {
         result.publicKey || ""
       );
 
-      setExternalCaptureConnected(false);
+      setExternalCaptureConnected(
+        result?.captureConnected === true
+      );
 
       setExternalUrl(
         result.url
@@ -2408,8 +2410,7 @@ export default function ManageLeadCapturePage() {
                                   + Add option
                                 </button>
                               </div>
-
-                              <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
+ <div className="mt-2 max-h-40 space-y-2 overflow-y-auto pr-1">
                                 {field.options.map(
                                   (
                                     option,
