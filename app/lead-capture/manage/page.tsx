@@ -457,7 +457,6 @@ export default function ManageLeadCapturePage() {
       Without this reset, React can keep Flow 1's form/source
       visible while Flow 2 has no source yet.
     */
-    setActive(true);
     setSourceType("flowex");
 
     setExternalSourceId(null);
@@ -1595,7 +1594,87 @@ export default function ManageLeadCapturePage() {
     custom: customReply,
   };
 
-  const saveChanges = () => {
+  const toggleAutomationActive =
+    async () => {
+      if (
+        !leadFlowId ||
+        !flowReady
+      ) {
+        return;
+      }
+
+      const nextActive =
+        !active;
+
+      const {
+        data: {
+          user,
+        },
+        error: userError,
+      } =
+        await supabase.auth.getUser();
+
+      if (
+        userError ||
+        !user
+      ) {
+        alert(
+          "Your session could not be verified."
+        );
+        return;
+      }
+
+      const {
+        error,
+      } =
+        await supabase
+          .from("lead_flows")
+          .update({
+            active:
+              nextActive,
+
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            leadFlowId
+          )
+          .eq(
+            "user_id",
+            user.id
+          );
+
+      if (error) {
+        alert(
+          "Flowex could not update this automation."
+        );
+        return;
+      }
+
+      setActive(
+        nextActive
+      );
+
+      localStorage.setItem(
+        `flowex-lead-capture:${leadFlowId}`,
+        JSON.stringify({
+          active:
+            nextActive,
+          sourceType,
+          storageType,
+          storageDestination,
+          replyType,
+          customReply,
+          companyEmail,
+          followUpEnabled,
+          followUpDelay,
+          followUpMessage,
+        })
+      );
+    };
+
+  const saveChanges = async () => {
     if (!leadFlowId) {
       alert("Select a Lead Flow first.");
       return;
@@ -1633,6 +1712,44 @@ export default function ManageLeadCapturePage() {
       followUpDelay,
       followUpMessage,
     };
+
+    const {
+      data: {
+        user,
+      },
+    } =
+      await supabase.auth.getUser();
+
+    if (
+      user &&
+      leadFlowId
+    ) {
+      const {
+        error: activeSaveError,
+      } =
+        await supabase
+          .from("lead_flows")
+          .update({
+            active,
+            updated_at:
+              new Date().toISOString(),
+          })
+          .eq(
+            "id",
+            leadFlowId
+          )
+          .eq(
+            "user_id",
+            user.id
+          );
+
+      if (activeSaveError) {
+        alert(
+          "Flowex could not save the automation status."
+        );
+        return;
+      }
+    }
 
     localStorage.setItem(
       `flowex-lead-capture:${leadFlowId}`,
@@ -1719,7 +1836,7 @@ export default function ManageLeadCapturePage() {
 
             <button
               type="button"
-              onClick={() => setActive(!active)}
+              onClick={toggleAutomationActive}
               className={`rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
                 active
                   ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"

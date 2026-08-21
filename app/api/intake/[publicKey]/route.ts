@@ -460,6 +460,64 @@ export async function POST(
     );
   }
 
+  if (!source.lead_flow_id) {
+    return json(
+      {
+        success: false,
+        error:
+          "This intake source is not attached to a Lead Flow.",
+      },
+      409
+    );
+  }
+
+  const supabase =
+    createAdminClient();
+
+  const {
+    data: leadFlow,
+    error: leadFlowError,
+  } =
+    await supabase
+      .from("lead_flows")
+      .select("id, active")
+      .eq(
+        "id",
+        source.lead_flow_id
+      )
+      .eq(
+        "user_id",
+        source.user_id
+      )
+      .maybeSingle();
+
+  if (
+    leadFlowError ||
+    !leadFlow
+  ) {
+    return json(
+      {
+        success: false,
+        error:
+          "This Lead Flow could not be verified.",
+      },
+      403
+    );
+  }
+
+  if (
+    leadFlow.active === false
+  ) {
+    return json(
+      {
+        success: false,
+        error:
+          "This automation is currently paused.",
+      },
+      423
+    );
+  }
+
   const allowedOrigin = allowedOriginForSource(
     source,
     request
@@ -566,9 +624,6 @@ export async function POST(
     team notification and follow-up) can all work from this same
     persisted lead record.
   */
-  const supabase =
-    createAdminClient();
-
   const {
     data: savedLead,
     error: saveLeadError,

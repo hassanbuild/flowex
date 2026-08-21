@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { createClient } from "@/lib/supabase/client";
 
 import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
@@ -17,12 +20,115 @@ export default function DashboardPage() {
     email,
     profileImage,
     plan,
+    authReady,
   } = useAppAccount();
 
   const {
     logout,
     isLoggingOut,
   } = useFlowexLogout();
+
+  const [supabase] =
+    useState(() =>
+      createClient()
+    );
+
+  const [leadsToday, setLeadsToday] =
+    useState(0);
+
+  const [isLoadingLeadsToday, setIsLoadingLeadsToday] =
+    useState(true);
+
+  useEffect(() => {
+    if (!authReady) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadLeadsToday =
+      async () => {
+        setIsLoadingLeadsToday(true);
+
+        const {
+          data: {
+            user,
+          },
+          error: userError,
+        } =
+          await supabase.auth.getUser();
+
+        if (
+          cancelled ||
+          userError ||
+          !user
+        ) {
+          if (!cancelled) {
+            setLeadsToday(0);
+            setIsLoadingLeadsToday(false);
+          }
+
+          return;
+        }
+
+        const startOfToday =
+          new Date();
+
+        startOfToday.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        /*
+          Count every lead captured today for this user,
+          across all of their Lead Flows.
+        */
+        const {
+          count,
+          error,
+        } =
+          await supabase
+            .from("leads")
+            .select(
+              "id",
+              {
+                count: "exact",
+                head: true,
+              }
+            )
+            .eq(
+              "user_id",
+              user.id
+            )
+            .gte(
+              "created_at",
+              startOfToday.toISOString()
+            );
+
+        if (cancelled) {
+          return;
+        }
+
+        setLeadsToday(
+          error
+            ? 0
+            : count || 0
+        );
+
+        setIsLoadingLeadsToday(false);
+      };
+
+    void loadLeadsToday();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authReady,
+    supabase,
+  ]);
 
   const planName =
     plan === "trial"
@@ -281,7 +387,9 @@ export default function DashboardPage() {
                     </p>
 
                     <p className="mt-1 text-xl font-black app-dark:text-white">
-                      18
+                      {isLoadingLeadsToday
+                        ? "—"
+                        : leadsToday}
                     </p>
 
                   </div>

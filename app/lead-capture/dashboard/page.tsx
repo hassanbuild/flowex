@@ -37,6 +37,7 @@ export default function LeadCaptureDashboard() {
         id: string;
         name: string;
         slot: number;
+        active: boolean;
       }[]
     >([]);
 
@@ -47,6 +48,9 @@ export default function LeadCaptureDashboard() {
     useState(true);
 
   const [isCreatingLeadFlow, setIsCreatingLeadFlow] =
+    useState(false);
+
+  const [isLeadFlowMenuOpen, setIsLeadFlowMenuOpen] =
     useState(false);
 
   const [leadFlowError, setLeadFlowError] =
@@ -140,53 +144,17 @@ export default function LeadCaptureDashboard() {
       } =
         await supabase
           .from("lead_flows")
-          .select("id, name, slot")
+          .select("id, name, slot, active")
           .eq("user_id", user.id)
           .order("slot", {
             ascending: true,
           });
 
-      if (
-        !cancelled &&
-        !error &&
-        (!data || data.length === 0)
-      ) {
-        const {
-          data: created,
-          error: createError,
-        } =
-          await supabase
-            .from("lead_flows")
-            .insert({
-              user_id: user.id,
-              name: "Lead Flow 1",
-              slot: 1,
-            })
-            .select("id, name, slot")
-            .single();
-
-        if (
-          createError ||
-          !created
-        ) {
-          setLeadFlowError(
-            "Flowex could not create your first Lead Flow."
-          );
-          setIsLoadingLeadFlows(false);
-          return;
-        }
-
-        data = [created];
-      }
-
       if (cancelled) {
         return;
       }
 
-      if (
-        error ||
-        !data
-      ) {
+      if (error) {
         setLeadFlowError(
           "Flowex could not load your Lead Flows."
         );
@@ -194,7 +162,12 @@ export default function LeadCaptureDashboard() {
         return;
       }
 
-      setLeadFlows(data);
+      const loadedFlows =
+        data || [];
+
+      setLeadFlows(
+        loadedFlows
+      );
 
       const savedLeadFlowId =
         localStorage.getItem(
@@ -202,14 +175,14 @@ export default function LeadCaptureDashboard() {
         );
 
       const validSavedFlow =
-        data.find(
+        loadedFlows.find(
           (flow) =>
             flow.id === savedLeadFlowId
         );
 
       const nextSelectedId =
         validSavedFlow?.id ||
-        data[0]?.id ||
+        loadedFlows[0]?.id ||
         "";
 
       setSelectedLeadFlowId(
@@ -242,6 +215,10 @@ export default function LeadCaptureDashboard() {
   ) => {
     setSelectedLeadFlowId(
       leadFlowId
+    );
+
+    setIsLeadFlowMenuOpen(
+      false
     );
 
     localStorage.setItem(
@@ -308,7 +285,7 @@ export default function LeadCaptureDashboard() {
             name: `Lead Flow ${nextSlot}`,
             slot: nextSlot,
           })
-          .select("id, name, slot")
+          .select("id, name, slot, active")
           .single();
 
       if (
@@ -338,6 +315,12 @@ export default function LeadCaptureDashboard() {
       selectLeadFlow(
         data.id
       );
+
+      router.push(
+        `/lead-capture/manage?flowId=${encodeURIComponent(
+          data.id
+        )}`
+      );
     } finally {
       setIsCreatingLeadFlow(
         false
@@ -351,6 +334,10 @@ export default function LeadCaptureDashboard() {
         flow.id ===
         selectedLeadFlowId
     ) || leadFlows[0] || null;
+
+  const needsFirstLeadFlow =
+    !isLoadingLeadFlows &&
+    leadFlows.length === 0;
 
   const manageHref =
     selectedLeadFlow
@@ -800,7 +787,15 @@ export default function LeadCaptureDashboard() {
 
       <section className="px-4 py-8 sm:px-6 lg:px-8">
 
-        <div className="mx-auto max-w-7xl">
+        <div className="relative mx-auto max-w-7xl">
+
+          <div
+            className={
+              needsFirstLeadFlow
+                ? "pointer-events-none select-none blur-[3px]"
+                : ""
+            }
+          >
 
           {/* ================= HEADER ================= */}
 
@@ -824,53 +819,99 @@ export default function LeadCaptureDashboard() {
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
-              <select
-                value={selectedLeadFlowId}
-                onChange={(event) =>
-                  selectLeadFlow(
-                    event.target.value
-                  )
-                }
-                disabled={
-                  isLoadingLeadFlows ||
-                  leadFlows.length === 0
-                }
-                className="min-w-[170px] rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-              >
-                {isLoadingLeadFlows ? (
-                  <option>
-                    Loading Lead Flows...
-                  </option>
-                ) : (
-                  leadFlows.map(
-                    (flow) => (
-                      <option
-                        key={flow.id}
-                        value={flow.id}
-                      >
-                        {flow.name}
-                      </option>
-                    )
-                  )
-                )}
-              </select>
+              <div className="relative">
 
-              <button
-                type="button"
-                onClick={createLeadFlow}
-                disabled={
-                  isCreatingLeadFlow ||
-                  isLoadingLeadFlows ||
-                  leadFlows.length >= 3
-                }
-                className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-              >
-                {isCreatingLeadFlow
-                  ? "Creating..."
-                  : leadFlows.length >= 3
-                    ? "3/3 Lead Flows"
-                    : "+ Create Lead Flow"}
-              </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsLeadFlowMenuOpen(
+                      (current) =>
+                        !current
+                    )
+                  }
+                  disabled={
+                    isLoadingLeadFlows ||
+                    leadFlows.length === 0
+                  }
+                  className="flex min-w-[190px] items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                >
+                  <span>
+                    {isLoadingLeadFlows
+                      ? "Loading Lead Flows..."
+                      : selectedLeadFlow?.name ||
+                        "Select Lead Flow"}
+                  </span>
+
+                  <span className="text-xs text-gray-400">
+                    {isLeadFlowMenuOpen
+                      ? "▲"
+                      : "▼"}
+                  </span>
+                </button>
+
+                {isLeadFlowMenuOpen && (
+                  <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-full min-w-[220px] overflow-hidden rounded-2xl border border-gray-200 bg-white p-2 shadow-xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+
+                    {leadFlows.map(
+                      (flow) => (
+                        <button
+                          key={flow.id}
+                          type="button"
+                          onClick={() =>
+                            selectLeadFlow(
+                              flow.id
+                            )
+                          }
+                          className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
+                            flow.id ===
+                            selectedLeadFlowId
+                              ? "bg-emerald-50 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                              : "text-gray-600 hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                          }`}
+                        >
+                          <span>
+                            {flow.name}
+                          </span>
+
+                          {flow.id ===
+                            selectedLeadFlowId && (
+                            <span>
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      )
+                    )}
+
+                    {leadFlows.length < 3 && (
+                      <>
+                        <div className="my-2 h-px bg-gray-100 app-dark:bg-slate-700" />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsLeadFlowMenuOpen(
+                              false
+                            );
+
+                            void createLeadFlow();
+                          }}
+                          disabled={
+                            isCreatingLeadFlow
+                          }
+                          className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#4b52f7] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:text-[#7c83ff] app-dark:hover:bg-indigo-500/10"
+                        >
+                          {isCreatingLeadFlow
+                            ? "Creating..."
+                            : "+ Create Lead Flow"}
+                        </button>
+                      </>
+                    )}
+
+                  </div>
+                )}
+
+              </div>
 
               <Link
                 href={manageHref}
@@ -970,14 +1011,29 @@ export default function LeadCaptureDashboard() {
               <div className="mt-3 flex items-end justify-between">
 
                 <h2 className="text-3xl font-black app-dark:text-white">
-                  Active
+                  {selectedLeadFlow?.active === false
+                    ? "Inactive"
+                    : "Active"}
                 </h2>
 
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                <span
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    selectedLeadFlow?.active === false
+                      ? "bg-amber-50 text-amber-600 app-dark:bg-amber-500/10 app-dark:text-amber-400"
+                      : "bg-emerald-50 text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      selectedLeadFlow?.active === false
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    }`}
+                  />
 
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-
-                  Live
+                  {selectedLeadFlow?.active === false
+                    ? "Paused"
+                    : "Live"}
 
                 </span>
 
@@ -997,7 +1053,13 @@ export default function LeadCaptureDashboard() {
 
                 <div className="flex items-center gap-3">
 
-                  <span className="h-3 w-3 rounded-full bg-emerald-500" />
+                  <span
+                    className={`h-3 w-3 rounded-full ${
+                      selectedLeadFlow?.active === false
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                    }`}
+                  />
 
                   <h2 className="text-xl font-bold app-dark:text-white">
                     {selectedLeadFlow?.name || "Lead Capture Automation"}
@@ -1013,8 +1075,16 @@ export default function LeadCaptureDashboard() {
 
               <div className="flex items-center gap-3">
 
-                <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                  Active
+                <span
+                  className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+                    selectedLeadFlow?.active === false
+                      ? "bg-amber-100 text-amber-700 app-dark:bg-amber-500/10 app-dark:text-amber-400"
+                      : "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                  }`}
+                >
+                  {selectedLeadFlow?.active === false
+                    ? "Inactive"
+                    : "Active"}
                 </span>
 
                 <Link
@@ -1164,6 +1234,47 @@ export default function LeadCaptureDashboard() {
             </div>
 
           </div>
+
+          </div>
+
+          {needsFirstLeadFlow && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center px-4">
+              <div className="w-full max-w-md rounded-[28px] border border-gray-200 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-xl app-dark:border-slate-700 app-dark:bg-[#11161d]/95">
+
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-2xl app-dark:from-emerald-500/15 app-dark:via-cyan-500/15 app-dark:to-indigo-500/15">
+                  ⚡
+                </div>
+
+                <p className="mt-5 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+                  LEAD CAPTURE
+                </p>
+
+                <h2 className="mt-2 text-2xl font-black app-dark:text-white">
+                  Create your first Lead Flow
+                </h2>
+
+                <p className="mt-3 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                  Set up where leads come from, then configure how Flowex handles them.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    void createLeadFlow()
+                  }
+                  disabled={
+                    isCreatingLeadFlow
+                  }
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCreatingLeadFlow
+                    ? "Creating Lead Flow..."
+                    : "Create Lead Flow"}
+                </button>
+
+              </div>
+            </div>
+          )}
 
         </div>
 
