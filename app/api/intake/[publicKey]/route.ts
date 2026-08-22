@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { google } from "googleapis";
+
+import { createGoogleOAuthClient } from "@/lib/integrations/google";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -270,6 +273,88 @@ function getExternalOrigin(config: unknown) {
   } catch {
     return null;
   }
+}
+
+
+async function sendLeadToGoogleSheets(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const { data: destination } = await supabase
+    .from("lead_destinations")
+    .select("connected, config")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "sheets")
+    .maybeSingle();
+
+  if (!destination || destination.connected !== true) {
+    return;
+  }
+
+  const config = destination.config as {
+    spreadsheet_id?: unknown;
+    field_keys?: unknown;
+  } | null;
+
+  const spreadsheetId =
+    typeof config?.spreadsheet_id === "string"
+      ? config.spreadsheet_id
+      : "";
+
+  const fieldKeys =
+    Array.isArray(config?.field_keys)
+      ? config.field_keys.filter(
+          (value): value is string =>
+            typeof value === "string"
+        )
+      : [];
+
+  if (!spreadsheetId) {
+    return;
+  }
+
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "google_sheets")
+    .maybeSingle();
+
+  if (
+    !connection?.credentials ||
+    typeof connection.credentials !== "object"
+  ) {
+    return;
+  }
+
+  const oauth2Client = createGoogleOAuthClient();
+  oauth2Client.setCredentials(connection.credentials);
+
+  const sheets = google.sheets({
+    version: "v4",
+    auth: oauth2Client,
+  });
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: "A:ZZ",
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: {
+      values: [
+        [
+          lead.receivedAt,
+          ...fieldKeys.map(
+            (key) => lead.fields[key] ?? ""
+          ),
+        ],
+      ],
+    },
+  });
 }
 
 async function getSource(publicKey: string) {
@@ -676,6 +761,18 @@ export async function POST(
       },
       500,
       allowedOrigin
+    );
+  }
+
+  try {
+    await sendLeadToGoogleSheets(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex Google Sheets delivery error:",
+      error
     );
   }
 

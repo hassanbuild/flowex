@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import Image from "next/image";
@@ -11,8 +8,98 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type SourceType = "flowex" | "external";
-type StorageType = "sheets" | "airtable" | "slack";
+type StorageType =
+  | "sheets"
+  | "airtable"
+  | "hubspot"
+  | "slack"
+  | "webhook";
+
+type StorageMode =
+  | "create_new"
+  | "existing";
 type ReplyType = "instant" | "friendly" | "custom";
+
+
+const storageProviders: {
+  value: StorageType | "pipedrive" | "zoho" | "salesforce" | "notion" | "monday" | "teams" | "excel";
+  title: string;
+  description: string;
+  available: boolean;
+}[] = [
+  {
+    value: "sheets",
+    title: "Google Sheets",
+    description: "Create a sheet or use an existing one.",
+    available: true,
+  },
+  {
+    value: "airtable",
+    title: "Airtable",
+    description: "Create a table or use an existing base.",
+    available: true,
+  },
+  {
+    value: "hubspot",
+    title: "HubSpot",
+    description: "Send leads into your CRM contacts.",
+    available: true,
+  },
+  {
+    value: "slack",
+    title: "Slack",
+    description: "Send every lead to a team channel.",
+    available: true,
+  },
+  {
+    value: "webhook",
+    title: "Webhook",
+    description: "Send lead data to any compatible endpoint.",
+    available: true,
+  },
+  {
+    value: "pipedrive",
+    title: "Pipedrive",
+    description: "CRM lead and contact sync.",
+    available: false,
+  },
+  {
+    value: "zoho",
+    title: "Zoho CRM",
+    description: "Send captured leads into Zoho.",
+    available: false,
+  },
+  {
+    value: "salesforce",
+    title: "Salesforce",
+    description: "Enterprise CRM lead sync.",
+    available: false,
+  },
+  {
+    value: "notion",
+    title: "Notion",
+    description: "Create or use a lead database.",
+    available: false,
+  },
+  {
+    value: "monday",
+    title: "monday.com",
+    description: "Send leads into a board.",
+    available: false,
+  },
+  {
+    value: "teams",
+    title: "Microsoft Teams",
+    description: "Send lead alerts to your team.",
+    available: false,
+  },
+  {
+    value: "excel",
+    title: "Microsoft Excel",
+    description: "Store leads in an Excel table.",
+    available: false,
+  },
+];
 
 type FlowexFieldType =
   | "full_name"
@@ -427,8 +514,23 @@ export default function ManageLeadCapturePage() {
   const [storageType, setStorageType] =
     useState<StorageType>("sheets");
 
+  const [storageMode, setStorageMode] =
+    useState<StorageMode>("create_new");
+
+  const [storageName, setStorageName] =
+    useState("Flowex Leads");
+
   const [storageDestination, setStorageDestination] =
     useState("");
+
+  const [storageConnected, setStorageConnected] =
+    useState(false);
+
+  const [storageError, setStorageError] =
+    useState("");
+
+  const [isConnectingStorage, setIsConnectingStorage] =
+    useState(false);
 
   const [replyType, setReplyType] =
     useState<ReplyType>("instant");
@@ -483,7 +585,11 @@ export default function ManageLeadCapturePage() {
     setCopiedFormLink(false);
 
     setStorageType("sheets");
+    setStorageMode("create_new");
+    setStorageName("Flowex Leads");
     setStorageDestination("");
+    setStorageConnected(false);
+    setStorageError("");
     setReplyType("instant");
     setCustomReply(
       "Thanks for reaching out. We’ve received your message and will get back to you shortly."
@@ -517,6 +623,14 @@ export default function ManageLeadCapturePage() {
         : "flowex"
     );
     setStorageType(data.storageType || "sheets");
+    setStorageMode(
+      data.storageMode === "existing"
+        ? "existing"
+        : "create_new"
+    );
+    setStorageName(
+      data.storageName || "Flowex Leads"
+    );
     setStorageDestination(
       data.storageDestination || ""
     );
@@ -1590,6 +1704,191 @@ export default function ManageLeadCapturePage() {
   };
 
 
+  useEffect(() => {
+    if (
+      !flowReady ||
+      !leadFlowId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadDestination =
+      async () => {
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from("lead_destinations")
+            .select(
+              "provider, mode, display_name, config, connected"
+            )
+            .eq(
+              "lead_flow_id",
+              leadFlowId
+            )
+            .maybeSingle();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error) {
+          setStorageError(
+            "Flowex could not load this destination."
+          );
+          return;
+        }
+
+        if (!data) {
+          return;
+        }
+
+        const provider =
+          data.provider as StorageType;
+
+        if (
+          provider === "sheets" ||
+          provider === "airtable" ||
+          provider === "hubspot" ||
+          provider === "slack" ||
+          provider === "webhook"
+        ) {
+          setStorageType(
+            provider
+          );
+        }
+
+        setStorageMode(
+          data.mode === "existing"
+            ? "existing"
+            : "create_new"
+        );
+
+        setStorageName(
+          data.display_name ||
+            "Flowex Leads"
+        );
+
+        const config =
+          data.config as {
+            destination?: unknown;
+          } | null;
+
+        setStorageDestination(
+          typeof config?.destination ===
+            "string"
+            ? config.destination
+            : ""
+        );
+
+        setStorageConnected(
+          data.connected === true
+        );
+      };
+
+    void loadDestination();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    flowReady,
+    leadFlowId,
+    supabase,
+  ]);
+
+
+  const connectStorageProvider =
+    async () => {
+      if (!leadFlowId || isConnectingStorage) {
+        return;
+      }
+
+      setStorageError("");
+
+      if (storageType !== "sheets") {
+        setStorageError(
+          "Google Sheets is the first live Step 02 integration. The other providers are next."
+        );
+        return;
+      }
+
+      if (!storageName.trim()) {
+        setStorageError(
+          "Give this destination a name first."
+        );
+        return;
+      }
+
+      if (
+        storageMode === "existing" &&
+        !storageDestination.trim()
+      ) {
+        setStorageError(
+          "Paste the Google Sheet URL you want Flowex to use."
+        );
+        return;
+      }
+
+      setIsConnectingStorage(true);
+
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          setStorageError(
+            "Your session could not be verified. Please log in again."
+          );
+          return;
+        }
+
+        const response = await fetch(
+          "/api/integrations/google/connect",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization:
+                `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              leadFlowId,
+              mode: storageMode,
+              displayName: storageName,
+              destination: storageDestination,
+            }),
+          }
+        );
+
+        const result = await response.json();
+
+        if (
+          !response.ok ||
+          typeof result?.url !== "string"
+        ) {
+          setStorageError(
+            result?.error ||
+              "Flowex could not start Google authorization."
+          );
+          return;
+        }
+
+        window.location.href = result.url;
+      } catch {
+        setStorageError(
+          "Flowex could not start Google authorization."
+        );
+      } finally {
+        setIsConnectingStorage(false);
+      }
+    };
+
   const replyTemplates = {
     instant:
       "Thanks for reaching out. We’ve received your message and will get back to you shortly.",
@@ -1731,6 +2030,8 @@ export default function ManageLeadCapturePage() {
       flowexFormTitle,
       flowexFormFields,
       storageType,
+      storageMode,
+      storageName,
       storageDestination,
       replyType,
       replyMessage: currentReply,
@@ -1776,6 +2077,61 @@ export default function ManageLeadCapturePage() {
         );
         return;
       }
+    }
+
+    if (
+      !storageName.trim()
+    ) {
+      alert(
+        "Give this destination a name before saving."
+      );
+      return;
+    }
+
+    const {
+      error: destinationSaveError,
+    } =
+      await supabase
+        .from("lead_destinations")
+        .upsert(
+          {
+            user_id:
+              user?.id,
+
+            lead_flow_id:
+              leadFlowId,
+
+            provider:
+              storageType,
+
+            mode:
+              storageMode,
+
+            display_name:
+              storageName.trim(),
+
+            config: {
+              destination:
+                storageDestination.trim(),
+            },
+
+            connected:
+              storageConnected,
+
+            updated_at:
+              new Date().toISOString(),
+          },
+          {
+            onConflict:
+              "lead_flow_id",
+          }
+        );
+
+    if (destinationSaveError) {
+      alert(
+        "Flowex could not save the Step 02 destination."
+      );
+      return;
     }
 
     localStorage.setItem(
@@ -2140,73 +2496,285 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="02"
-              title="Store Lead"
-              description="Choose where captured lead data should be sent."
+              title="Send Lead"
+              description="Choose where this Lead Flow should send every captured lead."
             >
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
-                <Option
-                  active={
-                    storageType === "sheets"
-                  }
-                  onClick={() =>
-                    setStorageType("sheets")
-                  }
-                  title="Google Sheets"
-                  description="Add each lead as a new row."
-                />
+                {storageProviders.map(
+                  (provider) => (
+                    <button
+                      key={provider.value}
+                      type="button"
+                      disabled={
+                        !provider.available
+                      }
+                      onClick={() => {
+                        if (
+                          !provider.available
+                        ) {
+                          return;
+                        }
 
-                <Option
-                  active={
-                    storageType ===
-                    "airtable"
-                  }
-                  onClick={() =>
-                    setStorageType(
-                      "airtable"
-                    )
-                  }
-                  title="Airtable"
-                  description="Store leads in your base."
-                />
+                        setStorageType(
+                          provider.value as StorageType
+                        );
 
-                <Option
-                  active={
-                    storageType === "slack"
-                  }
-                  onClick={() =>
-                    setStorageType("slack")
-                  }
-                  title="Slack"
-                  description="Send leads to a channel."
-                />
+                        setStorageConnected(
+                          false
+                        );
+
+                        setStorageError(
+                          ""
+                        );
+                      }}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        !provider.available
+                          ? "cursor-not-allowed border-gray-200 bg-gray-50 opacity-55 app-dark:border-slate-800 app-dark:bg-[#0b0f14]"
+                          : storageType ===
+                            provider.value
+                            ? "border-emerald-400 bg-emerald-50/60 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10"
+                            : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:bg-slate-900"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+
+                        <div>
+                          <p className="font-semibold app-dark:text-white">
+                            {provider.title}
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                            {provider.description}
+                          </p>
+                        </div>
+
+                        {!provider.available && (
+                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">
+                            SOON
+                          </span>
+                        )}
+
+                      </div>
+                    </button>
+                  )
+                )}
 
               </div>
 
-              <div className="mt-5">
+              <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
-                <input
-                  value={storageDestination}
-                  onChange={(e) =>
-                    setStorageDestination(
-                      e.target.value
-                    )
-                  }
-                  placeholder={
-                    storageType === "sheets"
-                      ? "Google Sheet URL"
-                      : storageType ===
-                        "airtable"
-                      ? "Airtable base URL"
-                      : "Slack channel or workspace"
-                  }
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                />
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
-                <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
-                  Flowex will map detected form fields to matching columns automatically.
-                </p>
+                  <div>
+                    <p className="text-sm font-semibold app-dark:text-white">
+                      Destination setup
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                      Each Lead Flow keeps its own destination and settings.
+                    </p>
+                  </div>
+
+                  <span
+                    className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      storageConnected
+                        ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                        : "bg-amber-100 text-amber-700 app-dark:bg-amber-500/10 app-dark:text-amber-400"
+                    }`}
+                  >
+                    {storageConnected
+                      ? "Connected"
+                      : "Not connected"}
+                  </span>
+
+                </div>
+
+                <div className="mt-5">
+
+                  <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                    Name in Flowex
+                  </label>
+
+                  <input
+                    value={storageName}
+                    onChange={(event) =>
+                      setStorageName(
+                        event.target.value
+                      )
+                    }
+                    maxLength={80}
+                    placeholder="e.g. Website Leads"
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                  />
+
+                  <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
+                    Rename this however you want. Flowex will use this name for the destination it creates when supported.
+                  </p>
+
+                </div>
+
+                {(storageType === "sheets" ||
+                  storageType === "airtable") && (
+                  <div className="mt-5">
+
+                    <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                      Destination
+                    </p>
+
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStorageMode(
+                            "create_new"
+                          );
+
+                          setStorageDestination(
+                            ""
+                          );
+                        }}
+                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                          storageMode ===
+                          "create_new"
+                            ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                        }`}
+                      >
+                        Create new automatically
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStorageMode(
+                            "existing"
+                          )
+                        }
+                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                          storageMode ===
+                          "existing"
+                            ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                        }`}
+                      >
+                        Use existing
+                      </button>
+
+                    </div>
+
+                  </div>
+                )}
+
+                {storageMode === "existing" &&
+                  (
+                    storageType === "sheets" ||
+                    storageType === "airtable"
+                  ) && (
+                  <div className="mt-5">
+
+                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                      Existing destination
+                    </label>
+
+                    <input
+                      value={storageDestination}
+                      onChange={(event) =>
+                        setStorageDestination(
+                          event.target.value
+                        )
+                      }
+                      placeholder={
+                        storageType ===
+                        "sheets"
+                          ? "Paste Google Sheet URL"
+                          : "Paste Airtable base/table URL"
+                      }
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+
+                  </div>
+                )}
+
+                {storageType === "hubspot" && (
+                  <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300">
+                    Flowex will create or update HubSpot Contacts and map detected form fields automatically.
+                  </div>
+                )}
+
+                {storageType === "slack" && (
+                  <div className="mt-5">
+
+                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                      Channel
+                    </label>
+
+                    <input
+                      value={storageDestination}
+                      onChange={(event) =>
+                        setStorageDestination(
+                          event.target.value
+                        )
+                      }
+                      placeholder="e.g. #new-leads"
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+
+                  </div>
+                )}
+
+                {storageType === "webhook" && (
+                  <div className="mt-5">
+
+                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                      Webhook URL
+                    </label>
+
+                    <input
+                      value={storageDestination}
+                      onChange={(event) =>
+                        setStorageDestination(
+                          event.target.value
+                        )
+                      }
+                      placeholder="https://example.com/webhook"
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+
+                  </div>
+                )}
+
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+
+                  <button
+                    type="button"
+                    onClick={connectStorageProvider}
+                    disabled={isConnectingStorage}
+                    className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                  >
+                    {isConnectingStorage
+                      ? "Connecting..."
+                      : `Connect ${
+                          storageProviders.find(
+                            (provider) =>
+                              provider.value === storageType
+                          )?.title || "Destination"
+                        }`}
+                  </button>
+
+                  <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                    Save Automation stores this Step 02 setup only for the current Lead Flow.
+                  </p>
+
+                </div>
+
+                {storageError && (
+                  <p className="mt-3 text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                    {storageError}
+                  </p>
+                )}
 
               </div>
 
@@ -2951,8 +3519,7 @@ function PreviewFlowexField({
             <select
               defaultValue={field.countryCode || "+92"}
               className="w-[92px] rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-sm text-gray-900 outline-none"
-            >
-              {phoneCountryCodes.map(
+            >{phoneCountryCodes.map(
                 (country, index) => (
                   <option
                     key={`${country.country}-${country.code}-${index}`}
