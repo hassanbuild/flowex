@@ -7,11 +7,20 @@ export const GOOGLE_SHEETS_SCOPES = [
 ];
 
 export function createGoogleOAuthClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID;
 
-  if (!clientId || !clientSecret || !redirectUri) {
+  const clientSecret =
+    process.env.GOOGLE_CLIENT_SECRET;
+
+  const redirectUri =
+    process.env.GOOGLE_REDIRECT_URI;
+
+  if (
+    !clientId ||
+    !clientSecret ||
+    !redirectUri
+  ) {
     throw new Error(
       "Google integration environment variables are missing."
     );
@@ -24,20 +33,38 @@ export function createGoogleOAuthClient() {
   );
 }
 
-export function extractSpreadsheetId(value: string) {
-  const trimmed = value.trim();
+export function extractSpreadsheetId(
+  value: string
+) {
+  const trimmed =
+    value.trim();
 
-  const urlMatch = trimmed.match(
-    /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/
-  );
+  const urlMatch =
+    trimmed.match(
+      /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/
+    );
 
   if (urlMatch?.[1]) {
     return urlMatch[1];
   }
 
-  if (/^[a-zA-Z0-9-_]{20,}$/.test(trimmed)) {
+  if (
+    /^[a-zA-Z0-9-_]{20,}$/.test(
+      trimmed
+    )
+  ) {
     return trimmed;
   }
 
   return null;
+}
+
+export function normalizeSheetHeader(
+  value: string
+) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }

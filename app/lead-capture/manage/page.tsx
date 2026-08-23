@@ -22,7 +22,15 @@ type ReplyType = "instant" | "friendly" | "custom";
 
 
 const storageProviders: {
-  value: StorageType | "pipedrive" | "zoho" | "salesforce" | "notion" | "monday" | "teams" | "excel";
+  value:
+    | StorageType
+    | "pipedrive"
+    | "zoho"
+    | "salesforce"
+    | "notion"
+    | "monday"
+    | "teams"
+    | "excel";
   title: string;
   description: string;
   available: boolean;
@@ -30,32 +38,32 @@ const storageProviders: {
   {
     value: "sheets",
     title: "Google Sheets",
-    description: "Create a sheet or use an existing one.",
+    description: "Create a new lead sheet or use an existing one.",
     available: true,
   },
   {
     value: "airtable",
     title: "Airtable",
-    description: "Create a table or use an existing base.",
-    available: true,
+    description: "Store leads in a base.",
+    available: false,
   },
   {
     value: "hubspot",
     title: "HubSpot",
-    description: "Send leads into your CRM contacts.",
-    available: true,
+    description: "Create or update CRM contacts.",
+    available: false,
   },
   {
     value: "slack",
     title: "Slack",
-    description: "Send every lead to a team channel.",
-    available: true,
+    description: "Send lead alerts to a channel.",
+    available: false,
   },
   {
     value: "webhook",
     title: "Webhook",
-    description: "Send lead data to any compatible endpoint.",
-    available: true,
+    description: "Send lead data to your endpoint.",
+    available: false,
   },
   {
     value: "pipedrive",
@@ -532,6 +540,21 @@ export default function ManageLeadCapturePage() {
   const [isConnectingStorage, setIsConnectingStorage] =
     useState(false);
 
+  const [isPreparingStorage, setIsPreparingStorage] =
+    useState(false);
+
+  const [googleAccountConnected, setGoogleAccountConnected] =
+    useState(false);
+
+  const [googleAccountEmail, setGoogleAccountEmail] =
+    useState("");
+
+  const [showMoreDestinations, setShowMoreDestinations] =
+    useState(false);
+
+  const [storageSpreadsheetUrl, setStorageSpreadsheetUrl] =
+    useState("");
+
   const [replyType, setReplyType] =
     useState<ReplyType>("instant");
 
@@ -589,6 +612,7 @@ export default function ManageLeadCapturePage() {
     setStorageName("Flowex Leads");
     setStorageDestination("");
     setStorageConnected(false);
+    setStorageSpreadsheetUrl("");
     setStorageError("");
     setReplyType("instant");
     setCustomReply(
@@ -1775,6 +1799,7 @@ export default function ManageLeadCapturePage() {
         const config =
           data.config as {
             destination?: unknown;
+            spreadsheet_url?: unknown;
           } | null;
 
         setStorageDestination(
@@ -1786,6 +1811,12 @@ export default function ManageLeadCapturePage() {
 
         setStorageConnected(
           data.connected === true
+        );
+
+        setStorageSpreadsheetUrl(
+          typeof config?.spreadsheet_url === "string"
+            ? config.spreadsheet_url
+            : ""
         );
       };
 
@@ -1801,76 +1832,155 @@ export default function ManageLeadCapturePage() {
   ]);
 
 
+  useEffect(() => {
+    if (
+      !flowReady ||
+      !leadFlowId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadGoogleConnection =
+      async () => {
+        const {
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
+
+        if (
+          cancelled ||
+          !session
+        ) {
+          return;
+        }
+
+        try {
+          const response =
+            await fetch(
+              "/api/integrations/google/connect",
+              {
+                method:
+                  "GET",
+
+                headers: {
+                  Authorization:
+                    `Bearer ${session.access_token}`,
+                },
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (cancelled) {
+            return;
+          }
+
+          setGoogleAccountConnected(
+            response.ok &&
+            result?.connected ===
+              true
+          );
+
+          setGoogleAccountEmail(
+            typeof result?.email ===
+              "string"
+              ? result.email
+              : ""
+          );
+        } catch {
+          if (!cancelled) {
+            setGoogleAccountConnected(
+              false
+            );
+          }
+        }
+      };
+
+    void loadGoogleConnection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    flowReady,
+    leadFlowId,
+    supabase,
+  ]);
+
   const connectStorageProvider =
     async () => {
-      if (!leadFlowId || isConnectingStorage) {
+      if (
+        !leadFlowId ||
+        isConnectingStorage
+      ) {
         return;
       }
 
       setStorageError("");
 
-      if (storageType !== "sheets") {
-        setStorageError(
-          "Google Sheets is the first live Step 02 integration. The other providers are next."
-        );
-        return;
-      }
-
-      if (!storageName.trim()) {
-        setStorageError(
-          "Give this destination a name first."
-        );
-        return;
-      }
-
       if (
-        storageMode === "existing" &&
-        !storageDestination.trim()
+        storageType !==
+        "sheets"
       ) {
         setStorageError(
-          "Paste the Google Sheet URL you want Flowex to use."
+          "This destination is coming soon."
         );
         return;
       }
 
-      setIsConnectingStorage(true);
+      setIsConnectingStorage(
+        true
+      );
 
       try {
         const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
 
-        if (sessionError || !session) {
+        if (!session) {
           setStorageError(
             "Your session could not be verified. Please log in again."
           );
           return;
         }
 
-        const response = await fetch(
-          "/api/integrations/google/connect",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization:
-                `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              leadFlowId,
-              mode: storageMode,
-              displayName: storageName,
-              destination: storageDestination,
-            }),
-          }
-        );
+        const response =
+          await fetch(
+            "/api/integrations/google/connect",
+            {
+              method:
+                "POST",
 
-        const result = await response.json();
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${session.access_token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  leadFlowId,
+                }),
+            }
+          );
+
+        const result =
+          await response.json();
 
         if (
           !response.ok ||
-          typeof result?.url !== "string"
+          typeof result?.url !==
+            "string"
         ) {
           setStorageError(
             result?.error ||
@@ -1879,15 +1989,178 @@ export default function ManageLeadCapturePage() {
           return;
         }
 
-        window.location.href = result.url;
+        window.location.href =
+          result.url;
       } catch {
         setStorageError(
           "Flowex could not start Google authorization."
         );
       } finally {
-        setIsConnectingStorage(false);
+        setIsConnectingStorage(
+          false
+        );
       }
     };
+
+  const prepareGoogleSheet =
+    async () => {
+      if (
+        !leadFlowId ||
+        isPreparingStorage
+      ) {
+        return;
+      }
+
+      setStorageError("");
+
+      if (
+        !googleAccountConnected
+      ) {
+        setStorageError(
+          "Connect your Google account first."
+        );
+        return;
+      }
+
+      if (
+        !storageName.trim()
+      ) {
+        setStorageError(
+          "Give this destination a name first."
+        );
+        return;
+      }
+
+      if (
+        storageMode ===
+          "existing" &&
+        !storageDestination.trim()
+      ) {
+        setStorageError(
+          "Paste the Google Sheet URL you want Flowex to use."
+        );
+        return;
+      }
+
+      setIsPreparingStorage(
+        true
+      );
+
+      try {
+        const {
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
+
+        if (!session) {
+          setStorageError(
+            "Your session could not be verified. Please log in again."
+          );
+          return;
+        }
+
+        const response =
+          await fetch(
+            "/api/integrations/google/destination",
+            {
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${session.access_token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  leadFlowId,
+                  mode:
+                    storageMode,
+                  displayName:
+                    storageName,
+                  destination:
+                    storageDestination,
+                }),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (
+          !response.ok ||
+          result?.connected !==
+            true
+        ) {
+          if (
+            result?.needsGoogleConnection ===
+            true
+          ) {
+            setGoogleAccountConnected(
+              false
+            );
+          }
+
+          setStorageConnected(
+            false
+          );
+
+          setStorageError(
+            result?.error ||
+              "Flowex could not prepare this Google Sheet."
+          );
+
+          return;
+        }
+
+        setStorageConnected(
+          true
+        );
+
+        setStorageSpreadsheetUrl(
+          typeof result
+            ?.spreadsheetUrl ===
+            "string"
+            ? result.spreadsheetUrl
+            : ""
+        );
+
+        if (
+          typeof result
+            ?.spreadsheetUrl ===
+            "string"
+        ) {
+          setStorageDestination(
+            result.spreadsheetUrl
+          );
+        }
+
+        setStorageError(
+          storageMode ===
+            "existing"
+            ? "Existing Google Sheet verified and ready."
+            : "Google Sheet created and ready."
+        );
+      } catch {
+        setStorageConnected(
+          false
+        );
+
+        setStorageError(
+          "Flowex could not prepare this Google Sheet."
+        );
+      } finally {
+        setIsPreparingStorage(
+          false
+        );
+      }
+    };
+
 
   const replyTemplates = {
     instant:
@@ -2088,11 +2361,53 @@ export default function ManageLeadCapturePage() {
       return;
     }
 
+    if (
+      storageType ===
+        "sheets" &&
+      !storageConnected
+    ) {
+      alert(
+        "Finish setting up the Google Sheets destination before saving this automation."
+      );
+      return;
+    }
+
     const {
-      error: destinationSaveError,
+      data:
+        currentDestination,
+      error:
+        destinationLoadError,
     } =
       await supabase
-        .from("lead_destinations")
+        .from(
+          "lead_destinations"
+        )
+        .select(
+          "config"
+        )
+        .eq(
+          "lead_flow_id",
+          leadFlowId
+        )
+        .maybeSingle();
+
+    if (
+      destinationLoadError
+    ) {
+      alert(
+        "Flowex could not load the Step 02 destination."
+      );
+      return;
+    }
+
+    const {
+      error:
+        destinationSaveError,
+    } =
+      await supabase
+        .from(
+          "lead_destinations"
+        )
         .upsert(
           {
             user_id:
@@ -2111,6 +2426,15 @@ export default function ManageLeadCapturePage() {
               storageName.trim(),
 
             config: {
+              ...(currentDestination
+                ?.config &&
+              typeof currentDestination
+                .config ===
+                "object"
+                ? currentDestination
+                    .config
+                : {}),
+
               destination:
                 storageDestination.trim(),
             },
@@ -2127,7 +2451,9 @@ export default function ManageLeadCapturePage() {
           }
         );
 
-    if (destinationSaveError) {
+    if (
+      destinationSaveError
+    ) {
       alert(
         "Flowex could not save the Step 02 destination."
       );
@@ -2500,283 +2826,386 @@ export default function ManageLeadCapturePage() {
               description="Choose where this Lead Flow should send every captured lead."
             >
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
 
-                {storageProviders.map(
-                  (provider) => (
-                    <button
-                      key={provider.value}
-                      type="button"
-                      disabled={
-                        !provider.available
-                      }
-                      onClick={() => {
-                        if (
-                          !provider.available
-                        ) {
-                          return;
-                        }
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStorageType(
+                      "sheets"
+                    );
 
-                        setStorageType(
-                          provider.value as StorageType
-                        );
+                    setStorageError(
+                      ""
+                    );
+                  }}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    storageType ===
+                    "sheets"
+                      ? "border-emerald-400 bg-emerald-50/60 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:bg-slate-900"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
 
-                        setStorageConnected(
-                          false
-                        );
+                    <div>
+                      <p className="font-semibold app-dark:text-white">
+                        Google Sheets
+                      </p>
 
-                        setStorageError(
-                          ""
-                        );
-                      }}
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        !provider.available
-                          ? "cursor-not-allowed border-gray-200 bg-gray-50 opacity-55 app-dark:border-slate-800 app-dark:bg-[#0b0f14]"
-                          : storageType ===
-                            provider.value
-                            ? "border-emerald-400 bg-emerald-50/60 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10"
-                            : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:bg-slate-900"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
+                      <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                        Create a clean lead sheet or use one you already have.
+                      </p>
+                    </div>
 
-                        <div>
-                          <p className="font-semibold app-dark:text-white">
-                            {provider.title}
-                          </p>
+                    {googleAccountConnected && (
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        CONNECTED
+                      </span>
+                    )}
 
-                          <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                            {provider.description}
-                          </p>
-                        </div>
+                  </div>
+                </button>
 
-                        {!provider.available && (
-                          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">
-                            SOON
-                          </span>
-                        )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowMoreDestinations(
+                      true
+                    )
+                  }
+                  className="rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
+                >
+                  <p className="font-semibold app-dark:text-white">
+                    + More destinations
+                  </p>
 
-                      </div>
-                    </button>
-                  )
-                )}
+                  <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                    Browse Airtable, HubSpot, Slack, Webhook and more.
+                  </p>
+                </button>
 
               </div>
 
-              <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+              {storageType === "sheets" && (
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                  <div>
-                    <p className="text-sm font-semibold app-dark:text-white">
-                      Destination setup
-                    </p>
+                    <div>
+                      <p className="text-sm font-semibold app-dark:text-white">
+                        Google Sheets
+                      </p>
 
-                    <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                      Each Lead Flow keeps its own destination and settings.
-                    </p>
-                  </div>
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                        {googleAccountConnected
+                          ? googleAccountEmail
+                            ? `Connected as ${googleAccountEmail}`
+                            : "Google account connected"
+                          : "Connect Google once. Every Lead Flow can then use its own sheet."}
+                      </p>
+                    </div>
 
-                  <span
-                    className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      storageConnected
-                        ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                        : "bg-amber-100 text-amber-700 app-dark:bg-amber-500/10 app-dark:text-amber-400"
-                    }`}
-                  >
-                    {storageConnected
-                      ? "Connected"
-                      : "Not connected"}
-                  </span>
-
-                </div>
-
-                <div className="mt-5">
-
-                  <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                    Name in Flowex
-                  </label>
-
-                  <input
-                    value={storageName}
-                    onChange={(event) =>
-                      setStorageName(
-                        event.target.value
-                      )
-                    }
-                    maxLength={80}
-                    placeholder="e.g. Website Leads"
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                  />
-
-                  <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
-                    Rename this however you want. Flowex will use this name for the destination it creates when supported.
-                  </p>
-
-                </div>
-
-                {(storageType === "sheets" ||
-                  storageType === "airtable") && (
-                  <div className="mt-5">
-
-                    <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                      Destination
-                    </p>
-
-                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
-
+                    {googleAccountConnected ? (
+                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        Google connected
+                      </span>
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => {
-                          setStorageMode(
-                            "create_new"
-                          );
-
-                          setStorageDestination(
-                            ""
-                          );
-                        }}
-                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                          storageMode ===
-                          "create_new"
-                            ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
-                        }`}
+                        onClick={
+                          connectStorageProvider
+                        }
+                        disabled={
+                          isConnectingStorage
+                        }
+                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Create new automatically
+                        {isConnectingStorage
+                          ? "Connecting..."
+                          : "Connect Google"}
                       </button>
+                    )}
+
+                  </div>
+
+                  {googleAccountConnected && (
+                    <>
+                      <div className="mt-5">
+
+                        <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                          Destination name
+                        </label>
+
+                        <input
+                          value={
+                            storageName
+                          }
+                          onChange={(
+                            event
+                          ) => {
+                            setStorageName(
+                              event.target.value
+                            );
+
+                            setStorageConnected(
+                              false
+                            );
+                          }}
+                          maxLength={
+                            80
+                          }
+                          placeholder="e.g. Website Leads"
+                          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                        />
+
+                      </div>
+
+                      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode(
+                              "create_new"
+                            );
+
+                            setStorageDestination(
+                              ""
+                            );
+
+                            setStorageSpreadsheetUrl(
+                              ""
+                            );
+
+                            setStorageConnected(
+                              false
+                            );
+
+                            setStorageError(
+                              ""
+                            );
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                            storageMode ===
+                            "create_new"
+                              ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                          }`}
+                        >
+                          Create new sheet
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode(
+                              "existing"
+                            );
+
+                            setStorageDestination(
+                              ""
+                            );
+
+                            setStorageSpreadsheetUrl(
+                              ""
+                            );
+
+                            setStorageConnected(
+                              false
+                            );
+
+                            setStorageError(
+                              ""
+                            );
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                            storageMode ===
+                            "existing"
+                              ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                          }`}
+                        >
+                          Use existing sheet
+                        </button>
+
+                      </div>
+
+                      {storageMode ===
+                        "existing" && (
+                        <div className="mt-4">
+
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            Google Sheet URL
+                          </label>
+
+                          <input
+                            value={
+                              storageDestination
+                            }
+                            onChange={(
+                              event
+                            ) => {
+                              setStorageDestination(
+                                event.target.value
+                              );
+
+                              setStorageConnected(
+                                false
+                              );
+                            }}
+                            placeholder="https://docs.google.com/spreadsheets/d/..."
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                          />
+
+                        </div>
+                      )}
+
+                      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+
+                        <button
+                          type="button"
+                          onClick={
+                            prepareGoogleSheet
+                          }
+                          disabled={
+                            isPreparingStorage
+                          }
+                          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                        >
+                          {isPreparingStorage
+                            ? "Preparing..."
+                            : storageMode ===
+                              "existing"
+                              ? "Verify & Use Sheet"
+                              : "Create Sheet"}
+                        </button>
+
+                        {storageConnected && (
+                          <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                            ✓ Destination ready
+                          </span>
+                        )}
+
+                        {storageSpreadsheetUrl && (
+                          <a
+                            href={
+                              storageSpreadsheetUrl
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                          >
+                            Open Sheet ↗
+                          </a>
+                        )}
+
+                      </div>
+                    </>
+                  )}
+
+                  {storageError && (
+                    <p className={`mt-3 text-xs font-medium ${
+                      storageConnected
+                        ? "text-emerald-600 app-dark:text-emerald-400"
+                        : "text-amber-600 app-dark:text-amber-400"
+                    }`}>
+                      {storageError}
+                    </p>
+                  )}
+
+                </div>
+              )}
+
+              {showMoreDestinations && (
+                <div
+                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+                  onClick={() =>
+                    setShowMoreDestinations(
+                      false
+                    )
+                  }
+                >
+                  <div
+                    className="w-full max-w-xl rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    onClick={(
+                      event
+                    ) =>
+                      event.stopPropagation()
+                    }
+                  >
+                    <div className="flex items-start justify-between gap-4">
+
+                      <div>
+                        <h3 className="text-xl font-bold app-dark:text-white">
+                          More destinations
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                          More business integrations are being added to Flowex.
+                        </p>
+                      </div>
 
                       <button
                         type="button"
                         onClick={() =>
-                          setStorageMode(
-                            "existing"
+                          setShowMoreDestinations(
+                            false
                           )
                         }
-                        className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                          storageMode ===
-                          "existing"
-                            ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
-                        }`}
+                        className="rounded-lg px-2 py-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
                       >
-                        Use existing
+                        ✕
                       </button>
 
                     </div>
 
-                  </div>
-                )}
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
 
-                {storageMode === "existing" &&
-                  (
-                    storageType === "sheets" ||
-                    storageType === "airtable"
-                  ) && (
-                  <div className="mt-5">
-
-                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                      Existing destination
-                    </label>
-
-                    <input
-                      value={storageDestination}
-                      onChange={(event) =>
-                        setStorageDestination(
-                          event.target.value
+                      {storageProviders
+                        .filter(
+                          (
+                            provider
+                          ) =>
+                            provider.value !==
+                            "sheets"
                         )
-                      }
-                      placeholder={
-                        storageType ===
-                        "sheets"
-                          ? "Paste Google Sheet URL"
-                          : "Paste Airtable base/table URL"
-                      }
-                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                    />
+                        .map(
+                          (
+                            provider
+                          ) => (
+                            <div
+                              key={
+                                provider.value
+                              }
+                              className="rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+
+                                <div>
+                                  <p className="font-semibold app-dark:text-white">
+                                    {provider.title}
+                                  </p>
+
+                                  <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                                    {provider.description}
+                                  </p>
+                                </div>
+
+                                <span className="shrink-0 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-semibold text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">
+                                  SOON
+                                </span>
+
+                              </div>
+                            </div>
+                          )
+                        )}
+
+                    </div>
 
                   </div>
-                )}
-
-                {storageType === "hubspot" && (
-                  <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300">
-                    Flowex will create or update HubSpot Contacts and map detected form fields automatically.
-                  </div>
-                )}
-
-                {storageType === "slack" && (
-                  <div className="mt-5">
-
-                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                      Channel
-                    </label>
-
-                    <input
-                      value={storageDestination}
-                      onChange={(event) =>
-                        setStorageDestination(
-                          event.target.value
-                        )
-                      }
-                      placeholder="e.g. #new-leads"
-                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                    />
-
-                  </div>
-                )}
-
-                {storageType === "webhook" && (
-                  <div className="mt-5">
-
-                    <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                      Webhook URL
-                    </label>
-
-                    <input
-                      value={storageDestination}
-                      onChange={(event) =>
-                        setStorageDestination(
-                          event.target.value
-                        )
-                      }
-                      placeholder="https://example.com/webhook"
-                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                    />
-
-                  </div>
-                )}
-
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-
-                  <button
-                    type="button"
-                    onClick={connectStorageProvider}
-                    disabled={isConnectingStorage}
-                    className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
-                  >
-                    {isConnectingStorage
-                      ? "Connecting..."
-                      : `Connect ${
-                          storageProviders.find(
-                            (provider) =>
-                              provider.value === storageType
-                          )?.title || "Destination"
-                        }`}
-                  </button>
-
-                  <p className="text-xs text-gray-400 app-dark:text-slate-500">
-                    Save Automation stores this Step 02 setup only for the current Lead Flow.
-                  </p>
-
                 </div>
-
-                {storageError && (
-                  <p className="mt-3 text-xs font-medium text-amber-600 app-dark:text-amber-400">
-                    {storageError}
-                  </p>
-                )}
-
-              </div>
+              )}
 
             </FlowStep>
 

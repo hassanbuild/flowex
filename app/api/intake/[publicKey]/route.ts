@@ -320,7 +320,7 @@ async function sendLeadToGoogleSheets(
   const { data: connection } = await supabase
     .from("integration_connections")
     .select("credentials")
-    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("user_id", lead.userId)
     .eq("provider", "google_sheets")
     .maybeSingle();
 
@@ -333,6 +333,37 @@ async function sendLeadToGoogleSheets(
 
   const oauth2Client = createGoogleOAuthClient();
   oauth2Client.setCredentials(connection.credentials);
+
+  oauth2Client.on(
+    "tokens",
+    async (tokens) => {
+      if (
+        !tokens.access_token &&
+        !tokens.refresh_token
+      ) {
+        return;
+      }
+
+      const current =
+        connection.credentials as Record<string, unknown>;
+
+      await supabase
+        .from("integration_connections")
+        .update({
+          credentials: {
+            ...current,
+            ...tokens,
+            refresh_token:
+              tokens.refresh_token ||
+              current.refresh_token,
+          },
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq("user_id", lead.userId)
+        .eq("provider", "google_sheets");
+    }
+  );
 
   const sheets = google.sheets({
     version: "v4",
@@ -347,9 +378,13 @@ async function sendLeadToGoogleSheets(
     requestBody: {
       values: [
         [
-          lead.receivedAt,
           ...fieldKeys.map(
-            (key) => lead.fields[key] ?? ""
+            (key) =>
+              key === "__captured_at"
+                ? lead.receivedAt
+                : key
+                  ? lead.fields[key] ?? ""
+                  : ""
           ),
         ],
       ],
