@@ -68,6 +68,46 @@ function cleanTableName(
   );
 }
 
+function extractSheetGid(
+  value: string
+) {
+  try {
+    const url =
+      new URL(
+        value
+      );
+
+    const gid =
+      url.searchParams.get(
+        "gid"
+      ) ||
+      new URLSearchParams(
+        url.hash.replace(
+          /^#/,
+          ""
+        )
+      ).get(
+        "gid"
+      );
+
+    if (
+      gid &&
+      /^\d+$/.test(
+        gid
+      )
+    ) {
+      return Number(
+        gid
+      );
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+
 function normalizeFieldType(
   value: string
 ) {
@@ -742,7 +782,8 @@ async function getFirstSheetMeta(
   sheets: ReturnType<
     typeof google.sheets
   >,
-  spreadsheetId: string
+  spreadsheetId: string,
+  preferredSheetId?: number | null
 ) {
   const result =
     await sheets.spreadsheets.get({
@@ -753,8 +794,21 @@ async function getFirstSheetMeta(
     });
 
   const firstSheet =
-    result.data
-      .sheets?.[0];
+    typeof preferredSheetId ===
+      "number"
+      ? result.data
+          .sheets?.find(
+            (
+              sheet
+            ) =>
+              sheet.properties
+                ?.sheetId ===
+              preferredSheetId
+          ) ||
+        result.data
+          .sheets?.[0]
+      : result.data
+          .sheets?.[0];
 
   const sheetId =
     firstSheet
@@ -1182,12 +1236,14 @@ async function prepareExisting(
     typeof google.sheets
   >,
   spreadsheetId: string,
-  desiredColumns: SheetColumn[]
+  desiredColumns: SheetColumn[],
+  preferredSheetId?: number | null
 ) {
   const meta =
     await getFirstSheetMeta(
       sheets,
-      spreadsheetId
+      spreadsheetId,
+      preferredSheetId
     );
 
   const safeTitle =
@@ -1250,9 +1306,46 @@ async function prepareExisting(
             ),
         };
 
+  const originalHeaderCount =
+    existingHeaders.filter(
+      Boolean
+    ).length;
+
+  const mappedRequiredCount =
+    mapped.columnKeys.filter(
+      Boolean
+    ).length;
+
+  const missingRequiredColumns =
+    Math.max(
+      desiredColumns.length -
+        mappedRequiredCount,
+      0
+    );
+
+  const hasRealTable =
+    !!meta.table;
+
+  const hasUsefulHeaders =
+    originalHeaderCount >=
+    Math.min(
+      2,
+      desiredColumns.length
+    );
+
+  const needsStructure =
+    !hasRealTable ||
+    !hasUsefulHeaders ||
+    missingRequiredColumns >
+      0;
+
   return {
     ...meta,
     ...mapped,
+    originalHeaderCount,
+    missingRequiredColumns,
+    hasRealTable,
+    needsStructure,
   };
 }
 
@@ -1695,6 +1788,11 @@ export async function POST(
       ) ||
       "";
 
+    const preferredSheetId =
+      extractSheetGid(
+        destination
+      );
+
     if (!spreadsheetId) {
       return NextResponse.json(
         {
@@ -1730,7 +1828,8 @@ export async function POST(
       await prepareExisting(
         sheets,
         spreadsheetId,
-        desiredColumns
+        desiredColumns,
+        preferredSheetId
       );
 
     return NextResponse.json({
@@ -1761,6 +1860,12 @@ export async function POST(
 
       columnKeys:
         prepared.columnKeys,
+
+      needsStructure:
+        prepared.needsStructure,
+
+      missingRequiredColumns:
+        prepared.missingRequiredColumns,
 
       additions:
         Math.max(
@@ -1896,6 +2001,30 @@ export async function POST(
 
   if (
     action ===
+    "unlink_destination"
+  ) {
+    await auth.supabase
+      .from(
+        "lead_destinations"
+      )
+      .delete()
+      .eq(
+        "lead_flow_id",
+        leadFlowId
+      )
+      .eq(
+        "user_id",
+        auth.user.id
+      );
+
+    return NextResponse.json({
+      unlinked:
+        true,
+    });
+  }
+
+  if (
+    action ===
     "unlink_existing"
   ) {
     await auth.supabase
@@ -1982,6 +2111,20 @@ export async function POST(
         | "TEXT"
       )[] =
       [];
+
+    const destinationUrl =
+      typeof body.destination ===
+        "string"
+        ? body.destination.trim()
+        : "";
+
+    const preferredSheetId =
+      mode ===
+        "existing"
+        ? extractSheetGid(
+            destinationUrl
+          )
+        : null;
 
     if (
       mode ===
@@ -2113,7 +2256,8 @@ export async function POST(
         await prepareExisting(
           sheets,
           spreadsheetId,
-          desiredColumns
+          desiredColumns,
+          preferredSheetId
         );
 
       sheetTitle =
@@ -2128,13 +2272,6 @@ export async function POST(
       columnTypes =
         prepared.columnTypes;
 
-      await writeHeaders(
-        sheets,
-        spreadsheetId,
-        sheetTitle,
-        headers
-      );
-
       const rows =
         await usedRowCount(
           sheets,
@@ -2142,29 +2279,56 @@ export async function POST(
           sheetTitle
         );
 
-      tableId =
-        await createOrUpdateTable(
+      if (
+        prepared.needsStructure
+      ) {
+        /*
+          The sheet is missing a real table, useful headers, or
+          one/more fields needed by this Lead Flow. Only now do
+          we apply the Flowex organized lead-table structure.
+          Existing unrelated columns and existing data remain.
+        */
+        await writeHeaders(
+          sheets,
+          spreadsheetId,
+          sheetTitle,
+          headers
+        );
+
+        tableId =
+          await createOrUpdateTable(
+            sheets,
+            spreadsheetId,
+            prepared.sheetId,
+            prepared.table
+              ?.tableId ||
+              null,
+            prepared.table
+              ?.name ||
+              `Flowex_${displayName}`,
+            headers,
+            columnTypes,
+            rows
+          );
+
+        await polishSheet(
           sheets,
           spreadsheetId,
           prepared.sheetId,
+          headers,
+          columnKeys
+        );
+      } else {
+        /*
+          It is already a proper Google Sheets table with all the
+          fields Flowex needs. Preserve the customer's structure,
+          styling, column order and table appearance exactly.
+        */
+        tableId =
           prepared.table
             ?.tableId ||
-            null,
-          prepared.table
-            ?.name ||
-            `Flowex_${displayName}`,
-          headers,
-          columnTypes,
-          rows
-        );
-
-      await polishSheet(
-        sheets,
-        spreadsheetId,
-        prepared.sheetId,
-        headers,
-        columnKeys
-      );
+          null;
+      }
     }
 
     const spreadsheetUrl =
@@ -2209,6 +2373,12 @@ export async function POST(
 
               sheet_title:
                 sheetTitle,
+
+              sheet_id:
+                mode ===
+                  "existing"
+                  ? preferredSheetId
+                  : null,
 
               table_id:
                 tableId,

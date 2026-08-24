@@ -319,6 +319,7 @@ async function sendLeadToGoogleSheets(
     destination.config as {
       spreadsheet_id?: unknown;
       sheet_title?: unknown;
+      sheet_id?: unknown;
       table_id?: unknown;
       column_keys?: unknown;
       field_keys?: unknown;
@@ -593,6 +594,15 @@ async function sendLeadToGoogleSheets(
     });
 
   const sheet =
+    spreadsheet.data
+      .sheets?.find(
+        (
+          item
+        ) =>
+          item.properties
+            ?.title ===
+          sheetTitle
+      ) ||
     spreadsheet.data
       .sheets?.[0];
 

@@ -582,6 +582,12 @@ export default function ManageLeadCapturePage() {
   const [storagePendingDelete, setStoragePendingDelete] =
     useState(false);
 
+  const [createdSheetRemovalMode, setCreatedSheetRemovalMode] =
+    useState<"unlink" | "trash" | null>(null);
+
+  const [showCreatedSheetDeleteDialog, setShowCreatedSheetDeleteDialog] =
+    useState(false);
+
   const [storagePendingUnlink, setStoragePendingUnlink] =
     useState(false);
 
@@ -667,6 +673,8 @@ export default function ManageLeadCapturePage() {
     setSavedCreatedSheetId("");
     setSavedExistingSheetId("");
     setStoragePendingDelete(false);
+    setCreatedSheetRemovalMode(null);
+    setShowCreatedSheetDeleteDialog(false);
     setStoragePendingUnlink(false);
     setIsEditingCreatedSheet(false);
     setStorageError("");
@@ -2006,6 +2014,14 @@ export default function ManageLeadCapturePage() {
           false
         );
 
+        setCreatedSheetRemovalMode(
+          null
+        );
+
+        setShowCreatedSheetDeleteDialog(
+          false
+        );
+
         setStoragePendingUnlink(
           false
         );
@@ -2278,6 +2294,10 @@ export default function ManageLeadCapturePage() {
         false
       );
 
+      setCreatedSheetRemovalMode(
+        null
+      );
+
       setStoragePendingUnlink(
         false
       );
@@ -2484,7 +2504,7 @@ export default function ManageLeadCapturePage() {
           );
 
           setStorageError(
-            "Existing Google Sheet verified. Flowex will structure and link it when you click Save Automation."
+            "Existing Google Sheet verified and mapped. Flowex will only reorganize it on Save Automation if the sheet needs structure."
           );
         }
 
@@ -2575,14 +2595,24 @@ export default function ManageLeadCapturePage() {
         return;
       }
 
-      const confirmed =
-        window.confirm(
-          "Delete this Flowex-created Google Sheet? It will be moved to Google Drive Trash after you click Save Automation."
-        );
+      setShowCreatedSheetDeleteDialog(
+        true
+      );
+    };
 
-      if (!confirmed) {
-        return;
-      }
+  const chooseCreatedSheetRemoval =
+    (
+      mode:
+        "unlink" |
+        "trash"
+    ) => {
+      setShowCreatedSheetDeleteDialog(
+        false
+      );
+
+      setCreatedSheetRemovalMode(
+        mode
+      );
 
       setStoragePendingDelete(
         true
@@ -2593,7 +2623,10 @@ export default function ManageLeadCapturePage() {
       );
 
       setStorageError(
-        "This Flowex-created sheet will be deleted when you click Save Automation."
+        mode ===
+          "trash"
+          ? "This sheet will be removed from the automation and moved to Google Drive Trash when you click Save Automation."
+          : "This sheet will be removed from the automation when you click Save Automation. The Google Sheet itself will stay in your Drive."
       );
 
       setHasUnsavedChanges(
@@ -2601,10 +2634,15 @@ export default function ManageLeadCapturePage() {
       );
     };
 
+
   const undoCreatedSheetDelete =
     () => {
       setStoragePendingDelete(
         false
+      );
+
+      setCreatedSheetRemovalMode(
+        null
       );
 
       setStorageConnected(
@@ -2866,7 +2904,10 @@ export default function ManageLeadCapturePage() {
           try {
             await callGoogleDestination({
               action:
-                "trash_created",
+                createdSheetRemovalMode ===
+                  "trash"
+                  ? "trash_created"
+                  : "unlink_destination",
 
               spreadsheetId:
                 createdSheetId,
@@ -2878,7 +2919,10 @@ export default function ManageLeadCapturePage() {
               error instanceof
                 Error
                 ? error.message
-                : "Flowex could not delete this Google Sheet."
+                : createdSheetRemovalMode ===
+                    "trash"
+                  ? "Flowex could not delete this Google Sheet."
+                  : "Flowex could not remove this Google Sheet from the automation."
             );
 
             return false;
@@ -2898,6 +2942,10 @@ export default function ManageLeadCapturePage() {
 
           setStoragePendingDelete(
             false
+          );
+
+          setCreatedSheetRemovalMode(
+            null
           );
 
           setStorageConnected(
@@ -3905,11 +3953,17 @@ export default function ManageLeadCapturePage() {
                             <div className="rounded-xl border border-red-200 bg-red-50 p-4 app-dark:border-red-500/30 app-dark:bg-red-500/10">
 
                               <p className="text-sm font-semibold text-red-700 app-dark:text-red-300">
-                                Sheet marked for deletion
+                                {createdSheetRemovalMode ===
+                                "trash"
+                                  ? "Sheet marked for deletion"
+                                  : "Sheet marked for removal"}
                               </p>
 
                               <p className="mt-1 text-xs leading-5 text-red-600 app-dark:text-red-400">
-                                It will move to Google Drive Trash only after Save Automation.
+                                {createdSheetRemovalMode ===
+                                "trash"
+                                  ? "It will be removed from this automation and moved to Google Drive Trash after Save Automation."
+                                  : "It will be removed from this automation after Save Automation, but the Google Sheet will stay in Drive."}
                               </p>
 
                               <button
@@ -3948,7 +4002,7 @@ export default function ManageLeadCapturePage() {
                                 <div className="mt-4">
 
                                   <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                                    Sheet name
+                                    Sheet name only
                                   </label>
 
                                   <input
@@ -4007,8 +4061,8 @@ export default function ManageLeadCapturePage() {
                                   className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                                 >
                                   {isEditingCreatedSheet
-                                    ? "Done editing"
-                                    : "Edit"}
+                                    ? "Done"
+                                    : "Rename"}
                                 </button>
 
                                 <button
@@ -4147,7 +4201,7 @@ export default function ManageLeadCapturePage() {
                               </div>
 
                               <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
-                                Verification does not save or restructure the sheet. Flowex maps existing columns, preserves unrelated columns, and applies the structured lead table only when Save Automation is clicked.
+                                Verification only checks access and maps the columns. On Save Automation, Flowex preserves a clean existing structure; if the sheet is unstructured or missing required lead columns, Flowex organizes it into the same lead-table style used for new sheets without deleting unrelated columns.
                               </p>
                             </>
                           )}
@@ -4518,13 +4572,17 @@ export default function ManageLeadCapturePage() {
             </p>
 
             <button
-              onClick={() => {
-               void saveChanges();
-             }}
-              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
-            >
-              Save Automation
-            </button>
+  type="button"
+  onClick={() => {
+    void saveChanges();
+  }}
+  disabled={isSavingAutomation}
+  className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {isSavingAutomation
+    ? "Saving..."
+    : "Save Automation"}
+</button>
 
           </div>
 
@@ -4946,6 +5004,76 @@ export default function ManageLeadCapturePage() {
       )}
 
 
+
+      {showCreatedSheetDeleteDialog && (
+        <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+
+          <div className="w-full max-w-md rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+
+            <h3 className="text-xl font-bold app-dark:text-white">
+              Remove this sheet?
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+              Choose what should happen to the Flowex-created Google Sheet.
+            </p>
+
+            <div className="mt-5 space-y-3">
+
+              <button
+                type="button"
+                onClick={() =>
+                  chooseCreatedSheetRemoval(
+                    "unlink"
+                  )
+                }
+                className="w-full rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:hover:bg-slate-800"
+              >
+                <p className="text-sm font-semibold app-dark:text-white">
+                  Remove from this automation
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                  Flowex stops sending this Lead Flow to the sheet. The Google Sheet stays in your Drive.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  chooseCreatedSheetRemoval(
+                    "trash"
+                  )
+                }
+                className="w-full rounded-xl border border-red-200 p-4 text-left transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:hover:bg-red-500/10"
+              >
+                <p className="text-sm font-semibold text-red-600 app-dark:text-red-400">
+                  Delete from Google Drive too
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-red-500 app-dark:text-red-400">
+                  Flowex removes it from this automation and moves the actual Google Sheet to Drive Trash.
+                </p>
+              </button>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowCreatedSheetDeleteDialog(
+                  false
+                )
+              }
+              className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+      )}
 
       {showUnsavedDialog && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
