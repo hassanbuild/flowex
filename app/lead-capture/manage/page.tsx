@@ -555,6 +555,51 @@ export default function ManageLeadCapturePage() {
   const [storageSpreadsheetUrl, setStorageSpreadsheetUrl] =
     useState("");
 
+  const [createdSheetId, setCreatedSheetId] =
+    useState("");
+
+  const [createdSheetUrl, setCreatedSheetUrl] =
+    useState("");
+
+  const [existingSheetId, setExistingSheetId] =
+    useState("");
+
+  const [existingSheetUrl, setExistingSheetUrl] =
+    useState("");
+
+  const [existingSheetVerified, setExistingSheetVerified] =
+    useState(false);
+
+  const [savedStorageMode, setSavedStorageMode] =
+    useState<StorageMode | null>(null);
+
+  const [savedCreatedSheetId, setSavedCreatedSheetId] =
+    useState("");
+
+  const [savedExistingSheetId, setSavedExistingSheetId] =
+    useState("");
+
+  const [storagePendingDelete, setStoragePendingDelete] =
+    useState(false);
+
+  const [storagePendingUnlink, setStoragePendingUnlink] =
+    useState(false);
+
+  const [isEditingCreatedSheet, setIsEditingCreatedSheet] =
+    useState(false);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] =
+    useState(false);
+
+  const [showUnsavedDialog, setShowUnsavedDialog] =
+    useState(false);
+
+  const [pendingNavigation, setPendingNavigation] =
+    useState("");
+
+  const [isSavingAutomation, setIsSavingAutomation] =
+    useState(false);
+
   const [replyType, setReplyType] =
     useState<ReplyType>("instant");
 
@@ -613,7 +658,19 @@ export default function ManageLeadCapturePage() {
     setStorageDestination("");
     setStorageConnected(false);
     setStorageSpreadsheetUrl("");
+    setCreatedSheetId("");
+    setCreatedSheetUrl("");
+    setExistingSheetId("");
+    setExistingSheetUrl("");
+    setExistingSheetVerified(false);
+    setSavedStorageMode(null);
+    setSavedCreatedSheetId("");
+    setSavedExistingSheetId("");
+    setStoragePendingDelete(false);
+    setStoragePendingUnlink(false);
+    setIsEditingCreatedSheet(false);
     setStorageError("");
+    setHasUnsavedChanges(false);
     setReplyType("instant");
     setCustomReply(
       "Thanks for reaching out. We’ve received your message and will get back to you shortly."
@@ -1745,7 +1802,9 @@ export default function ManageLeadCapturePage() {
           error,
         } =
           await supabase
-            .from("lead_destinations")
+            .from(
+              "lead_destinations"
+            )
             .select(
               "provider, mode, display_name, config, connected"
             )
@@ -1767,6 +1826,62 @@ export default function ManageLeadCapturePage() {
         }
 
         if (!data) {
+          setStorageConnected(
+            false
+          );
+
+          setSavedStorageMode(
+            null
+          );
+
+          setCreatedSheetId(
+            ""
+          );
+
+          setCreatedSheetUrl(
+            ""
+          );
+
+          setSavedCreatedSheetId(
+            ""
+          );
+
+          setExistingSheetId(
+            ""
+          );
+
+          setExistingSheetUrl(
+            ""
+          );
+
+          setSavedExistingSheetId(
+            ""
+          );
+
+          setExistingSheetVerified(
+            false
+          );
+
+          setStorageDestination(
+            ""
+          );
+
+          setStorageSpreadsheetUrl(
+            ""
+          );
+
+          setStoragePendingDelete(
+            false
+          );
+
+          setStoragePendingUnlink(
+            false
+          );
+
+          setHasUnsavedChanges(
+            false
+          );
+
           return;
         }
 
@@ -1774,21 +1889,35 @@ export default function ManageLeadCapturePage() {
           data.provider as StorageType;
 
         if (
-          provider === "sheets" ||
-          provider === "airtable" ||
-          provider === "hubspot" ||
-          provider === "slack" ||
-          provider === "webhook"
+          provider ===
+            "sheets" ||
+          provider ===
+            "airtable" ||
+          provider ===
+            "hubspot" ||
+          provider ===
+            "slack" ||
+          provider ===
+            "webhook"
         ) {
           setStorageType(
             provider
           );
         }
 
-        setStorageMode(
-          data.mode === "existing"
+        const savedMode:
+          StorageMode =
+          data.mode ===
+            "existing"
             ? "existing"
-            : "create_new"
+            : "create_new";
+
+        setStorageMode(
+          savedMode
+        );
+
+        setSavedStorageMode(
+          savedMode
         );
 
         setStorageName(
@@ -1799,24 +1928,90 @@ export default function ManageLeadCapturePage() {
         const config =
           data.config as {
             destination?: unknown;
+            spreadsheet_id?: unknown;
             spreadsheet_url?: unknown;
+            created_by_flowex?: unknown;
           } | null;
 
-        setStorageDestination(
-          typeof config?.destination ===
+        const spreadsheetId =
+          typeof config
+            ?.spreadsheet_id ===
             "string"
-            ? config.destination
-            : ""
+            ? config.spreadsheet_id
+            : "";
+
+        const spreadsheetUrl =
+          typeof config
+            ?.spreadsheet_url ===
+            "string"
+            ? config.spreadsheet_url
+            : typeof config
+                ?.destination ===
+                "string"
+              ? config.destination
+              : "";
+
+        setStorageSpreadsheetUrl(
+          spreadsheetUrl
         );
 
         setStorageConnected(
-          data.connected === true
+          data.connected ===
+            true
         );
 
-        setStorageSpreadsheetUrl(
-          typeof config?.spreadsheet_url === "string"
-            ? config.spreadsheet_url
-            : ""
+        if (
+          savedMode ===
+          "create_new"
+        ) {
+          setCreatedSheetId(
+            spreadsheetId
+          );
+
+          setCreatedSheetUrl(
+            spreadsheetUrl
+          );
+
+          setSavedCreatedSheetId(
+            spreadsheetId
+          );
+
+          setStorageDestination(
+            ""
+          );
+        } else {
+          setExistingSheetId(
+            spreadsheetId
+          );
+
+          setExistingSheetUrl(
+            spreadsheetUrl
+          );
+
+          setSavedExistingSheetId(
+            spreadsheetId
+          );
+
+          setExistingSheetVerified(
+            data.connected ===
+              true
+          );
+
+          setStorageDestination(
+            spreadsheetUrl
+          );
+        }
+
+        setStoragePendingDelete(
+          false
+        );
+
+        setStoragePendingUnlink(
+          false
+        );
+
+        setHasUnsavedChanges(
+          false
         );
       };
 
@@ -1830,7 +2025,6 @@ export default function ManageLeadCapturePage() {
     leadFlowId,
     supabase,
   ]);
-
 
   useEffect(() => {
     if (
@@ -2002,6 +2196,126 @@ export default function ManageLeadCapturePage() {
       }
     };
 
+  const callGoogleDestination =
+    async (
+      payload: Record<
+        string,
+        unknown
+      >
+    ) => {
+      const {
+        data: {
+          session,
+        },
+      } =
+        await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error(
+          "Your session could not be verified. Please log in again."
+        );
+      }
+
+      const response =
+        await fetch(
+          "/api/integrations/google/destination",
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Authorization:
+                `Bearer ${session.access_token}`,
+            },
+
+            body:
+              JSON.stringify({
+                leadFlowId,
+                ...payload,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok
+      ) {
+        const error =
+          new Error(
+            result?.error ||
+              "Flowex could not update Google Sheets."
+          );
+
+        (
+          error as Error & {
+            needsGoogleConnection?: boolean;
+          }
+        ).needsGoogleConnection =
+          result?.needsGoogleConnection ===
+          true;
+
+        throw error;
+      }
+
+      return result;
+    };
+
+  const selectStorageMode =
+    (
+      mode:
+        StorageMode
+    ) => {
+      setStorageMode(
+        mode
+      );
+
+      setStoragePendingDelete(
+        false
+      );
+
+      setStoragePendingUnlink(
+        false
+      );
+
+      if (
+        mode ===
+        "create_new"
+      ) {
+        setStorageConnected(
+          !!createdSheetId
+        );
+
+        setStorageSpreadsheetUrl(
+          createdSheetUrl
+        );
+      } else {
+        setStorageDestination(
+          existingSheetUrl
+        );
+
+        setStorageConnected(
+          existingSheetVerified
+        );
+
+        setStorageSpreadsheetUrl(
+          existingSheetUrl
+        );
+      }
+
+      setStorageError(
+        ""
+      );
+
+      setHasUnsavedChanges(
+        true
+      );
+    };
+
   const prepareGoogleSheet =
     async () => {
       if (
@@ -2011,7 +2325,9 @@ export default function ManageLeadCapturePage() {
         return;
       }
 
-      setStorageError("");
+      setStorageError(
+        ""
+      );
 
       if (
         !googleAccountConnected
@@ -2019,6 +2335,7 @@ export default function ManageLeadCapturePage() {
         setStorageError(
           "Connect your Google account first."
         );
+
         return;
       }
 
@@ -2028,17 +2345,7 @@ export default function ManageLeadCapturePage() {
         setStorageError(
           "Give this destination a name first."
         );
-        return;
-      }
 
-      if (
-        storageMode ===
-          "existing" &&
-        !storageDestination.trim()
-      ) {
-        setStorageError(
-          "Paste the Google Sheet URL you want Flowex to use."
-        );
         return;
       }
 
@@ -2047,112 +2354,168 @@ export default function ManageLeadCapturePage() {
       );
 
       try {
-        const {
-          data: {
-            session,
-          },
-        } =
-          await supabase.auth.getSession();
-
-        if (!session) {
-          setStorageError(
-            "Your session could not be verified. Please log in again."
-          );
-          return;
-        }
-
-        const response =
-          await fetch(
-            "/api/integrations/google/destination",
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-
-                Authorization:
-                  `Bearer ${session.access_token}`,
-              },
-
-              body:
-                JSON.stringify({
-                  leadFlowId,
-                  mode:
-                    storageMode,
-                  displayName:
-                    storageName,
-                  destination:
-                    storageDestination,
-                }),
-            }
-          );
-
-        const result =
-          await response.json();
-
         if (
-          !response.ok ||
-          result?.connected !==
-            true
+          storageMode ===
+          "create_new"
         ) {
           if (
-            result?.needsGoogleConnection ===
-            true
+            createdSheetId &&
+            !storagePendingDelete
           ) {
-            setGoogleAccountConnected(
-              false
+            setStorageError(
+              "This Lead Flow already has a prepared new sheet. Use Edit or Delete below."
             );
+
+            return;
           }
 
+          const result =
+            await callGoogleDestination({
+              action:
+                "create_new",
+
+              displayName:
+                storageName.trim(),
+            });
+
+          setCreatedSheetId(
+            typeof result
+              ?.spreadsheetId ===
+              "string"
+              ? result.spreadsheetId
+              : ""
+          );
+
+          setCreatedSheetUrl(
+            typeof result
+              ?.spreadsheetUrl ===
+              "string"
+              ? result.spreadsheetUrl
+              : ""
+          );
+
+          setStorageSpreadsheetUrl(
+            typeof result
+              ?.spreadsheetUrl ===
+              "string"
+              ? result.spreadsheetUrl
+              : ""
+          );
+
           setStorageConnected(
+            true
+          );
+
+          setStoragePendingDelete(
+            false
+          );
+
+          setIsEditingCreatedSheet(
             false
           );
 
           setStorageError(
-            result?.error ||
-              "Flowex could not prepare this Google Sheet."
+            "New Google Sheet prepared. Click Save Automation to attach it to this Lead Flow."
+          );
+        } else {
+          const url =
+            storageDestination
+              .trim();
+
+          if (!url) {
+            setStorageError(
+              "Paste the Google Sheet URL you want Flowex to use."
+            );
+
+            return;
+          }
+
+          const result =
+            await callGoogleDestination({
+              action:
+                "verify_existing",
+
+              destination:
+                url,
+            });
+
+          setExistingSheetId(
+            typeof result
+              ?.spreadsheetId ===
+              "string"
+              ? result.spreadsheetId
+              : ""
           );
 
-          return;
+          setExistingSheetUrl(
+            typeof result
+              ?.spreadsheetUrl ===
+              "string"
+              ? result.spreadsheetUrl
+              : url
+          );
+
+          setStorageDestination(
+            typeof result
+              ?.spreadsheetUrl ===
+              "string"
+              ? result.spreadsheetUrl
+              : url
+          );
+
+          setStorageSpreadsheetUrl(
+            typeof result
+              ?.spreadsheetUrl ===
+              "string"
+              ? result.spreadsheetUrl
+              : url
+          );
+
+          setExistingSheetVerified(
+            true
+          );
+
+          setStorageConnected(
+            true
+          );
+
+          setStoragePendingUnlink(
+            false
+          );
+
+          setStorageError(
+            "Existing Google Sheet verified. Flowex will structure and link it when you click Save Automation."
+          );
         }
 
-        setStorageConnected(
+        setHasUnsavedChanges(
           true
         );
-
-        setStorageSpreadsheetUrl(
-          typeof result
-            ?.spreadsheetUrl ===
-            "string"
-            ? result.spreadsheetUrl
-            : ""
-        );
+      } catch (
+        error
+      ) {
+        const failure =
+          error as Error & {
+            needsGoogleConnection?: boolean;
+          };
 
         if (
-          typeof result
-            ?.spreadsheetUrl ===
-            "string"
+          failure
+            .needsGoogleConnection ===
+          true
         ) {
-          setStorageDestination(
-            result.spreadsheetUrl
+          setGoogleAccountConnected(
+            false
           );
         }
 
-        setStorageError(
-          storageMode ===
-            "existing"
-            ? "Existing Google Sheet verified and ready."
-            : "Google Sheet created and ready."
-        );
-      } catch {
         setStorageConnected(
           false
         );
 
         setStorageError(
-          "Flowex could not prepare this Google Sheet."
+          failure.message ||
+            "Flowex could not prepare this Google Sheet."
         );
       } finally {
         setIsPreparingStorage(
@@ -2160,6 +2523,103 @@ export default function ManageLeadCapturePage() {
         );
       }
     };
+
+  const markExistingUnlinked =
+    () => {
+      if (
+        !existingSheetId &&
+        !existingSheetUrl
+      ) {
+        return;
+      }
+
+      setStoragePendingUnlink(
+        true
+      );
+
+      setStorageConnected(
+        false
+      );
+
+      setStorageError(
+        "This existing sheet will be unlinked when you click Save Automation."
+      );
+
+      setHasUnsavedChanges(
+        true
+      );
+    };
+
+  const undoExistingUnlink =
+    () => {
+      setStoragePendingUnlink(
+        false
+      );
+
+      setStorageConnected(
+        existingSheetVerified
+      );
+
+      setStorageError(
+        ""
+      );
+
+      setHasUnsavedChanges(
+        true
+      );
+    };
+
+  const markCreatedSheetDeleted =
+    () => {
+      if (!createdSheetId) {
+        return;
+      }
+
+      const confirmed =
+        window.confirm(
+          "Delete this Flowex-created Google Sheet? It will be moved to Google Drive Trash after you click Save Automation."
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setStoragePendingDelete(
+        true
+      );
+
+      setStorageConnected(
+        false
+      );
+
+      setStorageError(
+        "This Flowex-created sheet will be deleted when you click Save Automation."
+      );
+
+      setHasUnsavedChanges(
+        true
+      );
+    };
+
+  const undoCreatedSheetDelete =
+    () => {
+      setStoragePendingDelete(
+        false
+      );
+
+      setStorageConnected(
+        !!createdSheetId
+      );
+
+      setStorageError(
+        ""
+      );
+
+      setHasUnsavedChanges(
+        true
+      );
+    };
+
 
 
   const replyTemplates = {
@@ -2177,6 +2637,10 @@ export default function ManageLeadCapturePage() {
       setActive(
         (current) =>
           !current
+      );
+
+      setHasUnsavedChanges(
+        true
       );
     };
 
@@ -2273,200 +2737,587 @@ export default function ManageLeadCapturePage() {
       }
     };
 
-  const saveChanges = async () => {
-    if (!leadFlowId) {
-      alert("Select a Lead Flow first.");
-      return;
-    }
+  const saveChanges =
+    async (
+      showSuccess = true
+    ): Promise<boolean> => {
+      if (
+        !leadFlowId ||
+        isSavingAutomation
+      ) {
+        return false;
+      }
 
-    if (
-      sourceType === "external" &&
-      (
-        !externalVerified ||
-        !externalCaptureConnected
-      )
-    ) {
-      alert(
-        "Finish connecting the Lovable Form to Flowex before using it."
+      if (
+        sourceType ===
+          "external" &&
+        (
+          !externalVerified ||
+          !externalCaptureConnected
+        )
+      ) {
+        alert(
+          "Finish connecting the Lovable Form to Flowex before using it."
+        );
+
+        return false;
+      }
+
+      setIsSavingAutomation(
+        true
       );
-      return;
-    }
 
-    const currentReply =
-      replyType === "custom"
-        ? customReply
-        : replyTemplates[replyType];
+      try {
+        const currentReply =
+          replyType ===
+            "custom"
+            ? customReply
+            : replyTemplates[
+                replyType
+              ];
 
-    const automationData = {
-      active,
-      sourceType,
-      flowexFormTitle,
-      flowexFormFields,
-      storageType,
-      storageMode,
-      storageName,
-      storageDestination,
-      replyType,
-      replyMessage: currentReply,
-      companyEmail,
-      followUpEnabled,
-      followUpDelay,
-      followUpMessage,
-    };
+        const {
+          data: {
+            user,
+          },
+        } =
+          await supabase.auth.getUser();
 
-    const {
-      data: {
-        user,
-      },
-    } =
-      await supabase.auth.getUser();
-
-    if (
-      user &&
-      leadFlowId
-    ) {
-      const {
-        error: activeSaveError,
-      } =
-        await supabase
-          .from("lead_flows")
-          .update({
-            active,
-            updated_at:
-              new Date().toISOString(),
-          })
-          .eq(
-            "id",
-            leadFlowId
-          )
-          .eq(
-            "user_id",
-            user.id
+        if (!user) {
+          alert(
+            "Your session could not be verified."
           );
 
-      if (activeSaveError) {
-        alert(
-          "Flowex could not save the automation status."
+          return false;
+        }
+
+        const {
+          error:
+            activeSaveError,
+        } =
+          await supabase
+            .from(
+              "lead_flows"
+            )
+            .update({
+              active,
+
+              updated_at:
+                new Date().toISOString(),
+            })
+            .eq(
+              "id",
+              leadFlowId
+            )
+            .eq(
+              "user_id",
+              user.id
+            );
+
+        if (
+          activeSaveError
+        ) {
+          alert(
+            "Flowex could not save the automation status."
+          );
+
+          return false;
+        }
+
+        if (
+          !storagePendingDelete &&
+          !storagePendingUnlink &&
+          savedStorageMode !== null &&
+          storageMode !==
+            savedStorageMode
+        ) {
+          if (
+            storageMode ===
+              "create_new" &&
+            !createdSheetId
+          ) {
+            alert(
+              "Create the new Google Sheet first, or switch back to your saved Existing Sheet."
+            );
+
+            return false;
+          }
+
+          if (
+            storageMode ===
+              "existing" &&
+            (
+              !existingSheetId ||
+              !existingSheetVerified
+            )
+          ) {
+            alert(
+              "Verify the existing Google Sheet first, or switch back to your saved Flowex-created Sheet."
+            );
+
+            return false;
+          }
+        }
+
+        if (
+          storagePendingDelete &&
+          createdSheetId
+        ) {
+          try {
+            await callGoogleDestination({
+              action:
+                "trash_created",
+
+              spreadsheetId:
+                createdSheetId,
+            });
+          } catch (
+            error
+          ) {
+            alert(
+              error instanceof
+                Error
+                ? error.message
+                : "Flowex could not delete this Google Sheet."
+            );
+
+            return false;
+          }
+
+          setCreatedSheetId(
+            ""
+          );
+
+          setCreatedSheetUrl(
+            ""
+          );
+
+          setSavedCreatedSheetId(
+            ""
+          );
+
+          setStoragePendingDelete(
+            false
+          );
+
+          setStorageConnected(
+            false
+          );
+
+          setStorageSpreadsheetUrl(
+            ""
+          );
+
+          setSavedStorageMode(
+            null
+          );
+        } else if (
+          storagePendingUnlink
+        ) {
+          try {
+            await callGoogleDestination({
+              action:
+                "unlink_existing",
+            });
+          } catch (
+            error
+          ) {
+            alert(
+              error instanceof
+                Error
+                ? error.message
+                : "Flowex could not unlink this Google Sheet."
+            );
+
+            return false;
+          }
+
+          setExistingSheetId(
+            ""
+          );
+
+          setExistingSheetUrl(
+            ""
+          );
+
+          setStorageDestination(
+            ""
+          );
+
+          setSavedExistingSheetId(
+            ""
+          );
+
+          setExistingSheetVerified(
+            false
+          );
+
+          setStoragePendingUnlink(
+            false
+          );
+
+          setStorageConnected(
+            false
+          );
+
+          setStorageSpreadsheetUrl(
+            ""
+          );
+
+          setSavedStorageMode(
+            null
+          );
+        } else {
+          const selectedSpreadsheetId =
+            storageMode ===
+              "create_new"
+              ? createdSheetId
+              : existingSheetId;
+
+          if (
+            selectedSpreadsheetId
+          ) {
+            let result:
+              Record<
+                string,
+                unknown
+              >;
+
+            try {
+              result =
+                await callGoogleDestination({
+                  action:
+                    "commit",
+
+                  mode:
+                    storageMode,
+
+                  displayName:
+                    storageName.trim() ||
+                    "Flowex Leads",
+
+                  spreadsheetId:
+                    selectedSpreadsheetId,
+
+                  destination:
+                    storageMode ===
+                      "existing"
+                      ? existingSheetUrl ||
+                        storageDestination
+                      : createdSheetUrl,
+
+                  createdByFlowex:
+                    storageMode ===
+                    "create_new",
+                });
+            } catch (
+              error
+            ) {
+              alert(
+                error instanceof
+                  Error
+                  ? error.message
+                  : "Flowex could not save the Google Sheets destination."
+              );
+
+              return false;
+            }
+
+            const savedUrl =
+              typeof result
+                ?.spreadsheetUrl ===
+                "string"
+                ? result.spreadsheetUrl
+                : storageSpreadsheetUrl;
+
+            setStorageConnected(
+              true
+            );
+
+            setStorageSpreadsheetUrl(
+              savedUrl
+            );
+
+            setSavedStorageMode(
+              storageMode
+            );
+
+            if (
+              storageMode ===
+              "create_new"
+            ) {
+              setCreatedSheetUrl(
+                savedUrl
+              );
+
+              setSavedCreatedSheetId(
+                selectedSpreadsheetId
+              );
+
+              /*
+                If the user prepared a new Flowex sheet while an
+                old existing-sheet destination was still saved,
+                the commit above replaces the Lead Flow destination.
+                The external existing sheet itself is never deleted.
+              */
+              setSavedExistingSheetId(
+                ""
+              );
+            } else {
+              setExistingSheetUrl(
+                savedUrl
+              );
+
+              setStorageDestination(
+                savedUrl
+              );
+
+              setSavedExistingSheetId(
+                selectedSpreadsheetId
+              );
+
+              setExistingSheetVerified(
+                true
+              );
+
+              /*
+                Avoid leaving an unused, newly-created draft Sheet
+                behind if the user ultimately saved Existing Sheet.
+              */
+              if (
+                createdSheetId &&
+                createdSheetId !==
+                  savedCreatedSheetId
+              ) {
+                try {
+                  await callGoogleDestination({
+                    action:
+                      "trash_created",
+
+                    spreadsheetId:
+                      createdSheetId,
+                  });
+
+                  setCreatedSheetId(
+                    ""
+                  );
+
+                  setCreatedSheetUrl(
+                    ""
+                  );
+                } catch {
+                  /*
+                    Destination save succeeded. An orphan-draft
+                    cleanup failure should not roll the automation
+                    back.
+                  */
+                }
+              }
+
+              setSavedCreatedSheetId(
+                ""
+              );
+            }
+          }
+        }
+
+        const automationData = {
+          active,
+          sourceType,
+          flowexFormTitle,
+          flowexFormFields,
+          storageType,
+          storageMode,
+          storageName,
+
+          storageDestination:
+            storagePendingDelete ||
+            storagePendingUnlink
+              ? ""
+              : storageMode ===
+                  "existing"
+                ? existingSheetUrl ||
+                  storageDestination
+                : createdSheetUrl,
+
+          replyType,
+
+          replyMessage:
+            currentReply,
+
+          companyEmail,
+          followUpEnabled,
+          followUpDelay,
+          followUpMessage,
+        };
+
+        localStorage.setItem(
+          `flowex-lead-capture:${leadFlowId}`,
+          JSON.stringify(
+            automationData
+          )
         );
+
+        setHasUnsavedChanges(
+          false
+        );
+
+        setIsEditingCreatedSheet(
+          false
+        );
+
+        if (
+          showSuccess
+        ) {
+          alert(
+            "Automation saved successfully!"
+          );
+        }
+
+        return true;
+      } finally {
+        setIsSavingAutomation(
+          false
+        );
+      }
+    };
+
+  const discardUnsavedDraft =
+    async () => {
+      /*
+        Only clean up a newly-created Sheet that was never saved
+        as this Lead Flow's destination. Saved Sheets are left intact.
+      */
+      if (
+        createdSheetId &&
+        createdSheetId !==
+          savedCreatedSheetId
+      ) {
+        try {
+          await callGoogleDestination({
+            action:
+              "trash_created",
+
+            spreadsheetId:
+              createdSheetId,
+          });
+        } catch {
+          // Navigation should not be blocked by draft cleanup failure.
+        }
+      }
+
+      setHasUnsavedChanges(
+        false
+      );
+    };
+
+  const requestNavigation =
+    (
+      path:
+        string
+    ) => {
+      if (
+        !hasUnsavedChanges
+      ) {
+        router.push(
+          path
+        );
+
         return;
       }
-    }
 
-    if (
-      !storageName.trim()
-    ) {
-      alert(
-        "Give this destination a name before saving."
+      setPendingNavigation(
+        path
       );
+
+      setShowUnsavedDialog(
+        true
+      );
+    };
+
+  useEffect(() => {
+    if (
+      !hasUnsavedChanges
+    ) {
       return;
     }
 
-    if (
-      storageType ===
-        "sheets" &&
-      !storageConnected
-    ) {
-      alert(
-        "Finish setting up the Google Sheets destination before saving this automation."
-      );
-      return;
-    }
-
-    const {
-      data:
-        currentDestination,
-      error:
-        destinationLoadError,
-    } =
-      await supabase
-        .from(
-          "lead_destinations"
-        )
-        .select(
-          "config"
-        )
-        .eq(
-          "lead_flow_id",
-          leadFlowId
-        )
-        .maybeSingle();
-
-    if (
-      destinationLoadError
-    ) {
-      alert(
-        "Flowex could not load the Step 02 destination."
-      );
-      return;
-    }
-
-    const {
-      error:
-        destinationSaveError,
-    } =
-      await supabase
-        .from(
-          "lead_destinations"
-        )
-        .upsert(
-          {
-            user_id:
-              user?.id,
-
-            lead_flow_id:
-              leadFlowId,
-
-            provider:
-              storageType,
-
-            mode:
-              storageMode,
-
-            display_name:
-              storageName.trim(),
-
-            config: {
-              ...(currentDestination
-                ?.config &&
-              typeof currentDestination
-                .config ===
-                "object"
-                ? currentDestination
-                    .config
-                : {}),
-
-              destination:
-                storageDestination.trim(),
-            },
-
-            connected:
-              storageConnected,
-
-            updated_at:
-              new Date().toISOString(),
-          },
-          {
-            onConflict:
-              "lead_flow_id",
-          }
-        );
-
-    if (
-      destinationSaveError
-    ) {
-      alert(
-        "Flowex could not save the Step 02 destination."
-      );
-      return;
-    }
-
-    localStorage.setItem(
-      `flowex-lead-capture:${leadFlowId}`,
-      JSON.stringify(automationData)
+    window.history.pushState(
+      {
+        flowexUnsavedGuard:
+          true,
+      },
+      "",
+      window.location.href
     );
 
-    alert("Automation saved successfully!");
-  };
+    const handlePopState =
+      () => {
+        setPendingNavigation(
+          "/lead-capture/dashboard"
+        );
+
+        setShowUnsavedDialog(
+          true
+        );
+
+        window.history.pushState(
+          {
+            flowexUnsavedGuard:
+              true,
+          },
+          "",
+          window.location.href
+        );
+      };
+
+    window.addEventListener(
+      "popstate",
+      handlePopState
+    );
+
+    return () => {
+      window.removeEventListener(
+        "popstate",
+        handlePopState
+      );
+    };
+  }, [
+    hasUnsavedChanges,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload =
+      (
+        event:
+          BeforeUnloadEvent
+      ) => {
+        if (
+          !hasUnsavedChanges
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+
+        event.returnValue =
+          "";
+      };
+
+    window.addEventListener(
+      "beforeunload",
+      handleBeforeUnload
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeunload",
+        handleBeforeUnload
+      );
+    };
+  }, [
+    hasUnsavedChanges,
+  ]);
 
   if (
     !authReady ||
@@ -2485,7 +3336,15 @@ export default function ManageLeadCapturePage() {
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
-          <Link href="/dashboard">
+          <button
+            type="button"
+            onClick={() =>
+              requestNavigation(
+                "/dashboard"
+              )
+            }
+            className="cursor-pointer"
+          >
             <Image
               src="/flowex-logo.png"
               alt="Flowex"
@@ -2493,22 +3352,35 @@ export default function ManageLeadCapturePage() {
               height={34}
               priority
             />
-          </Link>
+          </button>
 
           <div className="flex items-center gap-3">
 
-            <Link
-              href="/lead-capture/dashboard"
+            <button
+              type="button"
+              onClick={() =>
+                requestNavigation(
+                  "/lead-capture/dashboard"
+                )
+              }
               className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 app-dark:text-slate-300 app-dark:hover:bg-white/10 app-dark:hover:text-white"
             >
               Back
-            </Link>
+            </button>
 
             <button
-              onClick={saveChanges}
-              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5"
+              type="button"
+              onClick={() =>
+                void saveChanges()
+              }
+              disabled={
+                isSavingAutomation
+              }
+              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save Automation
+              {isSavingAutomation
+                ? "Saving..."
+                : "Save Automation"}
             </button>
 
           </div>
@@ -2602,9 +3474,15 @@ export default function ManageLeadCapturePage() {
                   active={
                     sourceType === "flowex"
                   }
-                  onClick={() =>
-                    setSourceType("flowex")
-                  }
+                  onClick={() => {
+                    setSourceType(
+                      "flowex"
+                    );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
+                  }}
                   title="Flowex Form"
                   description="Create a ready-to-use form."
                 />
@@ -2613,9 +3491,15 @@ export default function ManageLeadCapturePage() {
                   active={
                     sourceType === "external"
                   }
-                  onClick={() =>
-                    setSourceType("external")
-                  }
+                  onClick={() => {
+                    setSourceType(
+                      "external"
+                    );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
+                  }}
                   title="Lovable Form"
                   description="Connect a form built with Lovable."
                 />
@@ -2854,7 +3738,7 @@ export default function ManageLeadCapturePage() {
                       </p>
 
                       <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                        Create a clean lead sheet or use one you already have.
+                        A structured lead table with mapped columns.
                       </p>
                     </div>
 
@@ -2881,13 +3765,14 @@ export default function ManageLeadCapturePage() {
                   </p>
 
                   <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                    Browse Airtable, HubSpot, Slack, Webhook and more.
+                    Airtable, HubSpot, Slack, Webhook and more.
                   </p>
                 </button>
 
               </div>
 
-              {storageType === "sheets" && (
+              {storageType ===
+                "sheets" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2902,7 +3787,7 @@ export default function ManageLeadCapturePage() {
                           ? googleAccountEmail
                             ? `Connected as ${googleAccountEmail}`
                             : "Google account connected"
-                          : "Connect Google once. Every Lead Flow can then use its own sheet."}
+                          : "Connect Google once. All Lead Flows can then use separate sheets."}
                       </p>
                     </div>
 
@@ -2931,61 +3816,15 @@ export default function ManageLeadCapturePage() {
 
                   {googleAccountConnected && (
                     <>
-                      <div className="mt-5">
-
-                        <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                          Destination name
-                        </label>
-
-                        <input
-                          value={
-                            storageName
-                          }
-                          onChange={(
-                            event
-                          ) => {
-                            setStorageName(
-                              event.target.value
-                            );
-
-                            setStorageConnected(
-                              false
-                            );
-                          }}
-                          maxLength={
-                            80
-                          }
-                          placeholder="e.g. Website Leads"
-                          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                        />
-
-                      </div>
-
                       <div className="mt-5 grid gap-2 sm:grid-cols-2">
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setStorageMode(
+                          onClick={() =>
+                            selectStorageMode(
                               "create_new"
-                            );
-
-                            setStorageDestination(
-                              ""
-                            );
-
-                            setStorageSpreadsheetUrl(
-                              ""
-                            );
-
-                            setStorageConnected(
-                              false
-                            );
-
-                            setStorageError(
-                              ""
-                            );
-                          }}
+                            )
+                          }
                           className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                             storageMode ===
                             "create_new"
@@ -2998,27 +3837,11 @@ export default function ManageLeadCapturePage() {
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setStorageMode(
+                          onClick={() =>
+                            selectStorageMode(
                               "existing"
-                            );
-
-                            setStorageDestination(
-                              ""
-                            );
-
-                            setStorageSpreadsheetUrl(
-                              ""
-                            );
-
-                            setStorageConnected(
-                              false
-                            );
-
-                            setStorageError(
-                              ""
-                            );
-                          }}
+                            )
+                          }
                           className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                             storageMode ===
                             "existing"
@@ -3032,86 +3855,320 @@ export default function ManageLeadCapturePage() {
                       </div>
 
                       {storageMode ===
-                        "existing" && (
-                        <div className="mt-4">
+                        "create_new" && (
+                        <div className="mt-5">
 
-                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                            Google Sheet URL
-                          </label>
+                          {!createdSheetId ? (
+                            <>
+                              <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                New sheet name
+                              </label>
 
-                          <input
-                            value={
-                              storageDestination
-                            }
-                            onChange={(
-                              event
-                            ) => {
-                              setStorageDestination(
-                                event.target.value
-                              );
+                              <input
+                                value={
+                                  storageName
+                                }
+                                onChange={(
+                                  event
+                                ) => {
+                                  setStorageName(
+                                    event.target.value
+                                  );
 
-                              setStorageConnected(
-                                false
-                              );
-                            }}
-                            placeholder="https://docs.google.com/spreadsheets/d/..."
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-                          />
+                                  setHasUnsavedChanges(
+                                    true
+                                  );
+                                }}
+                                maxLength={
+                                  80
+                                }
+                                placeholder="e.g. Website Leads"
+                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                              />
+
+                              <button
+                                type="button"
+                                onClick={
+                                  prepareGoogleSheet
+                                }
+                                disabled={
+                                  isPreparingStorage
+                                }
+                                className="mt-4 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                              >
+                                {isPreparingStorage
+                                  ? "Creating..."
+                                  : "Create Sheet"}
+                              </button>
+                            </>
+                          ) : storagePendingDelete ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 p-4 app-dark:border-red-500/30 app-dark:bg-red-500/10">
+
+                              <p className="text-sm font-semibold text-red-700 app-dark:text-red-300">
+                                Sheet marked for deletion
+                              </p>
+
+                              <p className="mt-1 text-xs leading-5 text-red-600 app-dark:text-red-400">
+                                It will move to Google Drive Trash only after Save Automation.
+                              </p>
+
+                              <button
+                                type="button"
+                                onClick={
+                                  undoCreatedSheetDelete
+                                }
+                                className="mt-3 text-xs font-semibold text-red-700 underline app-dark:text-red-300"
+                              >
+                                Undo delete
+                              </button>
+
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-emerald-200 bg-white p-4 app-dark:border-emerald-500/30 app-dark:bg-[#11161d]">
+
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+                                <div>
+                                  <p className="text-sm font-semibold app-dark:text-white">
+                                    Sheet prepared
+                                  </p>
+
+                                  <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                                    Flowex created a real Google Sheets table from this Lead Flow&apos;s fields.
+                                  </p>
+                                </div>
+
+                                <span className="w-fit rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                                  READY
+                                </span>
+
+                              </div>
+
+                              {isEditingCreatedSheet ? (
+                                <div className="mt-4">
+
+                                  <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                    Sheet name
+                                  </label>
+
+                                  <input
+                                    value={
+                                      storageName
+                                    }
+                                    onChange={(
+                                      event
+                                    ) => {
+                                      setStorageName(
+                                        event.target.value
+                                      );
+
+                                      setHasUnsavedChanges(
+                                        true
+                                      );
+                                    }}
+                                    maxLength={
+                                      80
+                                    }
+                                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                                  />
+
+                                  <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
+                                    The Google Sheet will be renamed when you save the automation.
+                                  </p>
+
+                                </div>
+                              ) : null}
+
+                              <div className="mt-4 flex flex-wrap gap-3">
+
+                                {createdSheetUrl && (
+                                  <a
+                                    href={
+                                      createdSheetUrl
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                                  >
+                                    Open Sheet ↗
+                                  </a>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setIsEditingCreatedSheet(
+                                      (
+                                        current
+                                      ) =>
+                                        !current
+                                    )
+                                  }
+                                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                                >
+                                  {isEditingCreatedSheet
+                                    ? "Done editing"
+                                    : "Edit"}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={
+                                    markCreatedSheetDeleted
+                                  }
+                                  className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                                >
+                                  Delete
+                                </button>
+
+                              </div>
+
+                            </div>
+                          )}
 
                         </div>
                       )}
 
-                      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                      {storageMode ===
+                        "existing" && (
+                        <div className="mt-5">
 
-                        <button
-                          type="button"
-                          onClick={
-                            prepareGoogleSheet
-                          }
-                          disabled={
-                            isPreparingStorage
-                          }
-                          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
-                        >
-                          {isPreparingStorage
-                            ? "Preparing..."
-                            : storageMode ===
-                              "existing"
-                              ? "Verify & Use Sheet"
-                              : "Create Sheet"}
-                        </button>
+                          {storagePendingUnlink ? (
+                            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 app-dark:border-amber-500/30 app-dark:bg-amber-500/10">
 
-                        {storageConnected && (
-                          <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
-                            ✓ Destination ready
-                          </span>
-                        )}
+                              <p className="text-sm font-semibold text-amber-800 app-dark:text-amber-300">
+                                Existing sheet will be unlinked
+                              </p>
 
-                        {storageSpreadsheetUrl && (
-                          <a
-                            href={
-                              storageSpreadsheetUrl
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
-                          >
-                            Open Sheet ↗
-                          </a>
-                        )}
+                              <p className="mt-1 text-xs leading-5 text-amber-700 app-dark:text-amber-400">
+                                Flowex will stop sending this Lead Flow to it after Save Automation. The Google Sheet itself will not be deleted.
+                              </p>
 
+                              <button
+                                type="button"
+                                onClick={
+                                  undoExistingUnlink
+                                }
+                                className="mt-3 text-xs font-semibold text-amber-800 underline app-dark:text-amber-300"
+                              >
+                                Undo unlink
+                              </button>
+
+                            </div>
+                          ) : (
+                            <>
+                              <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                Google Sheet URL
+                              </label>
+
+                              <input
+                                value={
+                                  storageDestination
+                                }
+                                onChange={(
+                                  event
+                                ) => {
+                                  setStorageDestination(
+                                    event.target.value
+                                  );
+
+                                  setExistingSheetUrl(
+                                    event.target.value
+                                  );
+
+                                  setExistingSheetVerified(
+                                    false
+                                  );
+
+                                  setStorageConnected(
+                                    false
+                                  );
+
+                                  setHasUnsavedChanges(
+                                    true
+                                  );
+                                }}
+                                placeholder="https://docs.google.com/spreadsheets/d/..."
+                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                              />
+
+                              <div className="mt-4 flex flex-wrap items-center gap-3">
+
+                                <button
+                                  type="button"
+                                  onClick={
+                                    prepareGoogleSheet
+                                  }
+                                  disabled={
+                                    isPreparingStorage
+                                  }
+                                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                                >
+                                  {isPreparingStorage
+                                    ? "Verifying..."
+                                    : existingSheetVerified
+                                      ? "Verify Again"
+                                      : "Verify Sheet"}
+                                </button>
+
+                                {existingSheetVerified && (
+                                  <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                    ✓ Verified
+                                  </span>
+                                )}
+
+                                {existingSheetUrl && (
+                                  <a
+                                    href={
+                                      existingSheetUrl
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                  >
+                                    Open Sheet ↗
+                                  </a>
+                                )}
+
+                                {(existingSheetId ||
+                                  savedStorageMode ===
+                                    "existing") && (
+                                  <button
+                                    type="button"
+                                    onClick={
+                                      markExistingUnlinked
+                                    }
+                                    className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                                  >
+                                    Unlink
+                                  </button>
+                                )}
+
+                              </div>
+
+                              <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                                Verification does not save or restructure the sheet. Flowex maps existing columns, preserves unrelated columns, and applies the structured lead table only when Save Automation is clicked.
+                              </p>
+                            </>
+                          )}
+
+                        </div>
+                      )}
+
+                      {storageError && (
+                        <p className={`mt-4 text-xs font-medium ${
+                          storageConnected
+                            ? "text-emerald-600 app-dark:text-emerald-400"
+                            : "text-amber-600 app-dark:text-amber-400"
+                        }`}>
+                          {storageError}
+                        </p>
+                      )}
+
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
                       </div>
                     </>
-                  )}
-
-                  {storageError && (
-                    <p className={`mt-3 text-xs font-medium ${
-                      storageConnected
-                        ? "text-emerald-600 app-dark:text-emerald-400"
-                        : "text-amber-600 app-dark:text-amber-400"
-                    }`}>
-                      {storageError}
-                    </p>
                   )}
 
                 </div>
@@ -3230,6 +4287,10 @@ export default function ManageLeadCapturePage() {
                     setCustomReply(
                       replyTemplates.instant
                     );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
                   }}
                   title="Professional"
                   description="Short and business-focused."
@@ -3244,6 +4305,10 @@ export default function ManageLeadCapturePage() {
                     setCustomReply(
                       replyTemplates.friendly
                     );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
                   }}
                   title="Friendly"
                   description="More casual and welcoming."
@@ -3253,9 +4318,15 @@ export default function ManageLeadCapturePage() {
                   active={
                     replyType === "custom"
                   }
-                  onClick={() =>
-                    setReplyType("custom")
-                  }
+                  onClick={() => {
+                    setReplyType(
+                      "custom"
+                    );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
+                  }}
                   title="Custom"
                   description="Write your own response."
                 />
@@ -3275,6 +4346,10 @@ export default function ManageLeadCapturePage() {
                   setReplyType("custom");
                   setCustomReply(
                     e.target.value
+                  );
+
+                  setHasUnsavedChanges(
+                    true
                   );
                 }}
                 className="mt-5 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
@@ -3299,11 +4374,15 @@ export default function ManageLeadCapturePage() {
               <input
                 type="email"
                 value={companyEmail}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCompanyEmail(
                     e.target.value
-                  )
-                }
+                  );
+
+                  setHasUnsavedChanges(
+                    true
+                  );
+                }}
                 placeholder="team@company.com"
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
               />
@@ -3336,11 +4415,15 @@ export default function ManageLeadCapturePage() {
 
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setFollowUpEnabled(
                       !followUpEnabled
-                    )
-                  }
+                    );
+
+                    setHasUnsavedChanges(
+                      true
+                    );
+                  }}
                   className={`relative h-7 w-12 rounded-full transition ${
                     followUpEnabled
                       ? "bg-emerald-500"
@@ -3369,11 +4452,15 @@ export default function ManageLeadCapturePage() {
 
                     <select
                       value={followUpDelay}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setFollowUpDelay(
                           e.target.value
-                        )
-                      }
+                        );
+
+                        setHasUnsavedChanges(
+                          true
+                        );
+                      }}
                       className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
                     >
                       <option value="1">
@@ -3403,11 +4490,15 @@ export default function ManageLeadCapturePage() {
                   <textarea
                     rows={3}
                     value={followUpMessage}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFollowUpMessage(
                         e.target.value
-                      )
-                    }
+                      );
+
+                      setHasUnsavedChanges(
+                        true
+                      );
+                    }}
                     className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
                   />
 
@@ -3427,7 +4518,9 @@ export default function ManageLeadCapturePage() {
             </p>
 
             <button
-              onClick={saveChanges}
+              onClick={() => {
+               void saveChanges();
+             }}
               className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
             >
               Save Automation
@@ -3852,6 +4945,111 @@ export default function ManageLeadCapturePage() {
         </div>
       )}
 
+
+
+      {showUnsavedDialog && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+
+          <div className="w-full max-w-md rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+
+            <h3 className="text-xl font-bold app-dark:text-white">
+              Save your changes?
+            </h3>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+              You have changes in this Lead Flow that have not been saved yet.
+            </p>
+
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUnsavedDialog(
+                    false
+                  );
+
+                  setPendingNavigation(
+                    ""
+                  );
+                }}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const path =
+                    pendingNavigation;
+
+                  await discardUnsavedDraft();
+
+                  setShowUnsavedDialog(
+                    false
+                  );
+
+                  setPendingNavigation(
+                    ""
+                  );
+
+                  if (path) {
+                    router.push(
+                      path
+                    );
+                  }
+                }}
+                className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+              >
+                Discard changes
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  isSavingAutomation
+                }
+                onClick={async () => {
+                  const saved =
+                    await saveChanges(
+                      false
+                    );
+
+                  if (!saved) {
+                    return;
+                  }
+
+                  const path =
+                    pendingNavigation;
+
+                  setShowUnsavedDialog(
+                    false
+                  );
+
+                  setPendingNavigation(
+                    ""
+                  );
+
+                  if (path) {
+                    router.push(
+                      path
+                    );
+                  }
+                }}
+                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingAutomation
+                  ? "Saving..."
+                  : "Save & leave"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </main>
   );

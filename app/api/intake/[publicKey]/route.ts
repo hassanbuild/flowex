@@ -277,66 +277,148 @@ function getExternalOrigin(config: unknown) {
 
 
 async function sendLeadToGoogleSheets(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ReturnType<
+    typeof createAdminClient
+  >,
   lead: NormalizedLead
 ) {
   if (!lead.leadFlowId) {
     return;
   }
 
-  const { data: destination } = await supabase
-    .from("lead_destinations")
-    .select("connected, config")
-    .eq("lead_flow_id", lead.leadFlowId)
-    .eq("provider", "sheets")
-    .maybeSingle();
-
-  if (!destination || destination.connected !== true) {
-    return;
-  }
-
-  const config = destination.config as {
-    spreadsheet_id?: unknown;
-    field_keys?: unknown;
-  } | null;
-
-  const spreadsheetId =
-    typeof config?.spreadsheet_id === "string"
-      ? config.spreadsheet_id
-      : "";
-
-  const fieldKeys =
-    Array.isArray(config?.field_keys)
-      ? config.field_keys.filter(
-          (value): value is string =>
-            typeof value === "string"
-        )
-      : [];
-
-  if (!spreadsheetId) {
-    return;
-  }
-
-  const { data: connection } = await supabase
-    .from("integration_connections")
-    .select("credentials")
-    .eq("user_id", lead.userId)
-    .eq("provider", "google_sheets")
-    .maybeSingle();
+  const {
+    data:
+      destination,
+  } =
+    await supabase
+      .from(
+        "lead_destinations"
+      )
+      .select(
+        "connected, config"
+      )
+      .eq(
+        "lead_flow_id",
+        lead.leadFlowId
+      )
+      .eq(
+        "provider",
+        "sheets"
+      )
+      .maybeSingle();
 
   if (
-    !connection?.credentials ||
-    typeof connection.credentials !== "object"
+    !destination ||
+    destination.connected !==
+      true
   ) {
     return;
   }
 
-  const oauth2Client = createGoogleOAuthClient();
-  oauth2Client.setCredentials(connection.credentials);
+  const config =
+    destination.config as {
+      spreadsheet_id?: unknown;
+      sheet_title?: unknown;
+      table_id?: unknown;
+      column_keys?: unknown;
+      field_keys?: unknown;
+    } | null;
+
+  const spreadsheetId =
+    typeof config
+      ?.spreadsheet_id ===
+      "string"
+      ? config.spreadsheet_id
+      : "";
+
+  const sheetTitle =
+    typeof config
+      ?.sheet_title ===
+      "string"
+      ? config.sheet_title
+      : "Sheet1";
+
+  const tableId =
+    typeof config
+      ?.table_id ===
+      "string"
+      ? config.table_id
+      : "";
+
+  const columnKeys =
+    Array.isArray(
+      config?.column_keys
+    )
+      ? config.column_keys.filter(
+          (
+            value
+          ): value is string =>
+            typeof value ===
+            "string"
+        )
+      : Array.isArray(
+          config?.field_keys
+        )
+        ? config.field_keys.filter(
+            (
+              value
+            ): value is string =>
+              typeof value ===
+              "string"
+          )
+        : [];
+
+  if (
+    !spreadsheetId ||
+    columnKeys.length ===
+      0
+  ) {
+    return;
+  }
+
+  const {
+    data:
+      connection,
+  } =
+    await supabase
+      .from(
+        "integration_connections"
+      )
+      .select(
+        "credentials"
+      )
+      .eq(
+        "user_id",
+        lead.userId
+      )
+      .eq(
+        "provider",
+        "google_sheets"
+      )
+      .maybeSingle();
+
+  if (
+    !connection
+      ?.credentials ||
+    typeof connection
+      .credentials !==
+      "object"
+  ) {
+    return;
+  }
+
+  const oauth2Client =
+    createGoogleOAuthClient();
+
+  oauth2Client.setCredentials(
+    connection.credentials
+  );
 
   oauth2Client.on(
     "tokens",
-    async (tokens) => {
+    async (
+      tokens
+    ) => {
       if (
         !tokens.access_token &&
         !tokens.refresh_token
@@ -345,52 +427,237 @@ async function sendLeadToGoogleSheets(
       }
 
       const current =
-        connection.credentials as Record<string, unknown>;
+        connection.credentials as Record<
+          string,
+          unknown
+        >;
 
       await supabase
-        .from("integration_connections")
+        .from(
+          "integration_connections"
+        )
         .update({
           credentials: {
             ...current,
             ...tokens,
+
             refresh_token:
               tokens.refresh_token ||
               current.refresh_token,
           },
+
           updated_at:
             new Date().toISOString(),
         })
-        .eq("user_id", lead.userId)
-        .eq("provider", "google_sheets");
+        .eq(
+          "user_id",
+          lead.userId
+        )
+        .eq(
+          "provider",
+          "google_sheets"
+        );
     }
   );
 
-  const sheets = google.sheets({
-    version: "v4",
-    auth: oauth2Client,
-  });
+  const sheets =
+    google.sheets({
+      version:
+        "v4",
+      auth:
+        oauth2Client,
+    });
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: "A:ZZ",
-    valueInputOption: "USER_ENTERED",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: {
-      values: [
-        [
-          ...fieldKeys.map(
-            (key) =>
-              key === "__captured_at"
-                ? lead.receivedAt
-                : key
-                  ? lead.fields[key] ?? ""
-                  : ""
-          ),
+  const date =
+    new Date(
+      lead.receivedAt
+    );
+
+  const sheetDateSerial =
+    date.getTime() /
+      86400000 +
+    25569;
+
+  const row =
+    columnKeys.map(
+      (
+        key
+      ) => {
+        if (
+          key ===
+          "__lead_date" ||
+          key ===
+          "__captured_at"
+        ) {
+          return sheetDateSerial;
+        }
+
+        if (
+          key ===
+          "__email"
+        ) {
+          return (
+            lead.contact
+              .email ||
+            ""
+          );
+        }
+
+        if (
+          key ===
+          "__phone"
+        ) {
+          return (
+            lead.contact
+              .phone ||
+            ""
+          );
+        }
+
+        return key
+          ? lead.fields[
+              key
+            ] ??
+              ""
+          : "";
+      }
+    );
+
+  const safeTitle =
+    sheetTitle.replace(
+      /'/g,
+      "''"
+    );
+
+  const appendResult =
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+
+      range:
+        `'${safeTitle}'!A:ZZ`,
+
+      valueInputOption:
+        "RAW",
+
+      insertDataOption:
+        "INSERT_ROWS",
+
+      includeValuesInResponse:
+        true,
+
+      requestBody: {
+        values: [
+          row,
         ],
+      },
+    });
+
+  if (!tableId) {
+    return;
+  }
+
+  const updatedRange =
+    appendResult.data
+      .updates
+      ?.updatedRange ||
+    "";
+
+  const rowMatch =
+    updatedRange.match(
+      /!(?:[A-Z]+)(\d+):/
+    );
+
+  const appendedRow =
+    rowMatch?.[1]
+      ? Number(
+          rowMatch[1]
+        )
+      : 0;
+
+  if (
+    !Number.isFinite(
+      appendedRow
+    ) ||
+    appendedRow <=
+      0
+  ) {
+    return;
+  }
+
+  const spreadsheet =
+    await sheets.spreadsheets.get({
+      spreadsheetId,
+
+      fields:
+        "sheets(properties(sheetId),tables(tableId,name,range,rowsProperties,columnProperties))",
+    });
+
+  const sheet =
+    spreadsheet.data
+      .sheets?.[0];
+
+  const table =
+    sheet?.tables?.find(
+      (
+        item
+      ) =>
+        item.tableId ===
+        tableId
+    );
+
+  const sheetId =
+    sheet?.properties
+      ?.sheetId;
+
+  if (
+    !table ||
+    typeof sheetId !==
+      "number"
+  ) {
+    return;
+  }
+
+  const currentEndRow =
+    table.range
+      ?.endRowIndex ||
+    0;
+
+  if (
+    currentEndRow >=
+    appendedRow
+  ) {
+    return;
+  }
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+
+    requestBody: {
+      requests: [
+        {
+          updateTable: {
+            table: {
+              ...table,
+
+              range: {
+                ...table.range,
+
+                sheetId,
+
+                endRowIndex:
+                  appendedRow,
+              },
+            },
+
+            fields:
+              "range",
+          },
+        } as any,
       ],
     },
   });
 }
+
 
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
