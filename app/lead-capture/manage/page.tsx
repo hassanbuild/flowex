@@ -376,6 +376,8 @@ export default function ManageLeadCapturePage() {
 
   const [leadFlowId, setLeadFlowId] = useState("");
   const [leadFlowName, setLeadFlowName] = useState("");
+  const [leadFlowNameDraft, setLeadFlowNameDraft] = useState("");
+  const [isEditingLeadFlowName, setIsEditingLeadFlowName] = useState(false);
   const [flowReady, setFlowReady] = useState(false);
 
   const [supabase] = useState(() =>
@@ -422,6 +424,7 @@ export default function ManageLeadCapturePage() {
 
       setLeadFlowId(data.id);
       setLeadFlowName(data.name || "Lead Flow");
+      setLeadFlowNameDraft(data.name || "Lead Flow");
       setFlowReady(true);
     };
 
@@ -2856,6 +2859,10 @@ export default function ManageLeadCapturePage() {
             )
             .update({
               active,
+              name:
+                leadFlowNameDraft.trim() ||
+                leadFlowName ||
+                "Lead Flow",
 
               updated_at:
                 new Date().toISOString(),
@@ -2878,6 +2885,23 @@ export default function ManageLeadCapturePage() {
 
           return false;
         }
+
+        const savedLeadFlowName =
+          leadFlowNameDraft.trim() ||
+          leadFlowName ||
+          "Lead Flow";
+
+        setLeadFlowName(
+          savedLeadFlowName
+        );
+
+        setLeadFlowNameDraft(
+          savedLeadFlowName
+        );
+
+        setIsEditingLeadFlowName(
+          false
+        );
 
         if (
           !storagePendingDelete &&
@@ -3470,9 +3494,73 @@ export default function ManageLeadCapturePage() {
                 LEAD CAPTURE
               </p>
 
-              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
-                {leadFlowName || "Automation Flow"}
-              </h1>
+              <div className="mt-2 flex items-center gap-3">
+                {isEditingLeadFlowName ? (
+                  <input
+                    type="text"
+                    value={leadFlowNameDraft}
+                    onChange={(event) => {
+                      setLeadFlowNameDraft(
+                        event.target.value
+                      );
+
+                      setHasUnsavedChanges(
+                        true
+                      );
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        setIsEditingLeadFlowName(
+                          false
+                        );
+                      }
+
+                      if (event.key === "Escape") {
+                        setLeadFlowNameDraft(
+                          leadFlowName
+                        );
+
+                        setIsEditingLeadFlowName(
+                          false
+                        );
+                      }
+                    }}
+                    autoFocus
+                    maxLength={80}
+                    className="min-w-0 max-w-xl rounded-xl border border-gray-200 bg-white px-3 py-2 text-3xl font-black text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 sm:text-4xl app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                    aria-label="Lead Flow name"
+                  />
+                ) : (
+                  <h1 className="text-3xl font-black sm:text-4xl app-dark:text-white">
+                    {leadFlowName || "Automation Flow"}
+                  </h1>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isEditingLeadFlowName) {
+                      const nextName =
+                        leadFlowNameDraft.trim();
+
+                      if (!nextName) {
+                        setLeadFlowNameDraft(
+                          leadFlowName
+                        );
+                      }
+                    }
+
+                    setIsEditingLeadFlowName(
+                      (current) => !current
+                    );
+                  }}
+                  className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 hover:text-gray-900 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
+                >
+                  {isEditingLeadFlowName
+                    ? "Done"
+                    : "Rename"}
+                </button>
+              </div>
 
               <p className="mt-2 max-w-xl text-gray-500 app-dark:text-slate-400">
                 Build your lead workflow from capture to follow-up.

@@ -56,6 +56,12 @@ export default function LeadCaptureDashboard() {
   const [leadFlowError, setLeadFlowError] =
     useState("");
 
+  const [isLeadFlowNameModalOpen, setIsLeadFlowNameModalOpen] =
+    useState(false);
+
+  const [newLeadFlowName, setNewLeadFlowName] =
+    useState("");
+
   const [leadsToday, setLeadsToday] =
     useState(0);
 
@@ -227,10 +233,27 @@ export default function LeadCaptureDashboard() {
     );
   };
 
-  const createLeadFlow = async () => {
+  const openLeadFlowNameModal = () => {
     if (
       isCreatingLeadFlow ||
       leadFlows.length >= 3
+    ) {
+      return;
+    }
+
+    setLeadFlowError("");
+    setNewLeadFlowName("");
+    setIsLeadFlowNameModalOpen(true);
+  };
+
+  const createLeadFlow = async () => {
+    const requestedName =
+      newLeadFlowName.trim();
+
+    if (
+      isCreatingLeadFlow ||
+      leadFlows.length >= 3 ||
+      !requestedName
     ) {
       return;
     }
@@ -282,7 +305,7 @@ export default function LeadCaptureDashboard() {
           .from("lead_flows")
           .insert({
             user_id: user.id,
-            name: `Lead Flow ${nextSlot}`,
+            name: requestedName,
             slot: nextSlot,
           })
           .select("id, name, slot, active")
@@ -315,6 +338,9 @@ export default function LeadCaptureDashboard() {
       selectLeadFlow(
         data.id
       );
+
+      setIsLeadFlowNameModalOpen(false);
+      setNewLeadFlowName("");
 
       router.push(
         `/lead-capture/manage?flowId=${encodeURIComponent(
@@ -894,7 +920,7 @@ export default function LeadCaptureDashboard() {
                               false
                             );
 
-                            void createLeadFlow();
+                            openLeadFlowNameModal();
                           }}
                           disabled={
                             isCreatingLeadFlow
@@ -1260,7 +1286,7 @@ export default function LeadCaptureDashboard() {
                 <button
                   type="button"
                   onClick={() =>
-                    void createLeadFlow()
+                    openLeadFlowNameModal()
                   }
                   disabled={
                     isCreatingLeadFlow
@@ -1279,6 +1305,71 @@ export default function LeadCaptureDashboard() {
         </div>
 
       </section>
+
+      {isLeadFlowNameModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[28px] border border-gray-200 bg-white p-7 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+            <h2 className="text-2xl font-black app-dark:text-white">
+              Name your Lead Flow
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
+              Give this Lead Flow a name you will recognize later.
+            </p>
+
+            <input
+              type="text"
+              value={newLeadFlowName}
+              onChange={(event) =>
+                setNewLeadFlowName(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  newLeadFlowName.trim() &&
+                  !isCreatingLeadFlow
+                ) {
+                  void createLeadFlow();
+                }
+              }}
+              maxLength={80}
+              autoFocus
+              placeholder="e.g. Website Leads"
+              className="mt-5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-emerald-500 app-dark:focus:ring-emerald-500/10"
+            />
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isCreatingLeadFlow) {
+                    setIsLeadFlowNameModalOpen(false);
+                    setNewLeadFlowName("");
+                  }
+                }}
+                disabled={isCreatingLeadFlow}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void createLeadFlow()}
+                disabled={
+                  isCreatingLeadFlow ||
+                  !newLeadFlowName.trim()
+                }
+                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCreatingLeadFlow
+                  ? "Creating..."
+                  : "Create Lead Flow"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================= FOOTER ================= */}
 
