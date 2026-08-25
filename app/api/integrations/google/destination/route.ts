@@ -1006,19 +1006,24 @@ async function createOrUpdateTable(
   }
 
   const result =
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
 
-      requestBody: {
-        requests: [
-          {
-            addTable: {
-              table,
-            },
-          } as any,
-        ],
-      },
-    });
+    requestBody: {
+      requests: [
+        {
+          clearBasicFilter: {
+            sheetId,
+          },
+        },
+        {
+          addTable: {
+            table,
+          },
+        } as any,
+      ],
+    },
+  });
 
   const reply =
     (

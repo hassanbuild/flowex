@@ -2255,8 +2255,25 @@ export default function ManageLeadCapturePage() {
           }
         );
 
-      const result =
-        await response.json();
+      const responseText =
+        await response.text();
+
+      let result: any = {};
+
+      if (responseText) {
+        try {
+          result =
+            JSON.parse(
+              responseText
+            );
+        } catch {
+          throw new Error(
+            response.ok
+              ? "Flowex received an unexpected response from Google Sheets."
+              : "Flowex could not update Google Sheets. The server returned an unexpected response."
+          );
+        }
+      }
 
       if (
         !response.ok
