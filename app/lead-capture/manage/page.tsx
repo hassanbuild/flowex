@@ -517,6 +517,9 @@ export default function ManageLeadCapturePage() {
   const [isSavingFlowexForm, setIsSavingFlowexForm] =
     useState(false);
 
+  const [isRemovingFlowexForm, setIsRemovingFlowexForm] =
+    useState(false);
+
   const [copiedFormLink, setCopiedFormLink] =
     useState(false);
 
@@ -1766,6 +1769,63 @@ export default function ManageLeadCapturePage() {
       setIsSavingFlowexForm(
         false
       );
+    }
+  };
+
+  const removeFlowexForm = async () => {
+    if (
+      isRemovingFlowexForm ||
+      !flowexFormSourceId
+    ) {
+      return;
+    }
+
+    setFormCustomizerError("");
+    setIsRemovingFlowexForm(true);
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setFormCustomizerError(
+          "Your session could not be verified. Please log in again."
+        );
+        return;
+      }
+
+      const { error } = await supabase
+        .from("lead_sources")
+        .delete()
+        .eq("id", flowexFormSourceId)
+        .eq("user_id", user.id)
+        .eq("lead_flow_id", leadFlowId);
+
+      if (error) {
+        setFormCustomizerError(
+          error.message ||
+            "Flowex could not remove this form."
+        );
+        return;
+      }
+
+      setFlowexFormSourceId(null);
+      setFlowexFormSlug("");
+      setFlowexFormTitle("");
+      setFlowexFormFields([]);
+      setSelectedFlowexField("");
+      setCopiedFormLink(false);
+      setShowFormCustomizer(false);
+      setSourceType("external");
+      setHasUnsavedChanges(true);
+    } catch {
+      setFormCustomizerError(
+        "Flowex could not remove this form."
+      );
+    } finally {
+      setIsRemovingFlowexForm(false);
     }
   };
 
@@ -3632,6 +3692,9 @@ export default function ManageLeadCapturePage() {
                   active={
                     sourceType === "flowex"
                   }
+                  disabled={
+                    !!externalSourceId
+                  }
                   onClick={() => {
                     setSourceType(
                       "flowex"
@@ -3648,6 +3711,9 @@ export default function ManageLeadCapturePage() {
                 <Option
                   active={
                     sourceType === "external"
+                  }
+                  disabled={
+                    !!flowexFormSourceId
                   }
                   onClick={() => {
                     setSourceType(
@@ -3675,6 +3741,12 @@ export default function ManageLeadCapturePage() {
 
               </div>
 
+              {(flowexFormSourceId || externalSourceId) && (
+                <p className="mt-3 text-xs font-medium text-gray-400 app-dark:text-slate-500">
+                  One lead source at a time. Remove the current source before switching to another.
+                </p>
+              )}
+
               {sourceType === "flowex" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
@@ -3694,16 +3766,29 @@ export default function ManageLeadCapturePage() {
 
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormCustomizerError("");
-                        setShowFormCustomizer(true);
-                      }}
-                      className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                    >
-                      Customize
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormCustomizerError("");
+                          setShowFormCustomizer(true);
+                        }}
+                        className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                      >
+                        Customize
+                      </button>
+
+                      {flowexFormSourceId && (
+                        <button
+                          type="button"
+                          onClick={() => void removeFlowexForm()}
+                          disabled={isRemovingFlowexForm}
+                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          {isRemovingFlowexForm ? "Removing..." : "Remove"}
+                        </button>
+                      )}
+                    </div>
 
                   </div>
 
@@ -5510,11 +5595,13 @@ function FlowStep({
 
 function Option({
   active,
+  disabled = false,
   onClick,
   title,
   description,
 }: {
   active: boolean;
+  disabled?: boolean;
   onClick: () => void;
   title: string;
   description: string;
@@ -5523,10 +5610,11 @@ function Option({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl border p-3 text-left transition-all ${
+      disabled={disabled}
+      className={`rounded-xl border p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-45 ${
         active
           ? "border-cyan-400 bg-cyan-50/60 shadow-sm ring-2 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10"
-          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-slate-600 app-dark:hover:bg-slate-900"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 disabled:hover:border-gray-200 disabled:hover:bg-white app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-slate-600 app-dark:hover:bg-slate-900 app-dark:disabled:hover:border-slate-700 app-dark:disabled:hover:bg-[#0b0f14]"
       }`}
     >
 
