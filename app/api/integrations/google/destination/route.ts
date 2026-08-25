@@ -281,7 +281,7 @@ function canonicalHeader(
       "contact"
     )
   ) {
-    return "Contact";
+    return "Phone";
   }
 
   if (
@@ -385,7 +385,7 @@ function buildDesiredColumns(
     SheetColumn[] = [
       {
         header:
-          "Lead Date",
+          "Date",
 
         key:
           "__lead_date",
@@ -398,7 +398,7 @@ function buildDesiredColumns(
   const usedHeaders =
     new Set<string>([
       normalizeSheetHeader(
-        "Lead Date"
+        "Date"
       ),
     ]);
 
@@ -1055,7 +1055,7 @@ async function polishSheet(
                 "MIDDLE",
 
               wrapStrategy:
-                "WRAP",
+                "CLIP",
             },
           },
 
@@ -1078,37 +1078,101 @@ async function polishSheet(
 
           properties: {
             pixelSize:
-              38,
+              30,
           },
 
           fields:
             "pixelSize",
         },
       },
+    ];
 
-      {
-        autoResizeDimensions: {
-          dimensions: {
+  headers.forEach(
+    (
+      header,
+      index
+    ) => {
+      const key =
+        columnKeys[index] ||
+        "";
+
+      let pixelSize =
+        165;
+
+      if (
+        key ===
+        "__lead_date"
+      ) {
+        pixelSize =
+          110;
+      } else if (
+        key ===
+        "__email"
+      ) {
+        pixelSize =
+          210;
+      } else if (
+        key ===
+        "__phone"
+      ) {
+        pixelSize =
+          145;
+      } else if (
+        normalizeSheetHeader(
+          header
+        ) ===
+        normalizeSheetHeader(
+          "Name"
+        )
+      ) {
+        pixelSize =
+          165;
+      } else if (
+        normalizeSheetHeader(
+          header
+        ) ===
+        normalizeSheetHeader(
+          "Company"
+        )
+      ) {
+        pixelSize =
+          165;
+      } else if (
+        normalizeSheetHeader(
+          header
+        ) ===
+        normalizeSheetHeader(
+          "Website"
+        )
+      ) {
+        pixelSize =
+          210;
+      }
+
+      requests.push({
+        updateDimensionProperties: {
+          range: {
             sheetId,
             dimension:
               "COLUMNS",
             startIndex:
-              0,
+              index,
             endIndex:
-              Math.max(
-                headers.length,
-                1
-              ),
+              index +
+              1,
           },
-        },
-      },
-    ];
 
-  columnKeys.forEach(
-    (
-      key,
-      index
-    ) => {
+          properties: {
+            pixelSize,
+            hiddenByUser:
+              false,
+          },
+
+          fields:
+            "pixelSize,hiddenByUser",
+        },
+      });
+
       if (
         key !==
         "__phone"
