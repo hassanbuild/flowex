@@ -573,124 +573,75 @@ function mapExistingColumns(
   existingHeaders: string[],
   desiredColumns: SheetColumn[]
 ) {
-  const headers =
-    existingHeaders.map(
-      (
-        value
-      ) =>
-        String(
-          value
-        ).trim()
+  const normalizedExisting = existingHeaders.map((value) => String(value).trim());
+  const usedExisting = new Set<number>();
+  const headers: string[] = [];
+  const columnKeys: string[] = [];
+  const columnTypes: ("DATE" | "TEXT")[] = [];
+  const sourceIndexes: number[] = [];
+
+  for (const column of desiredColumns) {
+    const matchIndex = normalizedExisting.findIndex(
+      (header, existingIndex) =>
+        !usedExisting.has(existingIndex) &&
+        !!header &&
+        headerAliases(column).has(normalizeSheetHeader(header))
     );
 
-  const columnKeys =
-    headers.map(
-      () =>
-        ""
-    );
+    headers.push(column.header);
+    columnKeys.push(column.key);
+    columnTypes.push(column.columnType);
+    sourceIndexes.push(matchIndex);
 
-  const columnTypes:
-    (
-      | "DATE"
-      | "TEXT"
-    )[] =
-    headers.map(
-      () =>
-        "TEXT"
-    );
-
-  const usedDesired =
-    new Set<number>();
-
-  for (
-    let index = 0;
-    index <
-    headers.length;
-    index += 1
-  ) {
-    const existing =
-      normalizeSheetHeader(
-        headers[
-          index
-        ]
-      );
-
-    if (!existing) {
-      continue;
-    }
-
-    const matchIndex =
-      desiredColumns.findIndex(
-        (
-          column,
-          desiredIndex
-        ) =>
-          !usedDesired.has(
-            desiredIndex
-          ) &&
-          headerAliases(
-            column
-          ).has(
-            existing
-          )
-      );
-
-    if (
-      matchIndex !==
-      -1
-    ) {
-      columnKeys[
-        index
-      ] =
-        desiredColumns[
-          matchIndex
-        ].key;
-
-      columnTypes[
-        index
-      ] =
-        desiredColumns[
-          matchIndex
-        ].columnType;
-
-      usedDesired.add(
-        matchIndex
-      );
-    }
+    if (matchIndex !== -1) usedExisting.add(matchIndex);
   }
 
-  desiredColumns.forEach(
-    (
-      column,
-      index
-    ) => {
-      if (
-        usedDesired.has(
-          index
-        )
-      ) {
-        return;
-      }
+  normalizedExisting.forEach((header, index) => {
+    if (!header || usedExisting.has(index)) return;
+    headers.push(header);
+    columnKeys.push("");
+    columnTypes.push("TEXT");
+    sourceIndexes.push(index);
+  });
 
-      headers.push(
-        column.header
-      );
+  const missingRequiredColumns = sourceIndexes
+    .slice(0, desiredColumns.length)
+    .filter((index) => index === -1).length;
 
-      columnKeys.push(
-        column.key
-      );
+  return { headers, columnKeys, columnTypes, sourceIndexes, missingRequiredColumns };
+}
 
-      columnTypes.push(
-        column.columnType
-      );
-    }
+async function rewriteExistingSheetData(
+  sheets: ReturnType<typeof google.sheets>,
+  spreadsheetId: string,
+  sheetTitle: string,
+  headers: string[],
+  sourceIndexes: number[]
+) {
+  const safeTitle = sheetTitle.replace(/'/g, "''");
+  const result = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${safeTitle}'!A:ZZ`,
+  });
+
+  const existingRows = result.data.values || [];
+  const rewrittenRows = existingRows.slice(1).map((row) =>
+    sourceIndexes.map((sourceIndex) =>
+      sourceIndex >= 0 ? row[sourceIndex] ?? "" : ""
+    )
   );
 
-  return {
-    headers,
-    columnKeys,
-    columnTypes,
-  };
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range: `'${safeTitle}'!A:ZZ`,
+  });
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${safeTitle}'!A1`,
+    valueInputOption: "RAW",
+    requestBody: { values: [headers, ...rewrittenRows] },
+  });
 }
 
 async function getGoogleConnection(
@@ -1237,119 +1188,55 @@ async function writeHeaders(
 }
 
 async function prepareExisting(
-  sheets: ReturnType<
-    typeof google.sheets
-  >,
+  sheets: ReturnType<typeof google.sheets>,
   spreadsheetId: string,
   desiredColumns: SheetColumn[],
   preferredSheetId?: number | null
 ) {
-  const meta =
-    await getFirstSheetMeta(
-      sheets,
-      spreadsheetId,
-      preferredSheetId
-    );
+  const meta = await getFirstSheetMeta(
+    sheets,
+    spreadsheetId,
+    preferredSheetId
+  );
 
-  const safeTitle =
-    meta.sheetTitle.replace(
-      /'/g,
-      "''"
-    );
-
-  const result =
-    await sheets.spreadsheets.values.get({
-      spreadsheetId,
-
-      range:
-        `'${safeTitle}'!1:1`,
+  const safeTitle = meta.sheetTitle.replace(/'/g, "''");
+  const result = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${safeTitle}'!1:1`,
   });
 
-  const existingHeaders =
-    (
-      result.data
-        .values?.[0] ||
-      []
-    ).map(
-      (
-        value
-      ) =>
-        String(
-          value
-        ).trim()
-    );
+  const existingHeaders = (result.data.values?.[0] || []).map((value) =>
+    String(value).trim()
+  );
 
-  const mapped =
-    existingHeaders.length
-      ? mapExistingColumns(
-          existingHeaders,
-          desiredColumns
-        )
-      : {
-          headers:
-            desiredColumns.map(
-              (
-                column
-              ) =>
-                column.header
-            ),
-
-          columnKeys:
-            desiredColumns.map(
-              (
-                column
-              ) =>
-                column.key
-            ),
-
-          columnTypes:
-            desiredColumns.map(
-              (
-                column
-              ) =>
-                column.columnType
-            ),
-        };
-
-  const originalHeaderCount =
-    existingHeaders.filter(
-      Boolean
-    ).length;
-
-  const mappedRequiredCount =
-    mapped.columnKeys.filter(
-      Boolean
-    ).length;
-
-  const missingRequiredColumns =
-    Math.max(
-      desiredColumns.length -
-        mappedRequiredCount,
-      0
-    );
-
-  const hasRealTable =
-    !!meta.table;
-
+  const mapped = mapExistingColumns(existingHeaders, desiredColumns);
+  const originalHeaderCount = existingHeaders.filter(Boolean).length;
+  const hasRealTable = !!meta.table;
   const hasUsefulHeaders =
-    originalHeaderCount >=
-    Math.min(
-      2,
-      desiredColumns.length
+    originalHeaderCount >= Math.min(2, desiredColumns.length);
+  const currentHeaders = existingHeaders.filter(Boolean);
+
+  const isCanonicalLayout =
+    currentHeaders.length === mapped.headers.length &&
+    mapped.headers.every(
+      (header, index) =>
+        normalizeSheetHeader(currentHeaders[index] || "") ===
+        normalizeSheetHeader(header)
     );
 
   const needsStructure =
     !hasRealTable ||
     !hasUsefulHeaders ||
-    missingRequiredColumns >
-      0;
+    mapped.missingRequiredColumns > 0 ||
+    !isCanonicalLayout;
 
   return {
     ...meta,
     ...mapped,
+    existingHeaders,
     originalHeaderCount,
-    missingRequiredColumns,
     hasRealTable,
+    isCanonicalLayout,
     needsStructure,
   };
 }
@@ -2293,11 +2180,12 @@ export async function POST(
           we apply the Flowex organized lead-table structure.
           Existing unrelated columns and existing data remain.
         */
-        await writeHeaders(
+        await rewriteExistingSheetData(
           sheets,
           spreadsheetId,
           sheetTitle,
-          headers
+          headers,
+          prepared.sourceIndexes
         );
 
         tableId =
