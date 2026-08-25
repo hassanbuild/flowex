@@ -378,6 +378,7 @@ export default function ManageLeadCapturePage() {
   const [leadFlowName, setLeadFlowName] = useState("");
   const [leadFlowNameDraft, setLeadFlowNameDraft] = useState("");
   const [isEditingLeadFlowName, setIsEditingLeadFlowName] = useState(false);
+  const [isSavingLeadFlowName, setIsSavingLeadFlowName] = useState(false);
   const [flowReady, setFlowReady] = useState(false);
 
   const [supabase] = useState(() =>
@@ -2795,6 +2796,53 @@ export default function ManageLeadCapturePage() {
       }
     };
 
+  const saveLeadFlowName = async () => {
+    if (!leadFlowId || isSavingLeadFlowName) return;
+
+    const nextName = leadFlowNameDraft.trim();
+
+    if (!nextName) {
+      setLeadFlowNameDraft(leadFlowName);
+      return;
+    }
+
+    if (nextName === leadFlowName) {
+      setIsEditingLeadFlowName(false);
+      return;
+    }
+
+    setIsSavingLeadFlowName(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("Your session could not be verified.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("lead_flows")
+        .update({
+          name: nextName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", leadFlowId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert("Flowex could not rename this Lead Flow.");
+        return;
+      }
+
+      setLeadFlowName(nextName);
+      setLeadFlowNameDraft(nextName);
+      setIsEditingLeadFlowName(false);
+    } finally {
+      setIsSavingLeadFlowName(false);
+    }
+  };
+
   const saveChanges =
     async (
       showSuccess = true
@@ -2859,11 +2907,6 @@ export default function ManageLeadCapturePage() {
             )
             .update({
               active,
-              name:
-                leadFlowNameDraft.trim() ||
-                leadFlowName ||
-                "Lead Flow",
-
               updated_at:
                 new Date().toISOString(),
             })
@@ -2885,23 +2928,6 @@ export default function ManageLeadCapturePage() {
 
           return false;
         }
-
-        const savedLeadFlowName =
-          leadFlowNameDraft.trim() ||
-          leadFlowName ||
-          "Lead Flow";
-
-        setLeadFlowName(
-          savedLeadFlowName
-        );
-
-        setLeadFlowNameDraft(
-          savedLeadFlowName
-        );
-
-        setIsEditingLeadFlowName(
-          false
-        );
 
         if (
           !storagePendingDelete &&
@@ -3480,9 +3506,9 @@ export default function ManageLeadCapturePage() {
 
       {/* PAGE */}
 
-      <section className="px-4 py-10 sm:px-6 lg:px-8">
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
 
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-5xl">
 
           {/* HEADER */}
 
@@ -3490,79 +3516,58 @@ export default function ManageLeadCapturePage() {
 
             <div>
 
-              <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+              <p className="text-xs font-semibold tracking-wide text-emerald-600 app-dark:text-emerald-400">
                 LEAD CAPTURE
               </p>
 
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-1.5 flex min-w-0 items-center gap-2">
                 {isEditingLeadFlowName ? (
-                  <input
-                    type="text"
-                    value={leadFlowNameDraft}
-                    onChange={(event) => {
-                      setLeadFlowNameDraft(
-                        event.target.value
-                      );
-
-                      setHasUnsavedChanges(
-                        true
-                      );
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        setIsEditingLeadFlowName(
-                          false
-                        );
-                      }
-
-                      if (event.key === "Escape") {
-                        setLeadFlowNameDraft(
-                          leadFlowName
-                        );
-
-                        setIsEditingLeadFlowName(
-                          false
-                        );
-                      }
-                    }}
-                    autoFocus
-                    maxLength={80}
-                    className="min-w-0 max-w-xl rounded-xl border border-gray-200 bg-white px-3 py-2 text-3xl font-black text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 sm:text-4xl app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
-                    aria-label="Lead Flow name"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      value={leadFlowNameDraft}
+                      onChange={(event) => setLeadFlowNameDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") void saveLeadFlowName();
+                        if (event.key === "Escape") {
+                          setLeadFlowNameDraft(leadFlowName);
+                          setIsEditingLeadFlowName(false);
+                        }
+                      }}
+                      autoFocus
+                      maxLength={80}
+                      className="h-9 min-w-0 w-full max-w-sm rounded-lg border border-gray-200 bg-white px-3 text-lg font-bold text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                      aria-label="Lead Flow name"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void saveLeadFlowName()}
+                      disabled={isSavingLeadFlowName}
+                      className="h-9 shrink-0 rounded-lg bg-gray-900 px-3 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 app-dark:bg-white app-dark:text-gray-900 app-dark:hover:bg-slate-200"
+                    >
+                      {isSavingLeadFlowName ? "Saving..." : "Save"}
+                    </button>
+                  </>
                 ) : (
-                  <h1 className="text-3xl font-black sm:text-4xl app-dark:text-white">
-                    {leadFlowName || "Automation Flow"}
-                  </h1>
+                  <>
+                    <h1 className="truncate text-2xl font-black sm:text-3xl app-dark:text-white">
+                      {leadFlowName || "Automation Flow"}
+                    </h1>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLeadFlowNameDraft(leadFlowName);
+                        setIsEditingLeadFlowName(true);
+                      }}
+                      className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:bg-white/10 app-dark:hover:text-slate-200"
+                    >
+                      Rename
+                    </button>
+                  </>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isEditingLeadFlowName) {
-                      const nextName =
-                        leadFlowNameDraft.trim();
-
-                      if (!nextName) {
-                        setLeadFlowNameDraft(
-                          leadFlowName
-                        );
-                      }
-                    }
-
-                    setIsEditingLeadFlowName(
-                      (current) => !current
-                    );
-                  }}
-                  className="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-50 hover:text-gray-900 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
-                >
-                  {isEditingLeadFlowName
-                    ? "Done"
-                    : "Rename"}
-                </button>
               </div>
 
-              <p className="mt-2 max-w-xl text-gray-500 app-dark:text-slate-400">
+              <p className="mt-1.5 max-w-xl text-sm text-gray-500 app-dark:text-slate-400">
                 Build your lead workflow from capture to follow-up.
               </p>
 
@@ -3573,7 +3578,7 @@ export default function ManageLeadCapturePage() {
               <button
                 type="button"
                 onClick={toggleAutomationActive}
-                className={`rounded-xl px-5 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
+                className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
                   active
                     ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                     : "bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-white shadow-md"
@@ -3586,7 +3591,7 @@ export default function ManageLeadCapturePage() {
                 type="button"
                 onClick={deleteLeadFlow}
                 disabled={isDeletingLeadFlow}
-                className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
               >
                 {isDeletingLeadFlow
                   ? "Deleting..."
@@ -5477,15 +5482,15 @@ function FlowStep({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex gap-4 sm:gap-6">
+    <div className="relative flex gap-3 sm:gap-4">
 
-      <div className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 via-cyan-400 to-indigo-600 text-sm font-black text-white shadow-md sm:h-20 sm:w-20">
+      <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 via-cyan-400 to-indigo-600 text-xs font-black text-white shadow-sm sm:h-12 sm:w-12">
         {number}
       </div>
 
-      <div className="min-w-0 flex-1 rounded-[26px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 sm:p-7 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+      <div className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors duration-300 sm:p-5 app-dark:border-slate-800 app-dark:bg-[#11161d]">
 
-        <h2 className="text-xl font-bold app-dark:text-white">
+        <h2 className="text-lg font-bold app-dark:text-white">
           {title}
         </h2>
 
@@ -5493,7 +5498,7 @@ function FlowStep({
           {description}
         </p>
 
-        <div className="mt-6">
+        <div className="mt-4">
           {children}
         </div>
 
@@ -5518,7 +5523,7 @@ function Option({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl border p-4 text-left transition-all ${
+      className={`rounded-xl border p-3 text-left transition-all ${
         active
           ? "border-cyan-400 bg-cyan-50/60 shadow-sm ring-2 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10"
           : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-slate-600 app-dark:hover:bg-slate-900"
