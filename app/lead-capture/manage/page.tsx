@@ -604,6 +604,9 @@ export default function ManageLeadCapturePage() {
   const [isEditingCreatedSheet, setIsEditingCreatedSheet] =
     useState(false);
 
+  const [isEditingStorage, setIsEditingStorage] =
+    useState(false);
+
   const [hasUnsavedChanges, setHasUnsavedChanges] =
     useState(false);
 
@@ -687,6 +690,7 @@ export default function ManageLeadCapturePage() {
     setShowCreatedSheetDeleteDialog(false);
     setStoragePendingUnlink(false);
     setIsEditingCreatedSheet(false);
+    setIsEditingStorage(false);
     setStorageError("");
     setHasUnsavedChanges(false);
     setReplyType("instant");
@@ -2530,6 +2534,8 @@ export default function ManageLeadCapturePage() {
           setStorageError(
             "New Google Sheet prepared. Click Save Automation to attach it to this Lead Flow."
           );
+
+          setIsEditingStorage(false);
         } else {
           const url =
             storageDestination
@@ -2599,6 +2605,8 @@ export default function ManageLeadCapturePage() {
           setStorageError(
             "Existing Google Sheet verified and mapped. Flowex will only reorganize it on Save Automation if the sheet needs structure."
           );
+
+          setIsEditingStorage(false);
         }
 
         setHasUnsavedChanges(
@@ -2649,6 +2657,8 @@ export default function ManageLeadCapturePage() {
       setStoragePendingUnlink(
         true
       );
+
+      setIsEditingStorage(false);
 
       setStorageConnected(
         false
@@ -2710,6 +2720,8 @@ export default function ManageLeadCapturePage() {
       setStoragePendingDelete(
         true
       );
+
+      setIsEditingStorage(false);
 
       setStorageConnected(
         false
@@ -3506,6 +3518,22 @@ export default function ManageLeadCapturePage() {
     hasUnsavedChanges,
   ]);
 
+  const hasConfiguredStorage =
+    storageType === "sheets" &&
+    !storagePendingDelete &&
+    !storagePendingUnlink &&
+    (
+      (
+        storageMode === "create_new" &&
+        !!createdSheetId
+      ) ||
+      (
+        storageMode === "existing" &&
+        !!existingSheetId &&
+        existingSheetVerified
+      )
+    );
+
   if (
     !authReady ||
     !hasPremiumAccess ||
@@ -3946,6 +3974,7 @@ export default function ManageLeadCapturePage() {
               description="Choose where this Lead Flow should send every captured lead."
             >
 
+              {!hasConfiguredStorage && (
               <div className="grid gap-3 sm:grid-cols-2">
 
                 <button
@@ -4006,9 +4035,47 @@ export default function ManageLeadCapturePage() {
                 </button>
 
               </div>
+              )}
+
+              {hasConfiguredStorage && !isEditingStorage && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 app-dark:border-emerald-500/30 app-dark:bg-emerald-500/10">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/15 app-dark:text-emerald-400">✓</span>
+                        <div>
+                          <p className="text-sm font-semibold app-dark:text-white">Google Sheets</p>
+                          <p className="mt-0.5 text-xs text-gray-500 app-dark:text-slate-400">
+                            {storageMode === "create_new" ? "Create new sheet" : "Use existing sheet"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingStorage(true)}
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={storageMode === "create_new" ? markCreatedSheetDeleted : markExistingUnlinked}
+                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                      >
+                        {storageMode === "create_new" ? "Remove" : "Unlink"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {storageType ===
-                "sheets" && (
+                "sheets" &&
+                (!hasConfiguredStorage || isEditingStorage) && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -4028,9 +4095,21 @@ export default function ManageLeadCapturePage() {
                     </div>
 
                     {googleAccountConnected ? (
-                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                        Google connected
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          Google connected
+                        </span>
+
+                        {hasConfiguredStorage && isEditingStorage && (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingStorage(false)}
+                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                          >
+                            Done
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       <button
                         type="button"
@@ -4052,6 +4131,7 @@ export default function ManageLeadCapturePage() {
 
                   {googleAccountConnected && (
                     <>
+                      {!hasConfiguredStorage && (
                       <div className="mt-5 grid gap-2 sm:grid-cols-2">
 
                         <button
@@ -4089,6 +4169,7 @@ export default function ManageLeadCapturePage() {
                         </button>
 
                       </div>
+                      )}
 
                       {storageMode ===
                         "create_new" && (
