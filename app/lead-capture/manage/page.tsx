@@ -520,6 +520,9 @@ export default function ManageLeadCapturePage() {
   const [isRemovingFlowexForm, setIsRemovingFlowexForm] =
     useState(false);
 
+  const [isEditingSourceSetup, setIsEditingSourceSetup] =
+    useState(false);
+
   const [copiedFormLink, setCopiedFormLink] =
     useState(false);
 
@@ -1097,6 +1100,10 @@ export default function ManageLeadCapturePage() {
       setExternalSourceError(
         ""
       );
+
+      setIsEditingSourceSetup(
+        result?.captureConnected !== true
+      );
     } catch {
       setExternalVerified(
         false
@@ -1199,6 +1206,8 @@ export default function ManageLeadCapturePage() {
       setExternalUrl(
         ""
       );
+
+      setIsEditingSourceSetup(false);
     } catch {
       setExternalSourceError(
         "Flowex could not unlink this form."
@@ -1761,6 +1770,8 @@ export default function ManageLeadCapturePage() {
       setShowFormCustomizer(
         false
       );
+
+      setIsEditingSourceSetup(false);
     } catch {
       setFormCustomizerError(
         "Something went wrong while saving the form."
@@ -1818,7 +1829,8 @@ export default function ManageLeadCapturePage() {
       setSelectedFlowexField("");
       setCopiedFormLink(false);
       setShowFormCustomizer(false);
-      setSourceType("external");
+      setIsEditingSourceSetup(false);
+      setSourceType("flowex");
       setHasUnsavedChanges(true);
     } catch {
       setFormCustomizerError(
@@ -3686,259 +3698,240 @@ export default function ManageLeadCapturePage() {
               description="Choose how new leads enter Flowex."
             >
 
-              <div className="grid gap-3 sm:grid-cols-3">
-
-                <Option
-                  active={
-                    sourceType === "flowex"
-                  }
-                  disabled={
-                    !!externalSourceId
-                  }
-                  onClick={() => {
-                    setSourceType(
-                      "flowex"
-                    );
-
-                    setHasUnsavedChanges(
-                      true
-                    );
-                  }}
-                  title="Flowex Form"
-                  description="Create a ready-to-use form."
-                />
-
-                <Option
-                  active={
-                    sourceType === "external"
-                  }
-                  disabled={
-                    !!flowexFormSourceId
-                  }
-                  onClick={() => {
-                    setSourceType(
-                      "external"
-                    );
-
-                    setHasUnsavedChanges(
-                      true
-                    );
-                  }}
-                  title="Lovable Form"
-                  description="Connect a form built with Lovable."
-                />
-
-                <div className="relative rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-                  <div className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">
-                    Coming Soon
-                  </div>
-
-                  <p className="font-semibold app-dark:text-white">
-                    Web Hooks
-                  </p>
-                  
-                </div>
-
-              </div>
-
-              {(flowexFormSourceId || externalSourceId) && (
-                <p className="mt-3 text-xs font-medium text-gray-400 app-dark:text-slate-500">
-                  One lead source at a time. Remove the current source before switching to another.
-                </p>
-              )}
-
-              {sourceType === "flowex" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-
-                  <div className="flex items-center justify-between gap-4">
-
-                    <div>
-
-                      <p className="font-semibold app-dark:text-white">
-                        Flowex Lead Form
-                      </p>
-
-                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                        {flowexFormFields.length > 0
-                          ? `${flowexFormFields.length} custom field${flowexFormFields.length === 1 ? "" : "s"} configured.`
-                          : "Build a simple form with up to 5 fields."}
-                      </p>
-
+              {flowexFormSourceId || externalSourceId ? (
+                <>
+                  <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">✓</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold app-dark:text-white">
+                            {flowexFormSourceId ? "Flowex Form" : "Lovable Form"}
+                          </p>
+                          <p className="truncate text-xs text-gray-500 app-dark:text-slate-400">
+                            {flowexFormSourceId
+                              ? flowexFormTitle || "Flowex Lead Form"
+                              : externalUrl || "Connected Lovable form"}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsEditingSourceSetup((current) => !current)
+                        }
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                      >
+                        {isEditingSourceSetup ? "Done" : "Edit"}
+                      </button>
+
                       <button
                         type="button"
                         onClick={() => {
-                          setFormCustomizerError("");
-                          setShowFormCustomizer(true);
+                          if (flowexFormSourceId) {
+                            void removeFlowexForm();
+                          } else {
+                            void unlinkExternalForm();
+                          }
                         }}
-                        className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        disabled={isRemovingFlowexForm || isConnectingExternal}
+                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                       >
-                        Customize
+                        {flowexFormSourceId
+                          ? isRemovingFlowexForm ? "Removing..." : "Unlink"
+                          : isConnectingExternal ? "Unlinking..." : "Unlink"}
                       </button>
-
-                      {flowexFormSourceId && (
-                        <button
-                          type="button"
-                          onClick={() => void removeFlowexForm()}
-                          disabled={isRemovingFlowexForm}
-                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                        >
-                          {isRemovingFlowexForm ? "Removing..." : "Remove"}
-                        </button>
-                      )}
                     </div>
-
                   </div>
 
-                  {flowexFormSlug && (
-                    <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
-
-                      <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
-                        Form Link
-                      </p>
-
-                      <div className="mt-2 flex gap-2">
-
-                        <input
-                          type="text"
-                          readOnly
-                          value={`/form/${flowexFormSlug}`}
-                          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
-                        />
+                  {isEditingSourceSetup && flowexFormSourceId && (
+                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-semibold app-dark:text-white">Flowex Lead Form</p>
+                          <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                            {flowexFormFields.length > 0
+                              ? `${flowexFormFields.length} custom field${flowexFormFields.length === 1 ? "" : "s"} configured.`
+                              : "Build a simple form with up to 5 fields."}
+                          </p>
+                        </div>
 
                         <button
                           type="button"
-                          onClick={copyFlowexFormLink}
+                          onClick={() => {
+                            setFormCustomizerError("");
+                            setShowFormCustomizer(true);
+                          }}
                           className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                         >
-                          {copiedFormLink
-                            ? "Copied"
-                            : "Copy"}
+                          Customize
                         </button>
-
-                        <Link
-                          href={`/form/${flowexFormSlug}`}
-                          target="_blank"
-                          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                        >
-                          Open
-                        </Link>
-
                       </div>
 
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              {sourceType === "external" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-
-                  <p className="font-semibold app-dark:text-white">
-                    Lovable Form
-                  </p>
-
-                  <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                    Paste the direct URL of your published Lovable form.
-                  </p>
-
-                  <div className="mt-4 flex gap-3">
-
-                    <input
-                      type="url"
-                      value={externalUrl}
-                      disabled={externalVerified}
-                      onChange={(event) => {
-                        setExternalUrl(
-                          event.target.value
-                        );
-
-                        setExternalSourceError(
-                          ""
-                        );
-                      }}
-                      placeholder="https://yourproject.lovable.app/contact"
-                      className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10 app-dark:disabled:bg-slate-900 app-dark:disabled:text-slate-400"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={
-                        externalVerified
-                          ? unlinkExternalForm
-                          : connectExternalForm
-                      }
-                      disabled={isConnectingExternal}
-                      className={`shrink-0 rounded-xl px-5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                        externalVerified
-                          ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                          : "bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-white shadow-md hover:-translate-y-0.5"
-                      }`}
-                    >
-                      {isConnectingExternal
-                        ? externalVerified
-                          ? "Unlinking..."
-                          : "Verifying..."
-                        : externalVerified
-                          ? "Unlink"
-                          : "Connect"}
-                    </button>
-
-                  </div>
-
-                  {externalVerified && (
-                    <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
-                      <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
-                        ✓ Form Verified
-                      </p>
-
-                      {externalCaptureConnected ? (
-                        <p className="mt-2 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
-                          ✓ Flowex Capture Connected
-                        </p>
-                      ) : (
-                        <>
-                          <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
-                            One last step: connect this form to Flowex.
-                          </p>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
+                      {flowexFormSlug && (
+                        <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                          <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Form Link</p>
+                          <div className="mt-2 flex gap-2">
+                            <input
+                              type="text"
+                              readOnly
+                              value={`/form/${flowexFormSlug}`}
+                              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                            />
                             <button
                               type="button"
-                              onClick={copyLovableSetupInstruction}
+                              onClick={copyFlowexFormLink}
                               className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                             >
-                              {copiedLovableSetup ? "Copied" : "Copy Lovable Setup"}
+                              {copiedFormLink ? "Copied" : "Copy"}
                             </button>
-
-                            <button
-                              type="button"
-                              onClick={checkExternalConnection}
-                              disabled={isCheckingExternalConnection}
-                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                            <Link
+                              href={`/form/${flowexFormSlug}`}
+                              target="_blank"
+                              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                             >
-                              {isCheckingExternalConnection ? "Checking..." : "Check Connection"}
-                            </button>
+                              Open
+                            </Link>
                           </div>
-
-                          <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
-                            Paste the copied instruction into Lovable, let it apply the change, then click Check Connection.
-                          </p>
-                        </>
+                        </div>
                       )}
                     </div>
                   )}
 
-                  {externalSourceError && (
-                    <p className="mt-3 text-sm font-medium text-red-500 app-dark:text-red-400">
-                      {externalSourceError}
-                    </p>
+                  {isEditingSourceSetup && externalSourceId && !flowexFormSourceId && (
+                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                      <p className="font-semibold app-dark:text-white">Lovable Form</p>
+                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">Connected published Lovable form.</p>
+
+                      <input
+                        type="url"
+                        value={externalUrl}
+                        readOnly
+                        className="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                      />
+
+                      <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                        <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Form Verified</p>
+                        {externalCaptureConnected ? (
+                          <p className="mt-2 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Flowex Capture Connected</p>
+                        ) : (
+                          <>
+                            <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">One last step: connect this form to Flowex.</p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={copyLovableSetupInstruction}
+                                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                              >
+                                {copiedLovableSetup ? "Copied" : "Copy Lovable Setup"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={checkExternalConnection}
+                                disabled={isCheckingExternalConnection}
+                                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isCheckingExternalConnection ? "Checking..." : "Check Connection"}
+                              </button>
+                            </div>
+                            <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">Paste the copied instruction into Lovable, let it apply the change, then click Check Connection.</p>
+                          </>
+                        )}
+                      </div>
+
+                      {externalSourceError && (
+                        <p className="mt-3 text-sm font-medium text-red-500 app-dark:text-red-400">{externalSourceError}</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Option
+                      active={sourceType === "flowex"}
+                      onClick={() => {
+                        setSourceType("flowex");
+                        setHasUnsavedChanges(true);
+                      }}
+                      title="Flowex Form"
+                      description="Create a ready-to-use form."
+                    />
+
+                    <Option
+                      active={sourceType === "external"}
+                      onClick={() => {
+                        setSourceType("external");
+                        setHasUnsavedChanges(true);
+                      }}
+                      title="Lovable Form"
+                      description="Connect a form built with Lovable."
+                    />
+
+                    <div className="relative rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                      <div className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">Coming Soon</div>
+                      <p className="font-semibold app-dark:text-white">Web Hooks</p>
+                    </div>
+                  </div>
+
+                  {sourceType === "flowex" && (
+                    <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="font-semibold app-dark:text-white">Flowex Lead Form</p>
+                          <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                            {flowexFormFields.length > 0
+                              ? `${flowexFormFields.length} custom field${flowexFormFields.length === 1 ? "" : "s"} configured.`
+                              : "Build a simple form with up to 5 fields."}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormCustomizerError("");
+                            setShowFormCustomizer(true);
+                          }}
+                          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        >
+                          Customize
+                        </button>
+                      </div>
+                    </div>
                   )}
 
-                </div>
+                  {sourceType === "external" && (
+                    <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                      <p className="font-semibold app-dark:text-white">Lovable Form</p>
+                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">Paste the direct URL of your published Lovable form.</p>
+                      <div className="mt-4 flex gap-3">
+                        <input
+                          type="url"
+                          value={externalUrl}
+                          onChange={(event) => {
+                            setExternalUrl(event.target.value);
+                            setExternalSourceError("");
+                          }}
+                          placeholder="https://yourproject.lovable.app/contact"
+                          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                        />
+                        <button
+                          type="button"
+                          onClick={connectExternalForm}
+                          disabled={isConnectingExternal}
+                          className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isConnectingExternal ? "Verifying..." : "Connect"}
+                        </button>
+                      </div>
+                      {externalSourceError && (
+                        <p className="mt-3 text-sm font-medium text-red-500 app-dark:text-red-400">{externalSourceError}</p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
 
             </FlowStep>
