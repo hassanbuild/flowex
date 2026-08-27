@@ -45,7 +45,7 @@ const storageProviders: {
     value: "airtable",
     title: "Airtable",
     description: "Store leads in a base.",
-    available: false,
+    available: true,
   },
   {
     value: "hubspot",
@@ -557,6 +557,12 @@ export default function ManageLeadCapturePage() {
     useState(false);
 
   const [googleAccountEmail, setGoogleAccountEmail] =
+    useState("");
+
+  const [airtableAccountConnected, setAirtableAccountConnected] =
+    useState(false);
+
+  const [airtableAccountEmail, setAirtableAccountEmail] =
     useState("");
 
   const [showMoreDestinations, setShowMoreDestinations] =
@@ -2202,6 +2208,86 @@ export default function ManageLeadCapturePage() {
     supabase,
   ]);
 
+  useEffect(() => {
+    if (
+      !flowReady ||
+      !leadFlowId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAirtableConnection =
+      async () => {
+        const {
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
+
+        if (
+          cancelled ||
+          !session
+        ) {
+          return;
+        }
+
+        try {
+          const response =
+            await fetch(
+              "/api/integrations/airtable/connect",
+              {
+                method:
+                  "GET",
+
+                headers: {
+                  Authorization:
+                    `Bearer ${session.access_token}`,
+                },
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (cancelled) {
+            return;
+          }
+
+          setAirtableAccountConnected(
+            response.ok &&
+            result?.connected ===
+              true
+          );
+
+          setAirtableAccountEmail(
+            typeof result?.email ===
+              "string"
+              ? result.email
+              : ""
+          );
+        } catch {
+          if (!cancelled) {
+            setAirtableAccountConnected(
+              false
+            );
+          }
+        }
+      };
+
+    void loadAirtableConnection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    flowReady,
+    leadFlowId,
+    supabase,
+  ]);
+
   const connectStorageProvider =
     async () => {
       if (
@@ -2215,7 +2301,9 @@ export default function ManageLeadCapturePage() {
 
       if (
         storageType !==
-        "sheets"
+          "sheets" &&
+        storageType !==
+          "airtable"
       ) {
         setStorageError(
           "This destination is coming soon."
@@ -2244,7 +2332,10 @@ export default function ManageLeadCapturePage() {
 
         const response =
           await fetch(
-            "/api/integrations/google/connect",
+            storageType ===
+              "airtable"
+              ? "/api/integrations/airtable/connect"
+              : "/api/integrations/google/connect",
             {
               method:
                 "POST",
@@ -2274,7 +2365,10 @@ export default function ManageLeadCapturePage() {
         ) {
           setStorageError(
             result?.error ||
-              "Flowex could not start Google authorization."
+              (storageType ===
+                "airtable"
+                ? "Flowex could not start Airtable authorization."
+                : "Flowex could not start Google authorization.")
           );
           return;
         }
@@ -2283,7 +2377,10 @@ export default function ManageLeadCapturePage() {
           result.url;
       } catch {
         setStorageError(
-          "Flowex could not start Google authorization."
+          storageType ===
+            "airtable"
+            ? "Flowex could not start Airtable authorization."
+            : "Flowex could not start Google authorization."
         );
       } finally {
         setIsConnectingStorage(
@@ -4497,6 +4594,59 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
+              {storageType ===
+                "airtable" &&
+                !hasConfiguredStorage && (
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div>
+                      <p className="text-sm font-semibold app-dark:text-white">
+                        Airtable
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                        {airtableAccountConnected
+                          ? airtableAccountEmail
+                            ? `Connected as ${airtableAccountEmail}`
+                            : "Airtable account connected"
+                          : "Connect Airtable once. All Lead Flows can then use separate Airtable destinations."}
+                      </p>
+                    </div>
+
+                    {airtableAccountConnected ? (
+                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        Airtable connected
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={
+                          connectStorageProvider
+                        }
+                        disabled={
+                          isConnectingStorage
+                        }
+                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isConnectingStorage
+                          ? "Connecting..."
+                          : "Connect Airtable"}
+                      </button>
+                    )}
+
+                  </div>
+
+                  {storageError && (
+                    <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                      {storageError}
+                    </p>
+                  )}
+
+                </div>
+              )}
+
               {showMoreDestinations && (
                 <div
                   className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
@@ -4554,11 +4704,44 @@ export default function ManageLeadCapturePage() {
                           (
                             provider
                           ) => (
-                            <div
+                            <button
                               key={
                                 provider.value
                               }
-                              className="rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  provider.available &&
+                                  (provider.value ===
+                                    "airtable" ||
+                                    provider.value ===
+                                    "hubspot" ||
+                                    provider.value ===
+                                    "slack" ||
+                                    provider.value ===
+                                    "webhook")
+                                ) {
+                                  setStorageType(
+                                    provider.value
+                                  );
+
+                                  setStorageError(
+                                    ""
+                                  );
+
+                                  setShowMoreDestinations(
+                                    false
+                                  );
+                                }
+                              }}
+                              disabled={
+                                !provider.available
+                              }
+                              className={`rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left app-dark:border-slate-700 app-dark:bg-[#0b0f14] ${
+                                provider.available
+                                  ? "transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
+                                  : "cursor-default"
+                              }`}
                             >
                               <div className="flex items-start justify-between gap-3">
 
@@ -4572,12 +4755,18 @@ export default function ManageLeadCapturePage() {
                                   </p>
                                 </div>
 
-                                <span className="shrink-0 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-semibold text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">
-                                  SOON
+                                <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
+                                  provider.available
+                                    ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                                    : "bg-gray-200 text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400"
+                                }`}>
+                                  {provider.available
+                                    ? "AVAILABLE"
+                                    : "SOON"}
                                 </span>
 
                               </div>
-                            </div>
+                            </button>
                           )
                         )}
 
