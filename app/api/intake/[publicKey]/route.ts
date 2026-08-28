@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 
 import { createGoogleOAuthClient } from "@/lib/integrations/google";
+import {
+  AIRTABLE_API_URL,
+  AIRTABLE_PROVIDER,
+  AIRTABLE_TOKEN_URL,
+  getAirtableOAuthConfig,
+} from "@/lib/integrations/airtable";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -319,7 +325,6 @@ async function sendLeadToGoogleSheets(
     destination.config as {
       spreadsheet_id?: unknown;
       sheet_title?: unknown;
-      sheet_id?: unknown;
       table_id?: unknown;
       column_keys?: unknown;
       field_keys?: unknown;
@@ -595,15 +600,6 @@ async function sendLeadToGoogleSheets(
 
   const sheet =
     spreadsheet.data
-      .sheets?.find(
-        (
-          item
-        ) =>
-          item.properties
-            ?.title ===
-          sheetTitle
-      ) ||
-    spreadsheet.data
       .sheets?.[0];
 
   const table =
@@ -668,6 +664,273 @@ async function sendLeadToGoogleSheets(
   });
 }
 
+
+
+type AirtableStoredCredentials = {
+  access_token?: unknown;
+  refresh_token?: unknown;
+  expires_at?: unknown;
+};
+
+async function getAirtableAccessTokenForLead(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials")
+    .eq("user_id", userId)
+    .eq("provider", AIRTABLE_PROVIDER)
+    .maybeSingle();
+
+  if (
+    !connection?.credentials ||
+    typeof connection.credentials !== "object"
+  ) {
+    return "";
+  }
+
+  const credentials =
+    connection.credentials as AirtableStoredCredentials;
+
+  const accessToken =
+    typeof credentials.access_token === "string"
+      ? credentials.access_token
+      : "";
+
+  const expiresAt =
+    typeof credentials.expires_at === "string"
+      ? Date.parse(credentials.expires_at)
+      : 0;
+
+  if (
+    accessToken &&
+    (!expiresAt || expiresAt > Date.now() + 60_000)
+  ) {
+    return accessToken;
+  }
+
+  const refreshToken =
+    typeof credentials.refresh_token === "string"
+      ? credentials.refresh_token
+      : "";
+
+  if (!refreshToken) {
+    return "";
+  }
+
+  const { clientId, clientSecret } =
+    getAirtableOAuthConfig();
+
+  const basic = Buffer.from(
+    `${clientId}:${clientSecret}`
+  ).toString("base64");
+
+  const response = await fetch(AIRTABLE_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+    cache: "no-store",
+  });
+
+  const token = (await response.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
+
+  if (!response.ok || !token.access_token) {
+    return "";
+  }
+
+  const updated = {
+    ...credentials,
+    access_token: token.access_token,
+    refresh_token:
+      token.refresh_token || refreshToken,
+    expires_in: token.expires_in || null,
+    expires_at:
+      typeof token.expires_in === "number"
+        ? new Date(
+            Date.now() + token.expires_in * 1000
+          ).toISOString()
+        : null,
+  };
+
+  await supabase
+    .from("integration_connections")
+    .update({
+      credentials: updated,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("provider", AIRTABLE_PROVIDER);
+
+  return token.access_token;
+}
+
+function airtableLeadName(lead: NormalizedLead) {
+  const preferredKeys = [
+    "name",
+    "full_name",
+    "fullname",
+    "fullName",
+    "first_name",
+    "firstName",
+  ];
+
+  for (const key of preferredKeys) {
+    const value = lead.fields[key];
+
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim()
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  const found = Object.entries(lead.fields).find(
+    ([key, value]) =>
+      key.toLowerCase().includes("name") &&
+      String(value).trim()
+  );
+
+  return found ? String(found[1]).trim() : "Lead";
+}
+
+async function sendLeadToAirtable(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const { data: destination } = await supabase
+    .from("lead_destinations")
+    .select("connected, config")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "airtable")
+    .maybeSingle();
+
+  if (!destination || destination.connected !== true) {
+    return;
+  }
+
+  const config = destination.config as {
+    base_id?: unknown;
+    table_id?: unknown;
+    field_mapping?: unknown;
+  } | null;
+
+  const baseId =
+    typeof config?.base_id === "string"
+      ? config.base_id
+      : "";
+
+  const tableId =
+    typeof config?.table_id === "string"
+      ? config.table_id
+      : "";
+
+  const fieldMapping =
+    config?.field_mapping &&
+    typeof config.field_mapping === "object"
+      ? (config.field_mapping as Record<
+          string,
+          { fieldId?: unknown; fieldName?: unknown }
+        >)
+      : {};
+
+  if (!baseId || !tableId) {
+    return;
+  }
+
+  const accessToken = await getAirtableAccessTokenForLead(
+    supabase,
+    lead.userId
+  );
+
+  if (!accessToken) {
+    return;
+  }
+
+  const fields: Record<string, string | number | boolean> = {};
+
+  for (const [key, mapped] of Object.entries(fieldMapping)) {
+    const fieldName =
+      typeof mapped?.fieldName === "string"
+        ? mapped.fieldName
+        : "";
+
+    if (!fieldName) {
+      continue;
+    }
+
+    if (key === "__name") {
+      fields[fieldName] = airtableLeadName(lead);
+      continue;
+    }
+
+    if (key === "__date") {
+      fields[fieldName] = lead.receivedAt;
+      continue;
+    }
+
+    if (key === "__email") {
+      if (lead.contact.email) {
+        fields[fieldName] = lead.contact.email;
+      }
+      continue;
+    }
+
+    if (key === "__phone") {
+      if (lead.contact.phone) {
+        fields[fieldName] = lead.contact.phone;
+      }
+      continue;
+    }
+
+    const value = lead.fields[key];
+
+    if (value !== undefined) {
+      fields[fieldName] = value;
+    }
+  }
+
+  const response = await fetch(
+    `${AIRTABLE_API_URL}/${encodeURIComponent(
+      baseId
+    )}/${encodeURIComponent(tableId)}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        records: [{ fields }],
+        typecast: true,
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      text || "Airtable rejected the lead record."
+    );
+  }
+}
 
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
@@ -1084,6 +1347,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex Google Sheets delivery error:",
+      error
+    );
+  }
+
+  try {
+    await sendLeadToAirtable(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex Airtable delivery error:",
       error
     );
   }

@@ -22,6 +22,7 @@ type ReplyType = "instant" | "friendly" | "custom";
 
 type AirtableBaseOption = { id: string; name: string };
 type AirtableTableOption = { id: string; name: string };
+type AirtableBaseMode = "existing_base" | "create_base";
 
 
 const storageProviders: {
@@ -583,6 +584,24 @@ export default function ManageLeadCapturePage() {
   const [airtableTableName, setAirtableTableName] =
     useState("");
 
+  const [airtableBaseMode, setAirtableBaseMode] =
+    useState<AirtableBaseMode>("existing_base");
+
+  const [airtableWorkspaceId, setAirtableWorkspaceId] =
+    useState("");
+
+  const [airtableBaseName, setAirtableBaseName] =
+    useState("Flowex Leads");
+
+  const [airtableCreatedBaseByFlowex, setAirtableCreatedBaseByFlowex] =
+    useState(false);
+
+  const [airtableBaseUrl, setAirtableBaseUrl] =
+    useState("");
+
+  const [showAirtableRemoveDialog, setShowAirtableRemoveDialog] =
+    useState(false);
+
   const [airtableExistingVerified, setAirtableExistingVerified] =
     useState(false);
 
@@ -727,6 +746,12 @@ export default function ManageLeadCapturePage() {
     setAirtableBaseId("");
     setAirtableTableId("");
     setAirtableTableName("");
+    setAirtableBaseMode("existing_base");
+    setAirtableWorkspaceId("");
+    setAirtableBaseName("Flowex Leads");
+    setAirtableCreatedBaseByFlowex(false);
+    setAirtableBaseUrl("");
+    setShowAirtableRemoveDialog(false);
     setAirtableExistingVerified(false);
     setHasUnsavedChanges(false);
     setReplyType("instant");
@@ -2065,18 +2090,28 @@ export default function ManageLeadCapturePage() {
             spreadsheet_url?: unknown;
             created_by_flowex?: unknown;
             base_id?: unknown;
+            base_name?: unknown;
+            base_url?: unknown;
             table_id?: unknown;
             table_name?: unknown;
+            created_base_by_flowex?: unknown;
           } | null;
 
         if (provider === "airtable") {
           const baseId = typeof config?.base_id === "string" ? config.base_id : "";
+          const baseName = typeof config?.base_name === "string" ? config.base_name : "";
+          const baseUrl = typeof config?.base_url === "string" ? config.base_url : baseId ? `https://airtable.com/${baseId}` : "";
           const tableId = typeof config?.table_id === "string" ? config.table_id : "";
           const tableName = typeof config?.table_name === "string" ? config.table_name : data.display_name || "";
+          const createdBaseByFlowex = config?.created_base_by_flowex === true;
 
           setAirtableBaseId(baseId);
+          setAirtableBaseName(baseName || "Flowex Leads");
+          setAirtableBaseUrl(baseUrl);
           setAirtableTableId(tableId);
           setAirtableTableName(tableName);
+          setAirtableCreatedBaseByFlowex(createdBaseByFlowex);
+          setAirtableBaseMode(createdBaseByFlowex ? "create_base" : "existing_base");
           setAirtableExistingVerified(savedMode === "existing" && data.connected === true);
           setStorageConnected(data.connected === true);
           setStoragePendingDelete(false);
@@ -2377,7 +2412,7 @@ export default function ManageLeadCapturePage() {
         const {
           data: {
             session,
-            },
+          },
         } =
           await supabase.auth.getSession();
 
@@ -2640,28 +2675,91 @@ export default function ManageLeadCapturePage() {
   };
 
   const prepareAirtableDestination = async () => {
-    if (!airtableBaseId || isPreparingStorage) return;
+    if (isPreparingStorage) return;
+
     setIsPreparingStorage(true);
     setStorageError("");
+
     try {
       if (storageMode === "create_new") {
-        const result = await callAirtableDestination({
-          action: "create_new",
-          baseId: airtableBaseId,
-          displayName: storageName.trim() || "Flowex Leads",
-        });
-        setAirtableTableId(typeof result?.tableId === "string" ? result.tableId : "");
-        setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : storageName);
+        if (airtableBaseMode === "create_base") {
+          if (!airtableWorkspaceId.trim()) {
+            setStorageError("Paste your Airtable workspace ID or workspace URL first.");
+            return;
+          }
+
+          if (!airtableBaseName.trim()) {
+            setStorageError("Give the Airtable base a name first.");
+            return;
+          }
+
+          if (!storageName.trim()) {
+            setStorageError("Give the Airtable table a name first.");
+            return;
+          }
+
+          const result = await callAirtableDestination({
+            action: "create_base",
+            workspaceId: airtableWorkspaceId.trim(),
+            baseName: airtableBaseName.trim(),
+            displayName: storageName.trim(),
+          });
+
+          setAirtableBaseId(typeof result?.baseId === "string" ? result.baseId : "");
+          setAirtableBaseName(typeof result?.baseName === "string" ? result.baseName : airtableBaseName);
+          setAirtableBaseUrl(typeof result?.baseUrl === "string" ? result.baseUrl : "");
+          setAirtableTableId(typeof result?.tableId === "string" ? result.tableId : "");
+          setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : storageName);
+          setAirtableCreatedBaseByFlowex(true);
+        } else {
+          if (!airtableBaseId) {
+            setStorageError("Choose an Airtable base first.");
+            return;
+          }
+
+          const result = await callAirtableDestination({
+            action: "create_new",
+            baseId: airtableBaseId,
+            displayName: storageName.trim() || "Flowex Leads",
+          });
+
+          setAirtableBaseUrl(typeof result?.baseUrl === "string" ? result.baseUrl : `https://airtable.com/${airtableBaseId}`);
+          setAirtableTableId(typeof result?.tableId === "string" ? result.tableId : "");
+          setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : storageName);
+          setAirtableCreatedBaseByFlowex(false);
+        }
+
         setStorageConnected(false);
       } else {
-        if (!airtableTableId) { setStorageError("Choose an Airtable table first."); return; }
-        const result = await callAirtableDestination({ action: "verify_existing", baseId: airtableBaseId, tableId: airtableTableId });
+        if (!airtableBaseId) {
+          setStorageError("Choose an Airtable base first.");
+          return;
+        }
+
+        if (!airtableTableId) {
+          setStorageError("Choose an Airtable table first.");
+          return;
+        }
+
+        const result = await callAirtableDestination({
+          action: "verify_existing",
+          baseId: airtableBaseId,
+          tableId: airtableTableId,
+        });
+
         setAirtableExistingVerified(true);
+        setAirtableBaseUrl(typeof result?.baseUrl === "string" ? result.baseUrl : `https://airtable.com/${airtableBaseId}`);
         setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : airtableTableName);
+        setAirtableCreatedBaseByFlowex(false);
       }
+
       setHasUnsavedChanges(true);
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : "Flowex could not prepare Airtable.");
+      setStorageError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not prepare Airtable."
+      );
     } finally {
       setIsPreparingStorage(false);
     }
@@ -3573,6 +3671,11 @@ export default function ManageLeadCapturePage() {
             setAirtableBaseId("");
             setAirtableTableId("");
             setAirtableTableName("");
+            setAirtableBaseMode("existing_base");
+            setAirtableWorkspaceId("");
+            setAirtableBaseName("Flowex Leads");
+            setAirtableCreatedBaseByFlowex(false);
+            setAirtableBaseUrl("");
             setAirtableExistingVerified(false);
             setStorageConnected(false);
             setStoragePendingUnlink(false);
@@ -3585,6 +3688,8 @@ export default function ManageLeadCapturePage() {
                 baseId: airtableBaseId,
                 tableId: airtableTableId,
                 displayName: storageName.trim() || airtableTableName || "Flowex Leads",
+                baseName: airtableBaseName,
+                createdBaseByFlowex: airtableCreatedBaseByFlowex,
               });
               setStorageConnected(true);
               setSavedStorageMode(storageMode);
@@ -4255,7 +4360,7 @@ export default function ManageLeadCapturePage() {
             >
 
               {!hasConfiguredStorage && (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className={`grid gap-3 ${storageType === "airtable" ? "sm:grid-cols-1" : "sm:grid-cols-2"}`}>
 
                 <button
                   type="button"
@@ -4278,23 +4383,25 @@ export default function ManageLeadCapturePage() {
                   </div>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowMoreDestinations(
-                      true
-                    )
-                  }
-                  className="rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
-                >
-                  <p className="font-semibold app-dark:text-white">
-                    + More destinations
-                  </p>
+                {storageType === "sheets" && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowMoreDestinations(
+                        true
+                      )
+                    }
+                    className="rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
+                  >
+                    <p className="font-semibold app-dark:text-white">
+                      + More destinations
+                    </p>
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                    Airtable, HubSpot, Slack, Webhook and more.
-                  </p>
-                </button>
+                    <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                      Airtable, HubSpot, Slack, Webhook and more.
+                    </p>
+                  </button>
+                )}
 
               </div>
               )}
@@ -4327,9 +4434,13 @@ export default function ManageLeadCapturePage() {
                         type="button"
                         onClick={() => {
                           if (storageType === "airtable") {
-                            setStoragePendingUnlink(true);
-                            setIsEditingStorage(false);
-                            setHasUnsavedChanges(true);
+                            if (airtableCreatedBaseByFlowex) {
+                              setShowAirtableRemoveDialog(true);
+                            } else {
+                              setStoragePendingUnlink(true);
+                              setIsEditingStorage(false);
+                              setHasUnsavedChanges(true);
+                            }
                           } else if (storageMode === "create_new") {
                             markCreatedSheetDeleted();
                           } else {
@@ -4775,77 +4886,416 @@ export default function ManageLeadCapturePage() {
                     <div>
                       <p className="text-sm font-semibold app-dark:text-white">Airtable</p>
                       <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
-                        {airtableAccountConnected ? (airtableAccountEmail ? `Connected as ${airtableAccountEmail}` : "Airtable account connected") : "Connect Airtable once. All Lead Flows can then use separate Airtable destinations."}
+                        {airtableAccountConnected
+                          ? airtableAccountEmail
+                            ? `Connected as ${airtableAccountEmail}`
+                            : "Airtable account connected"
+                          : "Connect Airtable once. All Lead Flows can then use separate Airtable destinations."}
                       </p>
                     </div>
-                    {airtableAccountConnected ? (
-                      <div className="flex items-center gap-2">
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">Airtable connected</span>
-                        {hasConfiguredStorage && isEditingStorage && (
-                          <button type="button" onClick={() => setIsEditingStorage(false)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800">Done</button>
-                        )}
-                      </div>
-                    ) : (
-                      <button type="button" onClick={connectStorageProvider} disabled={isConnectingStorage} className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60">
-                        {isConnectingStorage ? "Connecting..." : "Connect Airtable"}
-                      </button>
-                    )}
+
+                    <div className="flex items-center gap-2">
+                      {airtableAccountConnected ? (
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          Airtable connected
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={connectStorageProvider}
+                          disabled={isConnectingStorage}
+                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isConnectingStorage ? "Connecting..." : "Connect Airtable"}
+                        </button>
+                      )}
+
+                      {hasConfiguredStorage && isEditingStorage ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingStorage(false)}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        >
+                          Done
+                        </button>
+                      ) : !hasConfiguredStorage ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageType("sheets");
+                            setStorageMode("create_new");
+                            setAirtableBaseId("");
+                            setAirtableTableId("");
+                            setAirtableTableName("");
+                            setAirtableExistingVerified(false);
+                            setAirtableCreatedBaseByFlowex(false);
+                            setAirtableBaseUrl("");
+                            setStoragePendingUnlink(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          Unlink
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
-                  {airtableAccountConnected && (
+                  {storagePendingUnlink ? (
+                    <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 app-dark:border-amber-500/30 app-dark:bg-amber-500/10">
+                      <p className="text-sm font-semibold text-amber-800 app-dark:text-amber-300">
+                        Airtable will be unlinked from this Lead Flow after Save Automation.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoragePendingUnlink(false);
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="mt-3 text-xs font-semibold text-amber-800 underline app-dark:text-amber-300"
+                      >
+                        Undo unlink
+                      </button>
+                    </div>
+                  ) : airtableAccountConnected && (
                     <>
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                        <button type="button" onClick={() => { setStorageMode("create_new"); setAirtableTableId(""); setAirtableTableName(""); setAirtableExistingVerified(false); setStorageError(""); setHasUnsavedChanges(true); }} className={`rounded-2xl border p-4 text-left transition ${storageMode === "create_new" ? "border-emerald-400 bg-emerald-50 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("create_new");
+                            setAirtableTableId("");
+                            setAirtableTableName("");
+                            setAirtableExistingVerified(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                          }}
+                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "create_new" ? "border-emerald-400 bg-emerald-50 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                        >
                           <p className="font-semibold app-dark:text-white">Create New</p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">Create a new Airtable table for this Lead Flow.</p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Create a new table in an existing base or create a new base.
+                          </p>
                         </button>
-                        <button type="button" onClick={() => { setStorageMode("existing"); setAirtableTableId(""); setAirtableTableName(""); setAirtableExistingVerified(false); setStorageError(""); setHasUnsavedChanges(true); }} className={`rounded-2xl border p-4 text-left transition ${storageMode === "existing" ? "border-cyan-400 bg-cyan-50 ring-4 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("existing");
+                            setAirtableBaseMode("existing_base");
+                            setAirtableTableId("");
+                            setAirtableTableName("");
+                            setAirtableExistingVerified(false);
+                            setAirtableCreatedBaseByFlowex(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                          }}
+                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "existing" ? "border-cyan-400 bg-cyan-50 ring-4 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                        >
                           <p className="font-semibold app-dark:text-white">Use Existing</p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">Use one of your existing Airtable tables.</p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Use an existing Airtable base and table.
+                          </p>
                         </button>
                       </div>
 
-                      <div className="mt-5">
-                        <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base</label>
-                        <select value={airtableBaseId} onChange={(event) => { const value = event.target.value; setAirtableBaseId(value); setAirtableTableId(""); setAirtableTableName(""); setAirtableExistingVerified(false); setStorageError(""); setHasUnsavedChanges(true); void loadAirtableTables(value); }} className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white">
-                          <option value="">{isLoadingAirtable ? "Loading bases..." : "Choose a base"}</option>
-                          {airtableBases.map((base) => <option key={base.id} value={base.id}>{base.name}</option>)}
-                        </select>
-                      </div>
+                      {storageMode === "create_new" && (
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAirtableBaseMode("existing_base");
+                              setAirtableBaseId("");
+                              setAirtableTableId("");
+                              setAirtableCreatedBaseByFlowex(false);
+                              setStorageError("");
+                              setHasUnsavedChanges(true);
+                            }}
+                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "existing_base" ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10" : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                          >
+                            <span className="font-semibold app-dark:text-white">Use Existing Base</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAirtableBaseMode("create_base");
+                              setAirtableBaseId("");
+                              setAirtableTableId("");
+                              setAirtableCreatedBaseByFlowex(false);
+                              setStorageError("");
+                              setHasUnsavedChanges(true);
+                            }}
+                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "create_base" ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10" : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                          >
+                            <span className="font-semibold app-dark:text-white">Create New Base</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {(storageMode === "existing" || airtableBaseMode === "existing_base") && (
+                        <div className="mt-5">
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base</label>
+                          <select
+                            value={airtableBaseId}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setAirtableBaseId(value);
+                              setAirtableTableId("");
+                              setAirtableTableName("");
+                              setAirtableExistingVerified(false);
+                              setAirtableCreatedBaseByFlowex(false);
+                              setAirtableBaseUrl(value ? `https://airtable.com/${value}` : "");
+                              setStorageError("");
+                              setHasUnsavedChanges(true);
+                              void loadAirtableTables(value);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                          >
+                            <option value="">{isLoadingAirtable ? "Loading bases..." : "Choose a base"}</option>
+                            {airtableBases.map((base) => (
+                              <option key={base.id} value={base.id}>{base.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {storageMode === "create_new" && airtableBaseMode === "create_base" && (
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base name</label>
+                            <input
+                              value={airtableBaseName}
+                              onChange={(event) => {
+                                setAirtableBaseName(event.target.value);
+                                setHasUnsavedChanges(true);
+                              }}
+                              placeholder="Flowex Leads"
+                              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Workspace ID or URL</label>
+                            <input
+                              value={airtableWorkspaceId}
+                              onChange={(event) => {
+                                setAirtableWorkspaceId(event.target.value);
+                                setHasUnsavedChanges(true);
+                              }}
+                              placeholder="wsp..."
+                              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {storageMode === "create_new" ? (
                         <div className="mt-5">
                           <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Table name</label>
                           <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-                            <input value={storageName} onChange={(event) => { setStorageName(event.target.value); setHasUnsavedChanges(true); }} placeholder="Flowex Leads" className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white" />
-                            <button type="button" onClick={prepareAirtableDestination} disabled={!airtableBaseId || !storageName.trim() || isPreparingStorage || !!airtableTableId} className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60">
-                              {isPreparingStorage ? "Creating..." : airtableTableId ? "Created" : "Create Table"}
+                            <input
+                              value={storageName}
+                              onChange={(event) => {
+                                setStorageName(event.target.value);
+                                setHasUnsavedChanges(true);
+                              }}
+                              placeholder="Flowex Leads"
+                              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={prepareAirtableDestination}
+                              disabled={
+                                isPreparingStorage ||
+                                !!airtableTableId ||
+                                !storageName.trim() ||
+                                (airtableBaseMode === "existing_base" && !airtableBaseId) ||
+                                (airtableBaseMode === "create_base" && (!airtableBaseName.trim() || !airtableWorkspaceId.trim()))
+                              }
+                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isPreparingStorage
+                                ? "Creating..."
+                                : airtableTableId
+                                  ? "Created"
+                                  : airtableBaseMode === "create_base"
+                                    ? "Create Base & Table"
+                                    : "Create Table"}
                             </button>
                           </div>
-                          {airtableTableId && <p className="mt-3 text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">✓ {airtableTableName || storageName} is ready. Save Automation to use it.</p>}
+
+                          {airtableTableId && (
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                ✓ {airtableTableName || storageName} is ready. Save Automation to use it.
+                              </span>
+                              {airtableBaseUrl && (
+                                <a
+                                  href={airtableBaseUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                >
+                                  Open Airtable ↗
+                                </a>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="mt-5">
                           <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Table</label>
-                          <select value={airtableTableId} disabled={!airtableBaseId || isLoadingAirtable} onChange={(event) => { const value = event.target.value; setAirtableTableId(value); setAirtableTableName(airtableTables.find((table) => table.id === value)?.name || ""); setAirtableExistingVerified(false); setHasUnsavedChanges(true); }} className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white">
+                          <select
+                            value={airtableTableId}
+                            disabled={!airtableBaseId || isLoadingAirtable}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setAirtableTableId(value);
+                              setAirtableTableName(airtableTables.find((table) => table.id === value)?.name || "");
+                              setAirtableExistingVerified(false);
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                          >
                             <option value="">{!airtableBaseId ? "Choose a base first" : isLoadingAirtable ? "Loading tables..." : "Choose a table"}</option>
-                            {airtableTables.map((table) => <option key={table.id} value={table.id}>{table.name}</option>)}
+                            {airtableTables.map((table) => (
+                              <option key={table.id} value={table.id}>{table.name}</option>
+                            ))}
                           </select>
-                          <div className="mt-3 flex items-center gap-3">
-                            <button type="button" onClick={prepareAirtableDestination} disabled={!airtableBaseId || !airtableTableId || isPreparingStorage} className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200">
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={prepareAirtableDestination}
+                              disabled={!airtableBaseId || !airtableTableId || isPreparingStorage}
+                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200"
+                            >
                               {isPreparingStorage ? "Verifying..." : airtableExistingVerified ? "Verify Again" : "Verify Table"}
                             </button>
-                            {airtableExistingVerified && <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Verified</span>}
+
+                            {airtableExistingVerified && (
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Verified</span>
+                            )}
+
+                            {airtableBaseUrl && (
+                              <a
+                                href={airtableBaseUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              >
+                                Open Airtable ↗
+                              </a>
+                            )}
+
+                            {(savedStorageMode === "existing" && storageConnected) && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setStoragePendingUnlink(true);
+                                  setIsEditingStorage(false);
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                Unlink
+                              </button>
+                            )}
                           </div>
-                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">Flowex keeps existing Airtable fields and adds any missing fields from this Lead Flow when Save Automation is clicked.</p>
+
+                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                            Flowex keeps existing Airtable fields and adds any missing fields from this Lead Flow when Save Automation is clicked.
+                          </p>
                         </div>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.</div>
+                      {storageMode === "create_new" && storageConnected && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (airtableCreatedBaseByFlowex) {
+                                setShowAirtableRemoveDialog(true);
+                              } else {
+                                setStoragePendingUnlink(true);
+                                setIsEditingStorage(false);
+                                setHasUnsavedChanges(true);
+                              }
+                            }}
+                            className="text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                      </div>
                     </>
                   )}
 
-                  {storageError && <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">{storageError}</p>}
+                  {storageError && (
+                    <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">{storageError}</p>
+                  )}
+                </div>
+              )}
+
+              {showAirtableRemoveDialog && (
+                <div
+                  className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+                  onClick={() => setShowAirtableRemoveDialog(false)}
+                >
+                  <div
+                    className="w-full max-w-md rounded-[24px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <h3 className="text-lg font-bold app-dark:text-white">Remove Airtable destination?</h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                      Choose what you want to do with this Flowex-created Airtable base.
+                    </p>
+
+                    <div className="mt-5 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoragePendingUnlink(true);
+                          setShowAirtableRemoveDialog(false);
+                          setIsEditingStorage(false);
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                      >
+                        Remove from this automation
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoragePendingUnlink(true);
+                          setShowAirtableRemoveDialog(false);
+                          setIsEditingStorage(false);
+                          setHasUnsavedChanges(true);
+                          if (airtableBaseUrl) {
+                            window.open(airtableBaseUrl, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                        className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700 transition hover:bg-red-100 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-300"
+                      >
+                        Remove & open Airtable to delete base
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowAirtableRemoveDialog(false)}
+                        className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 app-dark:text-slate-400 app-dark:hover:bg-slate-800"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
