@@ -9,7 +9,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-type SourceField = { key: string; label: string; type: string };
+type SourceField = {
+  key: string;
+  label: string;
+  type: string;
+  options?: string[];
+};
 type DesiredField = {
   key: string;
   name: string;
@@ -63,6 +68,14 @@ function sourceFields(
             typeof field.type === "string"
               ? field.type
               : "text",
+          options:
+            Array.isArray((field as { options?: unknown }).options)
+              ? (field as { options: unknown[] }).options
+                  .filter((option): option is string =>
+                    typeof option === "string" && !!option.trim()
+                  )
+                  .map((option) => option.trim())
+              : [],
         }));
     }
   }
@@ -96,12 +109,46 @@ function sourceFields(
   return [];
 }
 
-function airtableFieldType(type: string) {
-  if (type === "email") return "email";
-  if (type === "phone") return "phoneNumber";
-  if (type === "url") return "url";
-  if (type === "number") return "number";
-  return "singleLineText";
+function airtableFieldDefinition(field: SourceField): {
+  type: string;
+  options?: Record<string, unknown>;
+} {
+  switch (field.type) {
+    case "email":
+      return { type: "email" };
+    case "phone":
+      return { type: "phoneNumber" };
+    case "website":
+    case "url":
+      return { type: "url" };
+    case "number":
+    case "range":
+      return {
+        type: "number",
+        options: { precision: 0 },
+      };
+    case "long_text":
+    case "textarea":
+      return { type: "multilineText" };
+    case "dropdown":
+    case "select":
+    case "radio":
+      return {
+        type: "singleSelect",
+        options: {
+          choices: (field.options || []).map((name) => ({ name })),
+        },
+      };
+    case "date":
+      return {
+        type: "date",
+        options: {
+          dateFormat: { name: "iso" },
+        },
+      };
+    default:
+      return { type: "singleLineText" };
+  }
 }
 
 function buildDesiredFields(
@@ -169,10 +216,15 @@ function buildDesiredFields(
     }
 
     usedNames.add(normalizedLabel);
+    const definition = airtableFieldDefinition(field);
+
     desired.push({
       key: field.key,
       name: field.label.slice(0, 100),
-      type: airtableFieldType(field.type),
+      type: definition.type,
+      ...(definition.options
+        ? { options: definition.options }
+        : {}),
     });
   }
 
@@ -496,6 +548,10 @@ export async function POST(request: Request) {
               id: base.id,
               name: base.name,
               permissionLevel: base.permissionLevel || null,
+              workspaceId:
+                typeof base.workspaceId === "string"
+                  ? base.workspaceId
+                  : null,
             }))
           : [],
       });

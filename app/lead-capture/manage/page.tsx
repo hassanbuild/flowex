@@ -2682,53 +2682,42 @@ export default function ManageLeadCapturePage() {
 
     try {
       if (storageMode === "create_new") {
-        if (airtableBaseMode === "create_base") {
-          if (!airtableWorkspaceId.trim()) {
-            setStorageError("Paste your Airtable workspace ID or workspace URL first.");
-            return;
-          }
-
-          if (!airtableBaseName.trim()) {
-            setStorageError("Give the Airtable base a name first.");
-            return;
-          }
-
-          if (!storageName.trim()) {
-            setStorageError("Give the Airtable table a name first.");
-            return;
-          }
-
-          const result = await callAirtableDestination({
-            action: "create_base",
-            workspaceId: airtableWorkspaceId.trim(),
-            baseName: airtableBaseName.trim(),
-            displayName: storageName.trim(),
-          });
-
-          setAirtableBaseId(typeof result?.baseId === "string" ? result.baseId : "");
-          setAirtableBaseName(typeof result?.baseName === "string" ? result.baseName : airtableBaseName);
-          setAirtableBaseUrl(typeof result?.baseUrl === "string" ? result.baseUrl : "");
-          setAirtableTableId(typeof result?.tableId === "string" ? result.tableId : "");
-          setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : storageName);
-          setAirtableCreatedBaseByFlowex(true);
-        } else {
-          if (!airtableBaseId) {
-            setStorageError("Choose an Airtable base first.");
-            return;
-          }
-
-          const result = await callAirtableDestination({
-            action: "create_new",
-            baseId: airtableBaseId,
-            displayName: storageName.trim() || "Flowex Leads",
-          });
-
-          setAirtableBaseUrl(typeof result?.baseUrl === "string" ? result.baseUrl : `https://airtable.com/${airtableBaseId}`);
-          setAirtableTableId(typeof result?.tableId === "string" ? result.tableId : "");
-          setAirtableTableName(typeof result?.tableName === "string" ? result.tableName : storageName);
-          setAirtableCreatedBaseByFlowex(false);
+        if (!airtableBaseId) {
+          setStorageError(
+            airtableBaseMode === "create_base"
+              ? "Create the Airtable base, refresh the list, then choose it first."
+              : "Choose an Airtable base first."
+          );
+          return;
         }
 
+        if (!storageName.trim()) {
+          setStorageError("Give the Airtable table a name first.");
+          return;
+        }
+
+        const result = await callAirtableDestination({
+          action: "create_new",
+          baseId: airtableBaseId,
+          displayName: storageName.trim(),
+        });
+
+        setAirtableBaseUrl(
+          typeof result?.baseUrl === "string"
+            ? result.baseUrl
+            : `https://airtable.com/${airtableBaseId}`
+        );
+        setAirtableTableId(
+          typeof result?.tableId === "string" ? result.tableId : ""
+        );
+        setAirtableTableName(
+          typeof result?.tableName === "string"
+            ? result.tableName
+            : storageName
+        );
+        setAirtableCreatedBaseByFlowex(
+          airtableBaseMode === "create_base"
+        );
         setStorageConnected(false);
       } else {
         if (!airtableBaseId) {
@@ -5034,7 +5023,7 @@ export default function ManageLeadCapturePage() {
                         </div>
                       )}
 
-                      {(storageMode === "existing" || airtableBaseMode === "existing_base") && (
+                      {(storageMode === "existing" || storageMode === "create_new") && (
                         <div className="mt-5">
                           <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base</label>
                           <select
@@ -5042,6 +5031,10 @@ export default function ManageLeadCapturePage() {
                             onChange={(event) => {
                               const value = event.target.value;
                               setAirtableBaseId(value);
+                              setAirtableBaseName(
+                                airtableBases.find((base) => base.id === value)?.name ||
+                                  ""
+                              );
                               setAirtableTableId("");
                               setAirtableTableName("");
                               setAirtableExistingVerified(false);
@@ -5062,31 +5055,30 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       {storageMode === "create_new" && airtableBaseMode === "create_base" && (
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base name</label>
-                            <input
-                              value={airtableBaseName}
-                              onChange={(event) => {
-                                setAirtableBaseName(event.target.value);
-                                setHasUnsavedChanges(true);
-                              }}
-                              placeholder="Flowex Leads"
-                              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Workspace ID or URL</label>
-                            <input
-                              value={airtableWorkspaceId}
-                              onChange={(event) => {
-                                setAirtableWorkspaceId(event.target.value);
-                                setHasUnsavedChanges(true);
-                              }}
-                              placeholder="wsp..."
-                              className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
-                            />
+                        <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4 app-dark:border-cyan-500/30 app-dark:bg-cyan-500/10">
+                          <p className="text-sm font-semibold text-cyan-900 app-dark:text-cyan-200">
+                            Create the base in Airtable
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-cyan-800/80 app-dark:text-cyan-300/80">
+                            Airtable does not expose a standard workspace list to OAuth apps. Create the base in Airtable, then refresh and select it here. Flowex will create and structure the lead table automatically.
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <a
+                              href="https://airtable.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-cyan-800 shadow-sm transition hover:bg-cyan-50 app-dark:bg-[#11161d] app-dark:text-cyan-300"
+                            >
+                              Open Airtable ↗
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => void loadAirtableBases()}
+                              disabled={isLoadingAirtable}
+                              className="rounded-lg border border-cyan-200 bg-white px-3 py-2 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-cyan-500/30 app-dark:bg-[#11161d] app-dark:text-cyan-300"
+                            >
+                              {isLoadingAirtable ? "Refreshing..." : "Refresh Bases"}
+                            </button>
                           </div>
                         </div>
                       )}
@@ -5111,8 +5103,7 @@ export default function ManageLeadCapturePage() {
                                 isPreparingStorage ||
                                 !!airtableTableId ||
                                 !storageName.trim() ||
-                                (airtableBaseMode === "existing_base" && !airtableBaseId) ||
-                                (airtableBaseMode === "create_base" && (!airtableBaseName.trim() || !airtableWorkspaceId.trim()))
+                                !airtableBaseId
                               }
                               className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
                             >
@@ -5120,9 +5111,7 @@ export default function ManageLeadCapturePage() {
                                 ? "Creating..."
                                 : airtableTableId
                                   ? "Created"
-                                  : airtableBaseMode === "create_base"
-                                    ? "Create Base & Table"
-                                    : "Create Table"}
+                                  : "Create Table"}
                             </button>
                           </div>
 
