@@ -24,6 +24,7 @@ type ReplyType = "instant" | "friendly" | "custom";
 type AirtableBaseOption = { id: string; name: string };
 type AirtableTableOption = { id: string; name: string };
 type AirtableBaseMode = "existing_base" | "create_base";
+type ExcelWorkbookOption = { id: string; name: string; webUrl: string };
 
 
 const storageProviders: {
@@ -575,6 +576,39 @@ export default function ManageLeadCapturePage() {
 
   const [microsoftAccountEmail, setMicrosoftAccountEmail] =
     useState("");
+
+  const [microsoftWorkbooks, setMicrosoftWorkbooks] =
+    useState<ExcelWorkbookOption[]>([]);
+
+  const [excelWorkbookId, setExcelWorkbookId] =
+    useState("");
+
+  const [excelWorkbookName, setExcelWorkbookName] =
+    useState("");
+
+  const [excelWorkbookUrl, setExcelWorkbookUrl] =
+    useState("");
+
+  const [excelTableId, setExcelTableId] =
+    useState("");
+
+  const [excelTableName, setExcelTableName] =
+    useState("");
+
+  const [excelExistingVerified, setExcelExistingVerified] =
+    useState(false);
+
+  const [excelCreatedByFlowex, setExcelCreatedByFlowex] =
+    useState(false);
+
+  const [showExcelRemoveDialog, setShowExcelRemoveDialog] =
+    useState(false);
+
+  const [excelRemovalMode, setExcelRemovalMode] =
+    useState<"unlink" | "trash" | null>(null);
+
+  const [isLoadingMicrosoft, setIsLoadingMicrosoft] =
+    useState(false);
 
   const [airtableBases, setAirtableBases] =
     useState<AirtableBaseOption[]>([]);
@@ -1951,6 +1985,17 @@ export default function ManageLeadCapturePage() {
   }, [flowReady, leadFlowId]);
 
   useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+    const microsoftStatus =
+      new URL(window.location.href).searchParams.get("microsoft");
+
+    if (microsoftStatus === "connected") {
+      setStorageType("excel");
+      setStorageError("");
+    }
+  }, [flowReady, leadFlowId]);
+
+  useEffect(() => {
     if (
       !flowReady ||
       !leadFlowId
@@ -2059,6 +2104,8 @@ export default function ManageLeadCapturePage() {
           provider ===
             "airtable" ||
           provider ===
+            "excel" ||
+          provider ===
             "hubspot" ||
           provider ===
             "slack" ||
@@ -2089,20 +2136,24 @@ export default function ManageLeadCapturePage() {
           data.display_name ||
             "Flowex Leads"
         );
-
-        const config =
-          data.config as {
-            destination?: unknown;
-            spreadsheet_id?: unknown;
-            spreadsheet_url?: unknown;
-            created_by_flowex?: unknown;
-            base_id?: unknown;
-            base_name?: unknown;
-            base_url?: unknown;
-            table_id?: unknown;
-            table_name?: unknown;
-            created_base_by_flowex?: unknown;
-          } | null;
+const config =
+  data.config as {
+    destination?: unknown;
+    spreadsheet_id?: unknown;
+    spreadsheet_url?: unknown;
+    created_by_flowex?: unknown;
+    base_id?: unknown;
+    base_name?: unknown;
+    base_url?: unknown;
+    table_id?: unknown;
+    table_name?: unknown;
+    created_base_by_flowex?: unknown;
+    workbook_id?: unknown;
+    workbook_name?: unknown;
+    workbook_url?: unknown;
+    table_name_excel?: unknown;
+    table_id_excel?: unknown;
+  } | null;
 
         if (provider === "airtable") {
           const baseId = typeof config?.base_id === "string" ? config.base_id : "";
@@ -2120,6 +2171,53 @@ export default function ManageLeadCapturePage() {
           setAirtableCreatedBaseByFlowex(createdBaseByFlowex);
           setAirtableBaseMode(createdBaseByFlowex ? "create_base" : "existing_base");
           setAirtableExistingVerified(savedMode === "existing" && data.connected === true);
+          setStorageConnected(data.connected === true);
+          setStoragePendingDelete(false);
+          setStoragePendingUnlink(false);
+          setHasUnsavedChanges(false);
+          return;
+        }
+
+        if (provider === "excel") {
+          const workbookId =
+            typeof config?.workbook_id === "string"
+              ? config.workbook_id
+              : "";
+
+          const workbookName =
+            typeof config?.workbook_name === "string"
+              ? config.workbook_name
+              : data.display_name || "";
+
+          const workbookUrl =
+            typeof config?.workbook_url === "string"
+              ? config.workbook_url
+              : "";
+
+          const excelTableIdValue =
+            typeof config?.table_id_excel === "string"
+              ? config.table_id_excel
+              : typeof config?.table_id === "string"
+                ? config.table_id
+                : "";
+
+          const excelTableNameValue =
+            typeof config?.table_name_excel === "string"
+              ? config.table_name_excel
+              : typeof config?.table_name === "string"
+                ? config.table_name
+                : "";
+
+          setExcelWorkbookId(workbookId);
+          setExcelWorkbookName(workbookName);
+          setExcelWorkbookUrl(workbookUrl);
+          setExcelTableId(excelTableIdValue);
+          setExcelTableName(excelTableNameValue);
+          setExcelCreatedByFlowex(config?.created_by_flowex === true);
+          setExcelExistingVerified(
+            savedMode === "existing" &&
+            data.connected === true
+          );
           setStorageConnected(data.connected === true);
           setStoragePendingDelete(false);
           setStoragePendingUnlink(false);
@@ -2858,6 +2956,259 @@ export default function ManageLeadCapturePage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageType, airtableAccountConnected]);
+
+  const callMicrosoftDestination =
+    async (
+      payload: Record<string, unknown>
+    ) => {
+      const {
+        data: {
+          session,
+        },
+      } =
+        await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error(
+          "Your session could not be verified. Please log in again."
+        );
+      }
+
+      const response =
+        await fetch(
+          "/api/integrations/microsoft/destination",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+              Authorization:
+                `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              ...payload,
+              leadFlowId,
+            }),
+          }
+        );
+
+      const text =
+        await response.text();
+
+      let result:
+        Record<string, any> = {};
+
+      try {
+        result =
+          text
+            ? JSON.parse(text)
+            : {};
+      } catch {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            "Flowex could not update Microsoft Excel."
+        );
+      }
+
+      return result;
+    };
+
+  const loadMicrosoftWorkbooks =
+    async () => {
+      if (
+        !microsoftAccountConnected ||
+        isLoadingMicrosoft
+      ) {
+        return;
+      }
+
+      setIsLoadingMicrosoft(true);
+      setStorageError("");
+
+      try {
+        const result =
+          await callMicrosoftDestination({
+            action:
+              "list_workbooks",
+          });
+
+        setMicrosoftWorkbooks(
+          Array.isArray(
+            result?.workbooks
+          )
+            ? result.workbooks
+            : []
+        );
+      } catch (error) {
+        setStorageError(
+          error instanceof Error
+            ? error.message
+            : "Flowex could not load Excel workbooks."
+        );
+      } finally {
+        setIsLoadingMicrosoft(false);
+      }
+    };
+
+  const prepareMicrosoftExcel =
+    async () => {
+      if (
+        isPreparingStorage
+      ) {
+        return;
+      }
+
+      setIsPreparingStorage(true);
+      setStorageError("");
+
+      try {
+        if (
+          storageMode ===
+          "create_new"
+        ) {
+          if (!storageName.trim()) {
+            setStorageError(
+              "Give the workbook a name first."
+            );
+            return;
+          }
+
+          const result =
+            await callMicrosoftDestination({
+              action:
+                "create_new",
+              displayName:
+                storageName.trim(),
+            });
+
+          setExcelWorkbookId(
+            typeof result?.workbookId ===
+              "string"
+              ? result.workbookId
+              : ""
+          );
+
+          setExcelWorkbookName(
+            typeof result?.workbookName ===
+              "string"
+              ? result.workbookName
+              : storageName
+          );
+
+          setExcelWorkbookUrl(
+            typeof result?.workbookUrl ===
+              "string"
+              ? result.workbookUrl
+              : ""
+          );
+
+          setExcelTableId(
+            typeof result?.tableId ===
+              "string"
+              ? result.tableId
+              : ""
+          );
+
+          setExcelTableName(
+            typeof result?.tableName ===
+              "string"
+              ? result.tableName
+              : ""
+          );
+
+          setExcelCreatedByFlowex(
+            true
+          );
+
+          setStorageConnected(
+            false
+          );
+        } else {
+          if (!excelWorkbookId) {
+            setStorageError(
+              "Choose an Excel workbook first."
+            );
+            return;
+          }
+
+          const result =
+            await callMicrosoftDestination({
+              action:
+                "verify_existing",
+              workbookId:
+                excelWorkbookId,
+            });
+
+          setExcelWorkbookName(
+            typeof result?.workbookName ===
+              "string"
+              ? result.workbookName
+              : excelWorkbookName
+          );
+
+          setExcelWorkbookUrl(
+            typeof result?.workbookUrl ===
+              "string"
+              ? result.workbookUrl
+              : excelWorkbookUrl
+          );
+
+          setExcelTableId(
+            typeof result?.tableId ===
+              "string"
+              ? result.tableId
+              : ""
+          );
+
+          setExcelTableName(
+            typeof result?.tableName ===
+              "string"
+              ? result.tableName
+              : ""
+          );
+
+          setExcelExistingVerified(
+            true
+          );
+
+          setExcelCreatedByFlowex(
+            false
+          );
+        }
+
+        setHasUnsavedChanges(
+          true
+        );
+      } catch (error) {
+        setStorageError(
+          error instanceof Error
+            ? error.message
+            : "Flowex could not prepare Microsoft Excel."
+        );
+      } finally {
+        setIsPreparingStorage(
+          false
+        );
+      }
+    };
+
+  useEffect(() => {
+    if (
+      storageType === "excel" &&
+      microsoftAccountConnected &&
+      microsoftWorkbooks.length === 0
+    ) {
+      void loadMicrosoftWorkbooks();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    storageType,
+    microsoftAccountConnected,
+  ]);
 
   const prepareGoogleSheet =
     async () => {
@@ -3747,6 +4098,144 @@ export default function ManageLeadCapturePage() {
           }
         }
 
+        } else if (storageType === "excel") {
+          if (
+            storagePendingUnlink ||
+            excelRemovalMode === "unlink"
+          ) {
+            try {
+              await callMicrosoftDestination({
+                action:
+                  "unlink_destination",
+              });
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not unlink Microsoft Excel."
+              );
+              return false;
+            }
+
+            setExcelWorkbookId("");
+            setExcelWorkbookName("");
+            setExcelWorkbookUrl("");
+            setExcelTableId("");
+            setExcelTableName("");
+            setExcelExistingVerified(false);
+            setExcelCreatedByFlowex(false);
+            setExcelRemovalMode(null);
+            setStorageConnected(false);
+            setStoragePendingUnlink(false);
+            setSavedStorageMode(null);
+          } else if (
+            excelRemovalMode === "trash" &&
+            excelWorkbookId
+          ) {
+            try {
+              await callMicrosoftDestination({
+                action:
+                  "trash_created",
+                workbookId:
+                  excelWorkbookId,
+              });
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not delete the Excel workbook."
+              );
+              return false;
+            }
+
+            setExcelWorkbookId("");
+            setExcelWorkbookName("");
+            setExcelWorkbookUrl("");
+            setExcelTableId("");
+            setExcelTableName("");
+            setExcelExistingVerified(false);
+            setExcelCreatedByFlowex(false);
+            setExcelRemovalMode(null);
+            setStorageConnected(false);
+            setSavedStorageMode(null);
+          } else if (
+            excelWorkbookId &&
+            excelTableId &&
+            (
+              storageMode === "create_new" ||
+              excelExistingVerified
+            )
+          ) {
+            try {
+              const result =
+                await callMicrosoftDestination({
+                  action:
+                    "commit",
+                  mode:
+                    storageMode,
+                  workbookId:
+                    excelWorkbookId,
+                  displayName:
+                    storageName.trim() ||
+                    excelWorkbookName ||
+                    "Flowex Leads",
+                  createdByFlowex:
+                    excelCreatedByFlowex,
+                });
+
+              setStorageConnected(
+                true
+              );
+
+              setSavedStorageMode(
+                storageMode
+              );
+
+              setExcelWorkbookName(
+                typeof result?.workbookName ===
+                  "string"
+                  ? result.workbookName
+                  : excelWorkbookName
+              );
+
+              setExcelWorkbookUrl(
+                typeof result?.workbookUrl ===
+                  "string"
+                  ? result.workbookUrl
+                  : excelWorkbookUrl
+              );
+
+              setExcelTableId(
+                typeof result?.tableId ===
+                  "string"
+                  ? result.tableId
+                  : excelTableId
+              );
+
+              setExcelTableName(
+                typeof result?.tableName ===
+                  "string"
+                  ? result.tableName
+                  : excelTableName
+              );
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not save the Microsoft Excel destination."
+              );
+              return false;
+            }
+          } else if (
+            microsoftAccountConnected
+          ) {
+            alert(
+              storageMode === "create_new"
+                ? "Create the Excel workbook first."
+                : "Choose and verify an existing Excel workbook first."
+            );
+            return false;
+          }
         } else if (storageType === "airtable") {
           if (storagePendingUnlink) {
             try {
@@ -3805,7 +4294,9 @@ export default function ManageLeadCapturePage() {
               ? ""
               : storageType === "airtable"
                 ? airtableTableId
-                : storageMode === "existing"
+                : storageType === "excel"
+                  ? excelWorkbookId
+                  : storageMode === "existing"
                   ? existingSheetUrl || storageDestination
                   : createdSheetUrl,
 
@@ -4003,7 +4494,13 @@ export default function ManageLeadCapturePage() {
               !!airtableTableId &&
               (storageMode === "create_new" || airtableExistingVerified)
             )
-          : false
+          : storageType === "excel"
+            ? (
+                !!excelWorkbookId &&
+                !!excelTableId &&
+                (storageMode === "create_new" || excelExistingVerified)
+              )
+            : false
     );
 
   if (
@@ -4502,9 +4999,9 @@ export default function ManageLeadCapturePage() {
                       <div className="flex items-center gap-2">
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/15 app-dark:text-emerald-400">✓</span>
                         <div>
-                          <p className="text-sm font-semibold app-dark:text-white">{storageType === "airtable" ? "Airtable" : "Google Sheets"}</p>
+                          <p className="text-sm font-semibold app-dark:text-white">{storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : "Google Sheets"}</p>
                           <p className="mt-0.5 text-xs text-gray-500 app-dark:text-slate-400">
-                            {storageType === "airtable" ? (storageMode === "create_new" ? "Create new table" : "Use existing table") : (storageMode === "create_new" ? "Create new sheet" : "Use existing sheet")}
+                            {storageType === "airtable" ? (storageMode === "create_new" ? "Create new table" : "Use existing table") : storageType === "excel" ? (storageMode === "create_new" ? "Create new workbook" : "Use existing workbook") : (storageMode === "create_new" ? "Create new sheet" : "Use existing sheet")}
                           </p>
                         </div>
                       </div>
@@ -4530,6 +5027,15 @@ export default function ManageLeadCapturePage() {
                               setIsEditingStorage(false);
                               setHasUnsavedChanges(true);
                             }
+                          } else if (storageType === "excel") {
+                            if (excelCreatedByFlowex) {
+                              setShowExcelRemoveDialog(true);
+                            } else {
+                              setExcelRemovalMode("unlink");
+                              setStoragePendingUnlink(true);
+                              setIsEditingStorage(false);
+                              setHasUnsavedChanges(true);
+                            }
                           } else if (storageMode === "create_new") {
                             markCreatedSheetDeleted();
                           } else {
@@ -4538,7 +5044,7 @@ export default function ManageLeadCapturePage() {
                         }}
                         className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                       >
-                        {storageType === "airtable" ? "Unlink" : storageMode === "create_new" ? "Remove" : "Unlink"}
+                        {storageType === "airtable" || storageType === "excel" ? (storageMode === "create_new" ? "Remove" : "Unlink") : storageMode === "create_new" ? "Remove" : "Unlink"}
                       </button>
                     </div>
                   </div>
@@ -4969,7 +5475,7 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
-              {storageType === "excel" && !hasConfiguredStorage && (
+              {storageType === "excel" && (!hasConfiguredStorage || isEditingStorage) && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -5002,24 +5508,232 @@ export default function ManageLeadCapturePage() {
                         </button>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStorageType("sheets");
-                          setStorageError("");
-                          setHasUnsavedChanges(true);
-                        }}
-                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                      >
-                        Unlink
-                      </button>
+                      {hasConfiguredStorage && isEditingStorage && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingStorage(false)}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                        >
+                          Done
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  {storageError && (
-                    <p className="mt-4 text-sm font-medium text-red-500 app-dark:text-red-400">
-                      {storageError}
-                    </p>
+                  {microsoftAccountConnected && (
+                    <>
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("create_new");
+                            setExcelExistingVerified(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                          }}
+                          className={`rounded-xl border p-4 text-left transition ${
+                            storageMode === "create_new"
+                              ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10"
+                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold app-dark:text-white">
+                            Create New Workbook
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Flowex creates a structured Excel table in OneDrive.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("existing");
+                            setExcelCreatedByFlowex(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                            void loadMicrosoftWorkbooks();
+                          }}
+                          className={`rounded-xl border p-4 text-left transition ${
+                            storageMode === "existing"
+                              ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10"
+                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold app-dark:text-white">
+                            Use Existing Workbook
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Flowex maps the table and adds missing lead columns on Save Automation.
+                          </p>
+                        </button>
+                      </div>
+
+                      {storageMode === "create_new" ? (
+                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            Workbook name
+                          </label>
+
+                          <input
+                            value={storageName}
+                            onChange={(event) => {
+                              setStorageName(event.target.value);
+                              setHasUnsavedChanges(true);
+                            }}
+                            placeholder="Flowex Leads"
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                          />
+
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={prepareMicrosoftExcel}
+                              disabled={isPreparingStorage}
+                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+                            >
+                              {isPreparingStorage
+                                ? "Creating..."
+                                : excelWorkbookId
+                                  ? "Create Again"
+                                  : "Create Workbook"}
+                            </button>
+
+                            {excelWorkbookId && (
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                ✓ Workbook ready
+                              </span>
+                            )}
+
+                            {excelWorkbookUrl && (
+                              <a
+                                href={excelWorkbookUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              >
+                                Open Workbook ↗
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                              Excel workbook
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={loadMicrosoftWorkbooks}
+                              disabled={isLoadingMicrosoft}
+                              className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                            >
+                              {isLoadingMicrosoft ? "Refreshing..." : "Refresh"}
+                            </button>
+                          </div>
+
+                          <select
+                            value={excelWorkbookId}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              const workbook =
+                                microsoftWorkbooks.find(
+                                  (item) => item.id === value
+                                );
+
+                              setExcelWorkbookId(value);
+                              setExcelWorkbookName(workbook?.name || "");
+                              setExcelWorkbookUrl(workbook?.webUrl || "");
+                              setExcelTableId("");
+                              setExcelTableName("");
+                              setExcelExistingVerified(false);
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                          >
+                            <option value="">
+                              {isLoadingMicrosoft
+                                ? "Loading workbooks..."
+                                : "Choose a workbook"}
+                            </option>
+
+                            {microsoftWorkbooks.map((workbook) => (
+                              <option
+                                key={workbook.id}
+                                value={workbook.id}
+                              >
+                                {workbook.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={prepareMicrosoftExcel}
+                              disabled={
+                                !excelWorkbookId ||
+                                isPreparingStorage
+                              }
+                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                            >
+                              {isPreparingStorage
+                                ? "Verifying..."
+                                : excelExistingVerified
+                                  ? "Verify Again"
+                                  : "Verify Workbook"}
+                            </button>
+
+                            {excelExistingVerified && (
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                ✓ Verified
+                              </span>
+                            )}
+
+                            {excelWorkbookUrl && (
+                              <a
+                                href={excelWorkbookUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              >
+                                Open Workbook ↗
+                              </a>
+                            )}
+
+                            {(excelWorkbookId || savedStorageMode === "existing") && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExcelRemovalMode("unlink");
+                                  setStoragePendingUnlink(true);
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                Unlink
+                              </button>
+                            )}
+                          </div>
+
+                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                            Verification checks access and maps the workbook. Missing Flowex lead columns are added only when Save Automation is clicked.
+                          </p>
+                        </div>
+                      )}
+
+                      {storageError && (
+                        <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                          {storageError}
+                        </p>
+                      )}
+
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -5384,6 +6098,57 @@ export default function ManageLeadCapturePage() {
                   {storageError && (
                     <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">{storageError}</p>
                   )}
+                </div>
+              )}
+
+              {showExcelRemoveDialog && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
+                  <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                    <h3 className="text-lg font-bold app-dark:text-white">
+                      Remove Excel destination?
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                      Choose whether Flowex should only stop using this workbook or also delete the Flowex-created workbook from OneDrive.
+                    </p>
+
+                    <div className="mt-5 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExcelRemovalMode("unlink");
+                          setStoragePendingUnlink(true);
+                          setShowExcelRemoveDialog(false);
+                          setIsEditingStorage(false);
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-200"
+                      >
+                        Remove from this automation
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExcelRemovalMode("trash");
+                          setShowExcelRemoveDialog(false);
+                          setIsEditingStorage(false);
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="w-full rounded-xl border border-red-200 px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:text-red-400"
+                      >
+                        Delete from OneDrive too
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowExcelRemoveDialog(false)}
+                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-slate-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 

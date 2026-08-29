@@ -8,6 +8,13 @@ import {
   AIRTABLE_TOKEN_URL,
   getAirtableOAuthConfig,
 } from "@/lib/integrations/airtable";
+import {
+  MICROSOFT_GRAPH_URL,
+  MICROSOFT_PROVIDER,
+  MICROSOFT_SCOPES,
+  MICROSOFT_TOKEN_URL,
+  getMicrosoftOAuthConfig,
+} from "@/lib/integrations/microsoft";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -54,11 +61,24 @@ function json(
   status = 200,
   origin?: string | null
 ) {
-  const response = NextResponse.json(body, { status });
+  const response =
+    NextResponse.json(
+      body,
+      {
+        status,
+      }
+    );
 
   if (origin) {
-    response.headers.set("Access-Control-Allow-Origin", origin);
-    response.headers.set("Vary", "Origin");
+    response.headers.set(
+      "Access-Control-Allow-Origin",
+      origin
+    );
+
+    response.headers.set(
+      "Vary",
+      "Origin"
+    );
   }
 
   return response;
@@ -932,6 +952,223 @@ async function sendLeadToAirtable(
   }
 }
 
+
+async function getMicrosoftAccessTokenForLead(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials")
+    .eq("user_id", userId)
+    .eq("provider", MICROSOFT_PROVIDER)
+    .maybeSingle();
+
+  if (
+    !connection?.credentials ||
+    typeof connection.credentials !== "object"
+  ) {
+    return null;
+  }
+
+  const credentials =
+    connection.credentials as Record<string, unknown>;
+
+  const accessToken =
+    typeof credentials.access_token === "string"
+      ? credentials.access_token
+      : "";
+
+  const expiresAt =
+    typeof credentials.expires_at === "string"
+      ? Date.parse(credentials.expires_at)
+      : 0;
+
+  if (
+    accessToken &&
+    (!expiresAt || expiresAt > Date.now() + 60_000)
+  ) {
+    return accessToken;
+  }
+
+  const refreshToken =
+    typeof credentials.refresh_token === "string"
+      ? credentials.refresh_token
+      : "";
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const {
+    clientId,
+    clientSecret,
+    redirectUri,
+  } = getMicrosoftOAuthConfig();
+
+  const response = await fetch(
+    MICROSOFT_TOKEN_URL,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        redirect_uri: redirectUri,
+        scope: MICROSOFT_SCOPES.join(" "),
+      }),
+      cache: "no-store",
+    }
+  );
+
+  const token = (await response.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
+
+  if (!response.ok || !token.access_token) {
+    return null;
+  }
+
+  await supabase
+    .from("integration_connections")
+    .update({
+      credentials: {
+        ...credentials,
+        access_token: token.access_token,
+        refresh_token:
+          token.refresh_token || refreshToken,
+        expires_in:
+          token.expires_in || null,
+        expires_at:
+          typeof token.expires_in === "number"
+            ? new Date(
+                Date.now() +
+                  token.expires_in * 1000
+              ).toISOString()
+            : null,
+      },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("provider", MICROSOFT_PROVIDER);
+
+  return token.access_token;
+}
+
+async function sendLeadToMicrosoftExcel(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const { data: destination } = await supabase
+    .from("lead_destinations")
+    .select("connected, config")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "excel")
+    .maybeSingle();
+
+  if (!destination || destination.connected !== true) {
+    return;
+  }
+
+  const config = destination.config as {
+    workbook_id?: unknown;
+    table_id?: unknown;
+    column_keys?: unknown;
+  } | null;
+
+  const workbookId =
+    typeof config?.workbook_id === "string"
+      ? config.workbook_id
+      : "";
+
+  const tableId =
+    typeof config?.table_id === "string"
+      ? config.table_id
+      : "";
+
+  const columnKeys =
+    Array.isArray(config?.column_keys)
+      ? config.column_keys.filter(
+          (value): value is string =>
+            typeof value === "string"
+        )
+      : [];
+
+  if (!workbookId || !tableId || columnKeys.length === 0) {
+    return;
+  }
+
+  const accessToken =
+    await getMicrosoftAccessTokenForLead(
+      supabase,
+      lead.userId
+    );
+
+  if (!accessToken) {
+    return;
+  }
+
+  const values = columnKeys.map((key) => {
+    if (key === "__date") {
+      return lead.receivedAt;
+    }
+
+    if (key === "__name") {
+      return airtableLeadName(lead);
+    }
+
+    if (key === "__email") {
+      return lead.contact.email || "";
+    }
+
+    if (key === "__phone") {
+      return lead.contact.phone || "";
+    }
+
+    return lead.fields[key] ?? "";
+  });
+
+  const response = await fetch(
+    `${MICROSOFT_GRAPH_URL}/me/drive/items/${encodeURIComponent(
+      workbookId
+    )}/workbook/tables/${encodeURIComponent(
+      tableId
+    )}/rows/add`,
+    {
+      method: "POST",
+      headers: {
+        Authorization:
+          `Bearer ${accessToken}`,
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        values: [values],
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      text ||
+        "Microsoft Excel rejected the lead row."
+    );
+  }
+}
+
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 
@@ -1359,6 +1596,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex Airtable delivery error:",
+      error
+    );
+  }
+
+  try {
+    await sendLeadToMicrosoftExcel(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex Microsoft Excel delivery error:",
       error
     );
   }
