@@ -68,14 +68,22 @@ function sourceFields(
             typeof field.type === "string"
               ? field.type
               : "text",
-          options:
-            Array.isArray((field as { options?: unknown }).options)
-              ? (field as { options: unknown[] }).options
-                  .filter((option): option is string =>
-                    typeof option === "string" && !!option.trim()
-                  )
-                  .map((option) => option.trim())
-              : [],
+          options: (() => {
+  const rawOptions =
+    (field as { options?: unknown }).options;
+
+  return Array.isArray(rawOptions)
+    ? rawOptions
+        .filter(
+          (option): option is string =>
+            typeof option === "string" &&
+            !!option.trim()
+        )
+        .map((option) =>
+          option.trim()
+        )
+    : [];
+})(),
         }));
     }
   }
