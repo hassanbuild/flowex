@@ -630,25 +630,56 @@ export async function POST(request: Request) {
     );
 
     if (action === "list_workbooks") {
-      const data = await graphFetch(
+      const rootData = await graphFetch(
         accessToken,
-        `/me/drive/root/search(q='xlsx')?$select=id,name,webUrl,file&$top=200`
+        `/me/drive/root/children?$select=id,name,webUrl,file,folder&$top=999`
       );
 
-      const items = Array.isArray(data?.value) ? data.value : [];
+      let searchItems: any[] = [];
+
+      try {
+        const searchData = await graphFetch(
+          accessToken,
+          `/me/drive/root/search(q='.xlsx')?$select=id,name,webUrl,file&$top=200`
+        );
+
+        searchItems = Array.isArray(searchData?.value)
+          ? searchData.value
+          : [];
+      } catch {
+        searchItems = [];
+      }
+
+      const rootItems = Array.isArray(rootData?.value)
+        ? rootData.value
+        : [];
+
+      const byId = new Map<string, any>();
+
+      for (const item of [...rootItems, ...searchItems]) {
+        if (
+          typeof item?.id !== "string" ||
+          typeof item?.name !== "string" ||
+          !item.name.toLowerCase().endsWith(".xlsx")
+        ) {
+          continue;
+        }
+
+        byId.set(item.id, item);
+      }
+
+      const workbooks = Array.from(byId.values())
+        .sort((a, b) =>
+          String(a.name).localeCompare(String(b.name))
+        )
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          webUrl: item.webUrl || null,
+        }));
 
       return NextResponse.json({
-        workbooks: items
-          .filter(
-            (item: any) =>
-              typeof item?.name === "string" &&
-              item.name.toLowerCase().endsWith(".xlsx")
-          )
-          .map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            webUrl: item.webUrl || null,
-          })),
+        workbooks,
         email,
       });
     }

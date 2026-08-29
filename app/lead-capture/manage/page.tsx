@@ -2136,24 +2136,26 @@ export default function ManageLeadCapturePage() {
           data.display_name ||
             "Flowex Leads"
         );
-const config =
-  data.config as {
-    destination?: unknown;
-    spreadsheet_id?: unknown;
-    spreadsheet_url?: unknown;
-    created_by_flowex?: unknown;
-    base_id?: unknown;
-    base_name?: unknown;
-    base_url?: unknown;
-    table_id?: unknown;
-    table_name?: unknown;
-    created_base_by_flowex?: unknown;
-    workbook_id?: unknown;
-    workbook_name?: unknown;
-    workbook_url?: unknown;
-    table_name_excel?: unknown;
-    table_id_excel?: unknown;
-  } | null;
+
+        const config =
+          data.config as {
+            destination?: unknown;
+            spreadsheet_id?: unknown;
+            spreadsheet_url?: unknown;
+            created_by_flowex?: unknown;
+            base_id?: unknown;
+            base_name?: unknown;
+            base_url?: unknown;
+            table_id?: unknown;
+            table_name?: unknown;
+            created_base_by_flowex?: unknown;
+            workbook_id?: unknown;
+            workbook_name?: unknown;
+            workbook_url?: unknown;
+            table_name_excel?: unknown;
+            table_id_excel?: unknown;
+            created_by_flowex?: unknown;
+          } | null;
 
         if (provider === "airtable") {
           const baseId = typeof config?.base_id === "string" ? config.base_id : "";
@@ -5615,6 +5617,18 @@ const config =
                                 Open Workbook ↗
                               </a>
                             )}
+
+                            {excelWorkbookId && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowExcelRemoveDialog(true)
+                                }
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                Remove
+                              </button>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -5999,6 +6013,23 @@ const config =
                                   Open Airtable ↗
                                 </a>
                               )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (airtableCreatedBaseByFlowex) {
+                                    setShowAirtableRemoveDialog(true);
+                                  } else {
+                                    setStoragePendingUnlink(true);
+                                    setHasUnsavedChanges(true);
+                                  }
+                                }}
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                {airtableCreatedBaseByFlowex
+                                  ? "Remove"
+                                  : "Unlink"}
+                              </button>
                             </div>
                           )}
                         </div>
