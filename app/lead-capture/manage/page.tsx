@@ -2137,26 +2137,25 @@ export default function ManageLeadCapturePage() {
             "Flowex Leads"
         );
 
-        const config =
-          data.config as {
-            destination?: unknown;
-            spreadsheet_id?: unknown;
-            spreadsheet_url?: unknown;
-            created_by_flowex?: unknown;
-            base_id?: unknown;
-            base_name?: unknown;
-            base_url?: unknown;
-            table_id?: unknown;
-            table_name?: unknown;
-            created_base_by_flowex?: unknown;
-            workbook_id?: unknown;
-            workbook_name?: unknown;
-            workbook_url?: unknown;
-            table_name_excel?: unknown;
-            table_id_excel?: unknown;
-            created_by_flowex?: unknown;
-          } | null;
-
+       const config =
+  data.config as {
+    destination?: unknown;
+    spreadsheet_id?: unknown;
+    spreadsheet_url?: unknown;
+    created_by_flowex?: unknown;
+    base_id?: unknown;
+    base_name?: unknown;
+    base_url?: unknown;
+    table_id?: unknown;
+    table_name?: unknown;
+    created_base_by_flowex?: unknown;
+    workbook_id?: unknown;
+    workbook_name?: unknown;
+    workbook_url?: unknown;
+    table_name_excel?: unknown;
+    table_id_excel?: unknown;
+  } | null;
+  
         if (provider === "airtable") {
           const baseId = typeof config?.base_id === "string" ? config.base_id : "";
           const baseName = typeof config?.base_name === "string" ? config.base_name : "";
