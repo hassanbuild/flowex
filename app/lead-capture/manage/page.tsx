@@ -11,6 +11,7 @@ type SourceType = "flowex" | "external";
 type StorageType =
   | "sheets"
   | "airtable"
+  | "excel"
   | "hubspot"
   | "slack"
   | "webhook";
@@ -109,7 +110,7 @@ const storageProviders: {
     value: "excel",
     title: "Microsoft Excel",
     description: "Store leads in an Excel table.",
-    available: false,
+    available: true,
   },
 ];
 
@@ -567,6 +568,12 @@ export default function ManageLeadCapturePage() {
     useState(false);
 
   const [airtableAccountEmail, setAirtableAccountEmail] =
+    useState("");
+
+  const [microsoftAccountConnected, setMicrosoftAccountConnected] =
+    useState(false);
+
+  const [microsoftAccountEmail, setMicrosoftAccountEmail] =
     useState("");
 
   const [airtableBases, setAirtableBases] =
@@ -2381,6 +2388,86 @@ export default function ManageLeadCapturePage() {
     supabase,
   ]);
 
+  useEffect(() => {
+    if (
+      !flowReady ||
+      !leadFlowId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMicrosoftConnection =
+      async () => {
+        const {
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
+
+        if (
+          cancelled ||
+          !session
+        ) {
+          return;
+        }
+
+        try {
+          const response =
+            await fetch(
+              "/api/integrations/microsoft/connect",
+              {
+                method:
+                  "GET",
+
+                headers: {
+                  Authorization:
+                    `Bearer ${session.access_token}`,
+                },
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (cancelled) {
+            return;
+          }
+
+          setMicrosoftAccountConnected(
+            response.ok &&
+            result?.connected ===
+              true
+          );
+
+          setMicrosoftAccountEmail(
+            typeof result?.email ===
+              "string"
+              ? result.email
+              : ""
+          );
+        } catch {
+          if (!cancelled) {
+            setMicrosoftAccountConnected(
+              false
+            );
+          }
+        }
+      };
+
+    void loadMicrosoftConnection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    flowReady,
+    leadFlowId,
+    supabase,
+  ]);
+
   const connectStorageProvider =
     async () => {
       if (
@@ -2396,7 +2483,9 @@ export default function ManageLeadCapturePage() {
         storageType !==
           "sheets" &&
         storageType !==
-          "airtable"
+          "airtable" &&
+        storageType !==
+          "excel"
       ) {
         setStorageError(
           "This destination is coming soon."
@@ -2428,7 +2517,10 @@ export default function ManageLeadCapturePage() {
             storageType ===
               "airtable"
               ? "/api/integrations/airtable/connect"
-              : "/api/integrations/google/connect",
+              : storageType ===
+                  "excel"
+                ? "/api/integrations/microsoft/connect"
+                : "/api/integrations/google/connect",
             {
               method:
                 "POST",
@@ -2461,7 +2553,10 @@ export default function ManageLeadCapturePage() {
               (storageType ===
                 "airtable"
                 ? "Flowex could not start Airtable authorization."
-                : "Flowex could not start Google authorization.")
+                : storageType ===
+                    "excel"
+                  ? "Flowex could not start Microsoft authorization."
+                  : "Flowex could not start Google authorization.")
           );
           return;
         }
@@ -2473,7 +2568,10 @@ export default function ManageLeadCapturePage() {
           storageType ===
             "airtable"
             ? "Flowex could not start Airtable authorization."
-            : "Flowex could not start Google authorization."
+            : storageType ===
+                "excel"
+              ? "Flowex could not start Microsoft authorization."
+              : "Flowex could not start Google authorization."
         );
       } finally {
         setIsConnectingStorage(
@@ -4349,7 +4447,7 @@ export default function ManageLeadCapturePage() {
             >
 
               {!hasConfiguredStorage && (
-              <div className={`grid gap-3 ${storageType === "airtable" ? "sm:grid-cols-1" : "sm:grid-cols-2"}`}>
+              <div className={`grid gap-3 ${storageType === "sheets" ? "sm:grid-cols-2" : "sm:grid-cols-1"}`}>
 
                 <button
                   type="button"
@@ -4358,16 +4456,18 @@ export default function ManageLeadCapturePage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold app-dark:text-white">
-                        {storageType === "airtable" ? "Airtable" : "Google Sheets"}
+                        {storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : "Google Sheets"}
                       </p>
                       <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                        {storageType === "airtable" ? "Store leads in an Airtable base." : "A structured lead table with mapped columns."}
+                        {storageType === "airtable" ? "Store leads in an Airtable base." : storageType === "excel" ? "Store leads in an Excel workbook." : "A structured lead table with mapped columns."}
                       </p>
                     </div>
                     {storageType === "airtable" ? (
                       airtableAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                    ) : storageType === "excel" ? (
+                      microsoftAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
                     ) : (
-                      googleAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      googleAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
                     )}
                   </div>
                 </button>
@@ -4869,6 +4969,61 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
+              {storageType === "excel" && !hasConfiguredStorage && (
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold app-dark:text-white">
+                        Microsoft Excel
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                        {microsoftAccountConnected
+                          ? microsoftAccountEmail
+                            ? `Connected as ${microsoftAccountEmail}`
+                            : "Microsoft account connected"
+                          : "Connect Microsoft once. All Lead Flows can then use separate Excel destinations."}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {microsoftAccountConnected ? (
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          Microsoft connected
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={connectStorageProvider}
+                          disabled={isConnectingStorage}
+                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isConnectingStorage ? "Connecting..." : "Connect Microsoft"}
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStorageType("sheets");
+                          setStorageError("");
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                      >
+                        Unlink
+                      </button>
+                    </div>
+                  </div>
+
+                  {storageError && (
+                    <p className="mt-4 text-sm font-medium text-red-500 app-dark:text-red-400">
+                      {storageError}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {storageType === "airtable" && (!hasConfiguredStorage || isEditingStorage) && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -5362,7 +5517,9 @@ export default function ManageLeadCapturePage() {
                                     provider.value ===
                                     "slack" ||
                                     provider.value ===
-                                    "webhook")
+                                    "webhook" ||
+                                    provider.value ===
+                                    "excel")
                                 ) {
                                   setStorageType(
                                     provider.value
