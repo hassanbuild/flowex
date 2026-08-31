@@ -10,7 +10,7 @@ export const NOTION_API_URL =
   "https://api.notion.com/v1";
 
 export const NOTION_VERSION =
-  "2022-06-28";
+  "2026-03-11";
 
 export function getNotionOAuthConfig() {
   const clientId =

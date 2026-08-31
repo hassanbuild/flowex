@@ -15,6 +15,11 @@ import {
   MICROSOFT_TOKEN_URL,
   getMicrosoftOAuthConfig,
 } from "@/lib/integrations/microsoft";
+import {
+  NOTION_API_URL,
+  NOTION_PROVIDER,
+  NOTION_VERSION,
+} from "@/lib/integrations/notion";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -1169,6 +1174,221 @@ async function sendLeadToMicrosoftExcel(
   }
 }
 
+
+function notionText(value: unknown) {
+  const text = String(value ?? "").trim();
+  return text.slice(0, 2000);
+}
+
+function notionPropertyValue(
+  type: string,
+  value: unknown
+) {
+  const text = notionText(value);
+
+  if (type === "title") {
+    return {
+      title: text
+        ? [{ type: "text", text: { content: text } }]
+        : [],
+    };
+  }
+
+  if (type === "rich_text") {
+    return {
+      rich_text: text
+        ? [{ type: "text", text: { content: text } }]
+        : [],
+    };
+  }
+
+  if (type === "number") {
+    const number =
+      typeof value === "number"
+        ? value
+        : Number(text);
+
+    return {
+      number:
+        Number.isFinite(number)
+          ? number
+          : null,
+    };
+  }
+
+  if (type === "select") {
+    return {
+      select: text
+        ? { name: text.replace(/,/g, " -").slice(0, 100) }
+        : null,
+    };
+  }
+
+  if (type === "date") {
+    return {
+      date: text
+        ? { start: text }
+        : null,
+    };
+  }
+
+  if (type === "url") {
+    return { url: text || null };
+  }
+
+  if (type === "email") {
+    return { email: text || null };
+  }
+
+  if (type === "phone_number") {
+    return { phone_number: text || null };
+  }
+
+  if (type === "checkbox") {
+    const checked =
+      value === true ||
+      text.toLowerCase() === "true" ||
+      text === "1" ||
+      text.toLowerCase() === "yes";
+
+    return { checkbox: checked };
+  }
+
+  return {
+    rich_text: text
+      ? [{ type: "text", text: { content: text } }]
+      : [],
+  };
+}
+
+async function sendLeadToNotion(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const { data: destination } = await supabase
+    .from("lead_destinations")
+    .select("connected, config")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "notion")
+    .maybeSingle();
+
+  if (!destination || destination.connected !== true) {
+    return;
+  }
+
+  const config = destination.config as {
+    data_source_id?: unknown;
+    property_map?: unknown;
+    property_types?: unknown;
+  } | null;
+
+  const dataSourceId =
+    typeof config?.data_source_id === "string"
+      ? config.data_source_id
+      : "";
+
+  const propertyMap =
+    config?.property_map &&
+    typeof config.property_map === "object" &&
+    !Array.isArray(config.property_map)
+      ? config.property_map as Record<string, unknown>
+      : {};
+
+  const propertyTypes =
+    config?.property_types &&
+    typeof config.property_types === "object" &&
+    !Array.isArray(config.property_types)
+      ? config.property_types as Record<string, unknown>
+      : {};
+
+  if (!dataSourceId || Object.keys(propertyMap).length === 0) {
+    return;
+  }
+
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials")
+    .eq("user_id", lead.userId)
+    .eq("provider", NOTION_PROVIDER)
+    .maybeSingle();
+
+  const credentials =
+    connection?.credentials &&
+    typeof connection.credentials === "object"
+      ? connection.credentials as Record<string, unknown>
+      : null;
+
+  const accessToken =
+    typeof credentials?.access_token === "string"
+      ? credentials.access_token
+      : "";
+
+  if (!accessToken) {
+    return;
+  }
+
+  const properties: Record<string, unknown> = {};
+
+  for (const [key, rawPropertyName] of Object.entries(propertyMap)) {
+    if (typeof rawPropertyName !== "string" || !rawPropertyName) {
+      continue;
+    }
+
+    const type =
+      typeof propertyTypes[key] === "string"
+        ? String(propertyTypes[key])
+        : "rich_text";
+
+    let value: unknown = "";
+
+    if (key === "__date") {
+      value = lead.receivedAt;
+    } else if (key === "__name") {
+      value = airtableLeadName(lead);
+    } else if (key === "__email") {
+      value = lead.contact.email || "";
+    } else if (key === "__phone") {
+      value = lead.contact.phone || "";
+    } else {
+      value = lead.fields[key] ?? "";
+    }
+
+    properties[rawPropertyName] =
+      notionPropertyValue(type, value);
+  }
+
+  const response = await fetch(
+    `${NOTION_API_URL}/pages`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Notion-Version": NOTION_VERSION,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        parent: {
+          type: "data_source_id",
+          data_source_id: dataSourceId,
+        },
+        properties,
+      }),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      text || "Notion rejected the lead entry."
+    );
+  }
+}
+
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 
@@ -1608,6 +1828,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex Microsoft Excel delivery error:",
+      error
+    );
+  }
+
+  try {
+    await sendLeadToNotion(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex Notion delivery error:",
       error
     );
   }

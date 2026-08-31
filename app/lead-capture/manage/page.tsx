@@ -1,4 +1,4 @@
-"use client";
+
 
 import Image from "next/image";
 import Link from "next/link";
@@ -26,6 +26,13 @@ type AirtableBaseOption = { id: string; name: string };
 type AirtableTableOption = { id: string; name: string };
 type AirtableBaseMode = "existing_base" | "create_base";
 type ExcelWorkbookOption = { id: string; name: string; webUrl: string };
+type NotionPageOption = { id: string; title: string; url: string | null };
+type NotionDatabaseOption = {
+  id: string;
+  title: string;
+  databaseId: string;
+  url: string | null;
+};
 
 
 const storageProviders: {
@@ -583,6 +590,48 @@ export default function ManageLeadCapturePage() {
 
   const [notionAccountEmail, setNotionAccountEmail] =
     useState("");
+
+  const [notionWorkspaceName, setNotionWorkspaceName] =
+    useState("");
+
+  const [notionPages, setNotionPages] =
+    useState<NotionPageOption[]>([]);
+
+  const [notionDatabases, setNotionDatabases] =
+    useState<NotionDatabaseOption[]>([]);
+
+  const [notionParentPageId, setNotionParentPageId] =
+    useState("");
+
+  const [notionDatabaseId, setNotionDatabaseId] =
+    useState("");
+
+  const [notionDataSourceId, setNotionDataSourceId] =
+    useState("");
+
+  const [notionDatabaseName, setNotionDatabaseName] =
+    useState("");
+
+  const [notionDatabaseUrl, setNotionDatabaseUrl] =
+    useState("");
+
+  const [notionExistingVerified, setNotionExistingVerified] =
+    useState(false);
+
+  const [notionCreatedByFlowex, setNotionCreatedByFlowex] =
+    useState(false);
+
+  const [notionMissingCount, setNotionMissingCount] =
+    useState(0);
+
+  const [isLoadingNotion, setIsLoadingNotion] =
+    useState(false);
+
+  const [showNotionRemoveDialog, setShowNotionRemoveDialog] =
+    useState(false);
+
+  const [notionRemovalMode, setNotionRemovalMode] =
+    useState<"unlink" | "trash" | null>(null);
 
   const [microsoftWorkbooks, setMicrosoftWorkbooks] =
     useState<ExcelWorkbookOption[]>([]);
@@ -2124,6 +2173,8 @@ export default function ManageLeadCapturePage() {
           provider ===
             "excel" ||
           provider ===
+            "notion" ||
+          provider ===
             "hubspot" ||
           provider ===
             "slack" ||
@@ -2172,7 +2223,57 @@ export default function ManageLeadCapturePage() {
             workbook_url?: unknown;
             table_name_excel?: unknown;
             table_id_excel?: unknown;
+            database_id?: unknown;
+            data_source_id?: unknown;
+            database_name?: unknown;
+            database_url?: unknown;
+            parent_page_id?: unknown;
           } | null;
+
+        if (provider === "notion") {
+          const databaseId =
+            typeof config?.database_id === "string"
+              ? config.database_id
+              : "";
+
+          const dataSourceId =
+            typeof config?.data_source_id === "string"
+              ? config.data_source_id
+              : "";
+
+          const databaseName =
+            typeof config?.database_name === "string"
+              ? config.database_name
+              : data.display_name || "";
+
+          const databaseUrl =
+            typeof config?.database_url === "string"
+              ? config.database_url
+              : databaseId
+                ? `https://www.notion.so/${databaseId.replace(/-/g, "")}`
+                : "";
+
+          const parentPageId =
+            typeof config?.parent_page_id === "string"
+              ? config.parent_page_id
+              : "";
+
+          setNotionDatabaseId(databaseId);
+          setNotionDataSourceId(dataSourceId);
+          setNotionDatabaseName(databaseName);
+          setNotionDatabaseUrl(databaseUrl);
+          setNotionParentPageId(parentPageId);
+          setNotionCreatedByFlowex(config?.created_by_flowex === true);
+          setNotionExistingVerified(
+            savedMode === "existing" && data.connected === true
+          );
+          setStorageConnected(data.connected === true);
+          setStoragePendingDelete(false);
+          setStoragePendingUnlink(false);
+          setNotionRemovalMode(null);
+          setHasUnsavedChanges(false);
+          return;
+        }
 
         if (provider === "airtable") {
           const baseId = typeof config?.base_id === "string" ? config.base_id : "";
@@ -2645,6 +2746,12 @@ export default function ManageLeadCapturePage() {
               ? result.email
               : ""
           );
+
+          setNotionWorkspaceName(
+            typeof result?.workspaceName === "string"
+              ? result.workspaceName
+              : ""
+          );
         } catch {
           if (!cancelled) {
             setNotionAccountConnected(
@@ -2928,6 +3035,222 @@ export default function ManageLeadCapturePage() {
         true
       );
     };
+
+  const callNotionDestination =
+    async (payload: Record<string, unknown>) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error(
+          "Your session could not be verified. Please log in again."
+        );
+      }
+
+      const response = await fetch(
+        "/api/integrations/notion/destination",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            ...payload,
+            leadFlowId,
+          }),
+        }
+      );
+
+      const text = await response.text();
+      let result: Record<string, any> = {};
+
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(
+          "Flowex received an invalid response from Notion."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || "Flowex could not update Notion."
+        );
+      }
+
+      return result;
+    };
+
+  const loadNotionPages = async () => {
+    if (!notionAccountConnected || isLoadingNotion) return;
+
+    setIsLoadingNotion(true);
+    setStorageError("");
+
+    try {
+      const result = await callNotionDestination({
+        action: "list_pages",
+      });
+
+      setNotionPages(
+        Array.isArray(result?.pages) ? result.pages : []
+      );
+
+      if (typeof result?.workspaceName === "string") {
+        setNotionWorkspaceName(result.workspaceName);
+      }
+    } catch (error) {
+      setStorageError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not load the Notion pages shared with it."
+      );
+    } finally {
+      setIsLoadingNotion(false);
+    }
+  };
+
+  const loadNotionDatabases = async () => {
+    if (!notionAccountConnected || isLoadingNotion) return;
+
+    setIsLoadingNotion(true);
+    setStorageError("");
+
+    try {
+      const result = await callNotionDestination({
+        action: "list_databases",
+      });
+
+      setNotionDatabases(
+        Array.isArray(result?.databases)
+          ? result.databases
+          : []
+      );
+    } catch (error) {
+      setStorageError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not load the Notion databases shared with it."
+      );
+    } finally {
+      setIsLoadingNotion(false);
+    }
+  };
+
+  const prepareNotionDestination = async () => {
+    if (isPreparingStorage) return;
+
+    setIsPreparingStorage(true);
+    setStorageError("");
+
+    try {
+      if (storageMode === "create_new") {
+        if (!notionParentPageId) {
+          setStorageError(
+            "Choose the Notion page where Flowex should create the lead database."
+          );
+          return;
+        }
+
+        if (!storageName.trim()) {
+          setStorageError("Give the Notion database a name first.");
+          return;
+        }
+
+        const result = await callNotionDestination({
+          action: "create_new",
+          parentPageId: notionParentPageId,
+          displayName: storageName.trim(),
+        });
+
+        setNotionDatabaseId(
+          typeof result?.databaseId === "string"
+            ? result.databaseId
+            : ""
+        );
+        setNotionDataSourceId(
+          typeof result?.dataSourceId === "string"
+            ? result.dataSourceId
+            : ""
+        );
+        setNotionDatabaseName(
+          typeof result?.databaseName === "string"
+            ? result.databaseName
+            : storageName.trim()
+        );
+        setNotionDatabaseUrl(
+          typeof result?.databaseUrl === "string"
+            ? result.databaseUrl
+            : ""
+        );
+        setNotionCreatedByFlowex(true);
+        setNotionExistingVerified(false);
+        setNotionMissingCount(0);
+        setStorageConnected(false);
+      } else {
+        if (!notionDataSourceId) {
+          setStorageError("Choose a Notion database first.");
+          return;
+        }
+
+        const result = await callNotionDestination({
+          action: "verify_existing",
+          dataSourceId: notionDataSourceId,
+        });
+
+        setNotionDatabaseId(
+          typeof result?.databaseId === "string"
+            ? result.databaseId
+            : notionDatabaseId
+        );
+        setNotionDatabaseName(
+          typeof result?.databaseName === "string"
+            ? result.databaseName
+            : notionDatabaseName
+        );
+        setNotionDatabaseUrl(
+          typeof result?.databaseUrl === "string"
+            ? result.databaseUrl
+            : notionDatabaseUrl
+        );
+        setNotionMissingCount(
+          typeof result?.missingCount === "number"
+            ? result.missingCount
+            : 0
+        );
+        setNotionExistingVerified(true);
+        setNotionCreatedByFlowex(false);
+      }
+
+      setHasUnsavedChanges(true);
+    } catch (error) {
+      setStorageError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not prepare Notion."
+      );
+    } finally {
+      setIsPreparingStorage(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      storageType === "notion" &&
+      notionAccountConnected
+    ) {
+      if (storageMode === "create_new" && notionPages.length === 0) {
+        void loadNotionPages();
+      }
+
+      if (storageMode === "existing" && notionDatabases.length === 0) {
+        void loadNotionDatabases();
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageType, storageMode, notionAccountConnected]);
 
   const callAirtableDestination =
     async (payload: Record<string, unknown>) => {
@@ -4208,6 +4531,115 @@ export default function ManageLeadCapturePage() {
           }
         }
 
+        } else if (storageType === "notion") {
+          if (
+            storagePendingUnlink ||
+            notionRemovalMode === "unlink"
+          ) {
+            try {
+              await callNotionDestination({
+                action: "unlink_destination",
+              });
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not unlink Notion."
+              );
+              return false;
+            }
+
+            setNotionParentPageId("");
+            setNotionDatabaseId("");
+            setNotionDataSourceId("");
+            setNotionDatabaseName("");
+            setNotionDatabaseUrl("");
+            setNotionExistingVerified(false);
+            setNotionCreatedByFlowex(false);
+            setNotionMissingCount(0);
+            setNotionRemovalMode(null);
+            setStorageConnected(false);
+            setStoragePendingUnlink(false);
+            setSavedStorageMode(null);
+          } else if (
+            notionRemovalMode === "trash" &&
+            notionDatabaseId
+          ) {
+            try {
+              await callNotionDestination({
+                action: "trash_created",
+                databaseId: notionDatabaseId,
+              });
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not move this Notion database to trash."
+              );
+              return false;
+            }
+
+            setNotionParentPageId("");
+            setNotionDatabaseId("");
+            setNotionDataSourceId("");
+            setNotionDatabaseName("");
+            setNotionDatabaseUrl("");
+            setNotionExistingVerified(false);
+            setNotionCreatedByFlowex(false);
+            setNotionMissingCount(0);
+            setNotionRemovalMode(null);
+            setStorageConnected(false);
+            setSavedStorageMode(null);
+          } else if (
+            notionDataSourceId &&
+            notionDatabaseId &&
+            (
+              storageMode === "create_new" ||
+              notionExistingVerified
+            )
+          ) {
+            try {
+              const result = await callNotionDestination({
+                action: "commit",
+                mode: storageMode,
+                dataSourceId: notionDataSourceId,
+                databaseId: notionDatabaseId,
+                parentPageId: notionParentPageId,
+                displayName:
+                  storageName.trim() ||
+                  notionDatabaseName ||
+                  "Flowex Leads",
+                createdByFlowex: notionCreatedByFlowex,
+              });
+
+              setStorageConnected(true);
+              setSavedStorageMode(storageMode);
+              setNotionDatabaseName(
+                typeof result?.databaseName === "string"
+                  ? result.databaseName
+                  : notionDatabaseName
+              );
+              setNotionDatabaseUrl(
+                typeof result?.databaseUrl === "string"
+                  ? result.databaseUrl
+                  : notionDatabaseUrl
+              );
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not save the Notion destination."
+              );
+              return false;
+            }
+          } else if (notionAccountConnected) {
+            alert(
+              storageMode === "create_new"
+                ? "Create the Notion database first."
+                : "Choose and verify an existing Notion database first."
+            );
+            return false;
+          }
         } else if (storageType === "excel") {
           if (
             storagePendingUnlink ||
@@ -4404,7 +4836,9 @@ export default function ManageLeadCapturePage() {
               ? ""
               : storageType === "airtable"
                 ? airtableTableId
-                : storageType === "excel"
+                : storageType === "notion"
+                  ? notionDataSourceId
+                  : storageType === "excel"
                   ? excelWorkbookId
                   : storageMode === "existing"
                   ? existingSheetUrl || storageDestination
@@ -4610,7 +5044,13 @@ export default function ManageLeadCapturePage() {
                 !!excelTableId &&
                 (storageMode === "create_new" || excelExistingVerified)
               )
-            : false
+            : storageType === "notion"
+              ? (
+                  !!notionDatabaseId &&
+                  !!notionDataSourceId &&
+                  (storageMode === "create_new" || notionExistingVerified)
+                )
+              : false
     );
 
   if (
@@ -5054,7 +5494,7 @@ export default function ManageLeadCapturePage() {
             >
 
               {!hasConfiguredStorage && (
-              <div className={`grid gap-3 ${storageType === "sheets" ? "sm:grid-cols-2" : "sm:grid-cols-1"}`}>
+              <div className="grid gap-3 sm:grid-cols-2">
 
                 <button
                   type="button"
@@ -5081,8 +5521,7 @@ export default function ManageLeadCapturePage() {
                   </div>
                 </button>
 
-                {storageType === "sheets" && (
-                  <button
+                <button
                     type="button"
                     onClick={() =>
                       setShowMoreDestinations(
@@ -5096,10 +5535,9 @@ export default function ManageLeadCapturePage() {
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                      Airtable, HubSpot, Slack, Webhook and more.
+                      Switch destination or see more integrations.
                     </p>
                   </button>
-                )}
 
               </div>
               )}
@@ -5111,9 +5549,9 @@ export default function ManageLeadCapturePage() {
                       <div className="flex items-center gap-2">
                         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/15 app-dark:text-emerald-400">✓</span>
                         <div>
-                          <p className="text-sm font-semibold app-dark:text-white">{storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : "Google Sheets"}</p>
+                          <p className="text-sm font-semibold app-dark:text-white">{storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : storageType === "notion" ? "Notion" : "Google Sheets"}</p>
                           <p className="mt-0.5 text-xs text-gray-500 app-dark:text-slate-400">
-                            {storageType === "airtable" ? (storageMode === "create_new" ? "Create new table" : "Use existing table") : storageType === "excel" ? (storageMode === "create_new" ? "Create new workbook" : "Use existing workbook") : (storageMode === "create_new" ? "Create new sheet" : "Use existing sheet")}
+                            {storageType === "airtable" ? (storageMode === "create_new" ? "Create new table" : "Use existing table") : storageType === "excel" ? (storageMode === "create_new" ? "Create new workbook" : "Use existing workbook") : storageType === "notion" ? (storageMode === "create_new" ? "Create new database" : "Use existing database") : (storageMode === "create_new" ? "Create new sheet" : "Use existing sheet")}
                           </p>
                         </div>
                       </div>
@@ -5148,6 +5586,15 @@ export default function ManageLeadCapturePage() {
                               setIsEditingStorage(false);
                               setHasUnsavedChanges(true);
                             }
+                          } else if (storageType === "notion") {
+                            if (notionCreatedByFlowex) {
+                              setShowNotionRemoveDialog(true);
+                            } else {
+                              setNotionRemovalMode("unlink");
+                              setStoragePendingUnlink(true);
+                              setIsEditingStorage(false);
+                              setHasUnsavedChanges(true);
+                            }
                           } else if (storageMode === "create_new") {
                             markCreatedSheetDeleted();
                           } else {
@@ -5156,7 +5603,7 @@ export default function ManageLeadCapturePage() {
                         }}
                         className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                       >
-                        {storageType === "airtable" || storageType === "excel" ? (storageMode === "create_new" ? "Remove" : "Unlink") : storageMode === "create_new" ? "Remove" : "Unlink"}
+                        {storageType === "airtable" || storageType === "excel" || storageType === "notion" ? (storageMode === "create_new" ? "Remove" : "Unlink") : storageMode === "create_new" ? "Remove" : "Unlink"}
                       </button>
                     </div>
                   </div>
@@ -5862,7 +6309,7 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
-              {storageType === "notion" && !hasConfiguredStorage && (
+              {storageType === "notion" && (!hasConfiguredStorage || isEditingStorage) && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -5872,41 +6319,305 @@ export default function ManageLeadCapturePage() {
 
                       <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
                         {notionAccountConnected
-                          ? notionAccountEmail
-                            ? `Connected as ${notionAccountEmail}`
-                            : "Notion workspace connected"
-                          : "Connect Notion once. Database setup comes next."}
+                          ? notionWorkspaceName
+                            ? `Connected to ${notionWorkspaceName}`
+                            : notionAccountEmail
+                              ? `Connected as ${notionAccountEmail}`
+                              : "Notion workspace connected"
+                          : "Connect Notion and choose the pages Flowex is allowed to use."}
                       </p>
                     </div>
 
-                    {notionAccountConnected ? (
-                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                        Notion connected
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={connectStorageProvider}
-                        disabled={isConnectingStorage}
-                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isConnectingStorage
-                          ? "Connecting..."
-                          : "Connect Notion"}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {notionAccountConnected ? (
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          Notion connected
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={connectStorageProvider}
+                          disabled={isConnectingStorage}
+                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isConnectingStorage ? "Connecting..." : "Connect Notion"}
+                        </button>
+                      )}
+
+                      {hasConfiguredStorage && isEditingStorage && (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingStorage(false)}
+                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        >
+                          Done
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {notionAccountConnected && (
-                    <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                      Notion is connected. Next we&apos;ll add Create New Database and Use Existing Database without changing your other destinations.
-                    </div>
-                  )}
+                    <>
+                      <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-indigo-700 app-dark:border-indigo-500/20 app-dark:bg-indigo-500/10 app-dark:text-indigo-300">
+                        Notion only gives Flowex access to pages you approve. Choose a shared page below for a new lead database, or use an existing database already shared with Flowex.
+                      </div>
 
-                  {storageError && (
-                    <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">
-                      {storageError}
-                    </p>
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("create_new");
+                            setNotionExistingVerified(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                            void loadNotionPages();
+                          }}
+                          className={`rounded-xl border p-4 text-left transition ${
+                            storageMode === "create_new"
+                              ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10"
+                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold app-dark:text-white">
+                            Create New Database
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Flowex creates a lead database inside an approved Notion page.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStorageMode("existing");
+                            setNotionCreatedByFlowex(false);
+                            setStorageError("");
+                            setHasUnsavedChanges(true);
+                            void loadNotionDatabases();
+                          }}
+                          className={`rounded-xl border p-4 text-left transition ${
+                            storageMode === "existing"
+                              ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10"
+                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                          }`}
+                        >
+                          <p className="text-sm font-semibold app-dark:text-white">
+                            Use Existing Database
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                            Flowex maps it and adds missing form properties on Save Automation.
+                          </p>
+                        </button>
+                      </div>
+
+                      {storageMode === "create_new" ? (
+                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                              Parent page
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={loadNotionPages}
+                              disabled={isLoadingNotion}
+                              className="text-xs font-semibold text-[#4b52f7] hover:underline disabled:opacity-60 app-dark:text-[#7c83ff]"
+                            >
+                              {isLoadingNotion ? "Refreshing..." : "Refresh pages"}
+                            </button>
+                          </div>
+
+                          <select
+                            value={notionParentPageId}
+                            onChange={(event) => {
+                              setNotionParentPageId(event.target.value);
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                          >
+                            <option value="">
+                              {isLoadingNotion ? "Loading pages..." : "Choose an approved page"}
+                            </option>
+                            {notionPages.map((page) => (
+                              <option key={page.id} value={page.id}>
+                                {page.title}
+                              </option>
+                            ))}
+                          </select>
+
+                          <label className="mt-4 block text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            Database name
+                          </label>
+
+                          <input
+                            value={storageName}
+                            onChange={(event) => {
+                              setStorageName(event.target.value);
+                              setHasUnsavedChanges(true);
+                            }}
+                            placeholder="Flowex Leads"
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                          />
+
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={prepareNotionDestination}
+                              disabled={
+                                !notionParentPageId ||
+                                !storageName.trim() ||
+                                isPreparingStorage
+                              }
+                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+                            >
+                              {isPreparingStorage
+                                ? "Creating..."
+                                : notionDatabaseId
+                                  ? "Create Again"
+                                  : "Create Database"}
+                            </button>
+
+                            {notionDatabaseId && (
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                ✓ Database ready
+                              </span>
+                            )}
+
+                            {notionDatabaseUrl && (
+                              <a
+                                href={notionDatabaseUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              >
+                                Open Database ↗
+                              </a>
+                            )}
+
+                            {notionDatabaseId && (
+                              <button
+                                type="button"
+                                onClick={() => setShowNotionRemoveDialog(true)}
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                              Notion database
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={loadNotionDatabases}
+                              disabled={isLoadingNotion}
+                              className="text-xs font-semibold text-[#4b52f7] hover:underline disabled:opacity-60 app-dark:text-[#7c83ff]"
+                            >
+                              {isLoadingNotion ? "Refreshing..." : "Refresh"}
+                            </button>
+                          </div>
+
+                          <select
+                            value={notionDataSourceId}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              const selected = notionDatabases.find(
+                                (database) => database.id === value
+                              );
+
+                              setNotionDataSourceId(value);
+                              setNotionDatabaseId(selected?.databaseId || "");
+                              setNotionDatabaseName(selected?.title || "");
+                              setNotionDatabaseUrl(selected?.url || "");
+                              setNotionExistingVerified(false);
+                              setNotionMissingCount(0);
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                          >
+                            <option value="">
+                              {isLoadingNotion ? "Loading databases..." : "Choose a shared database"}
+                            </option>
+                            {notionDatabases.map((database) => (
+                              <option key={database.id} value={database.id}>
+                                {database.title}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="mt-4 flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={prepareNotionDestination}
+                              disabled={!notionDataSourceId || isPreparingStorage}
+                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                            >
+                              {isPreparingStorage
+                                ? "Verifying..."
+                                : notionExistingVerified
+                                  ? "Verify Again"
+                                  : "Verify Database"}
+                            </button>
+
+                            {notionExistingVerified && (
+                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                ✓ Verified
+                              </span>
+                            )}
+
+                            {notionMissingCount > 0 && notionExistingVerified && (
+                              <span className="text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                                {notionMissingCount} missing {notionMissingCount === 1 ? "property" : "properties"} will be added on Save
+                              </span>
+                            )}
+
+                            {notionDatabaseUrl && (
+                              <a
+                                href={notionDatabaseUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              >
+                                Open Database ↗
+                              </a>
+                            )}
+
+                            {(notionDataSourceId || savedStorageMode === "existing") && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNotionRemovalMode("unlink");
+                                  setStoragePendingUnlink(true);
+                                  setHasUnsavedChanges(true);
+                                }}
+                                className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                              >
+                                Unlink
+                              </button>
+                            )}
+                          </div>
+
+                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                            If a database is missing, add Flowex from that page/database&apos;s Connections menu in Notion, then click Refresh.
+                          </p>
+                        </div>
+                      )}
+
+                      {storageError && (
+                        <p className="mt-4 text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                          {storageError}
+                        </p>
+                      )}
+
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -6291,6 +7002,59 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
+              {showNotionRemoveDialog && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
+                  <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                    <h3 className="text-lg font-bold app-dark:text-white">
+                      Remove Notion destination?
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                      Choose whether Flowex should only stop using this database or also move the Flowex-created Notion database to trash.
+                    </p>
+
+                    <div className="mt-5 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNotionRemovalMode("unlink");
+                          setStoragePendingUnlink(true);
+                          setShowNotionRemoveDialog(false);
+                          setIsEditingStorage(false);
+                          setHasUnsavedChanges(true);
+                        }}
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-200"
+                      >
+                        Remove from this automation
+                      </button>
+
+                      {notionCreatedByFlowex && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotionRemovalMode("trash");
+                            setShowNotionRemoveDialog(false);
+                            setIsEditingStorage(false);
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-full rounded-xl border border-red-200 px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:text-red-400"
+                        >
+                          Move Notion database to trash too
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setShowNotionRemoveDialog(false)}
+                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-slate-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {showExcelRemoveDialog && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
                   <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
@@ -6423,7 +7187,7 @@ export default function ManageLeadCapturePage() {
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          More business integrations are being added to Flowex.
+                          Choose another available destination or see what&apos;s coming next.
                         </p>
                       </div>
 
