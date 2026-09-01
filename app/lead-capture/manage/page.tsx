@@ -1,4 +1,4 @@
-
+"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -5493,7 +5493,6 @@ export default function ManageLeadCapturePage() {
               description="Choose where this Lead Flow should send every captured lead."
             >
 
-              {!hasConfiguredStorage && (
               <div className="grid gap-3 sm:grid-cols-2">
 
                 <button
@@ -5540,87 +5539,69 @@ export default function ManageLeadCapturePage() {
                   </button>
 
               </div>
-              )}
 
-              {hasConfiguredStorage && !isEditingStorage && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 app-dark:border-emerald-500/30 app-dark:bg-emerald-500/10">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/15 app-dark:text-emerald-400">✓</span>
-                        <div>
-                          <p className="text-sm font-semibold app-dark:text-white">{storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : storageType === "notion" ? "Notion" : "Google Sheets"}</p>
-                          <p className="mt-0.5 text-xs text-gray-500 app-dark:text-slate-400">
-                            {storageType === "airtable" ? (storageMode === "create_new" ? "Create new table" : "Use existing table") : storageType === "excel" ? (storageMode === "create_new" ? "Create new workbook" : "Use existing workbook") : storageType === "notion" ? (storageMode === "create_new" ? "Create new database" : "Use existing database") : (storageMode === "create_new" ? "Create new sheet" : "Use existing sheet")}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+              <div className="mt-3 flex flex-wrap justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreDestinations(true)}
+                  className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 app-dark:border-indigo-500/30 app-dark:bg-[#11161d] app-dark:text-indigo-300 app-dark:hover:bg-indigo-500/10"
+                >
+                  Use another destination
+                </button>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsEditingStorage(true)}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowMoreDestinations(true)}
-                        className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 app-dark:border-indigo-500/30 app-dark:bg-[#11161d] app-dark:text-indigo-300 app-dark:hover:bg-indigo-500/10"
-                      >
-                        Use another destination
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (storageType === "airtable") {
-                            if (airtableCreatedBaseByFlowex) {
-                              setShowAirtableRemoveDialog(true);
-                            } else {
-                              setStoragePendingUnlink(true);
-                              setIsEditingStorage(false);
-                              setHasUnsavedChanges(true);
-                            }
-                          } else if (storageType === "excel") {
-                            if (excelCreatedByFlowex) {
-                              setShowExcelRemoveDialog(true);
-                            } else {
-                              setExcelRemovalMode("unlink");
-                              setStoragePendingUnlink(true);
-                              setIsEditingStorage(false);
-                              setHasUnsavedChanges(true);
-                            }
-                          } else if (storageType === "notion") {
-                            if (notionCreatedByFlowex) {
-                              setShowNotionRemoveDialog(true);
-                            } else {
-                              setNotionRemovalMode("unlink");
-                              setStoragePendingUnlink(true);
-                              setIsEditingStorage(false);
-                              setHasUnsavedChanges(true);
-                            }
-                          } else if (storageMode === "create_new") {
-                            markCreatedSheetDeleted();
-                          } else {
-                            markExistingUnlinked();
-                          }
-                        }}
-                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                      >
-                        Unlink
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                <button
+                  type="button"
+                  disabled={
+                    storageType === "sheets"
+                      ? storageMode === "create_new"
+                        ? !createdSheetId
+                        : !existingSheetId
+                      : storageType === "airtable"
+                        ? !airtableBaseId || !airtableTableId
+                        : storageType === "excel"
+                          ? !excelWorkbookId || !excelTableId
+                          : storageType === "notion"
+                            ? !notionDatabaseId || !notionDataSourceId
+                            : true
+                  }
+                  onClick={() => {
+                    if (storageType === "airtable") {
+                      if (airtableCreatedBaseByFlowex) {
+                        setShowAirtableRemoveDialog(true);
+                      } else {
+                        setStoragePendingUnlink(true);
+                        setHasUnsavedChanges(true);
+                      }
+                    } else if (storageType === "excel") {
+                      if (excelCreatedByFlowex) {
+                        setShowExcelRemoveDialog(true);
+                      } else {
+                        setExcelRemovalMode("unlink");
+                        setStoragePendingUnlink(true);
+                        setHasUnsavedChanges(true);
+                      }
+                    } else if (storageType === "notion") {
+                      if (notionCreatedByFlowex) {
+                        setShowNotionRemoveDialog(true);
+                      } else {
+                        setNotionRemovalMode("unlink");
+                        setStoragePendingUnlink(true);
+                        setHasUnsavedChanges(true);
+                      }
+                    } else if (storageMode === "create_new") {
+                      markCreatedSheetDeleted();
+                    } else {
+                      markExistingUnlinked();
+                    }
+                  }}
+                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                >
+                  Unlink
+                </button>
+              </div>
 
               {storageType ===
-                "sheets" &&
-                (!hasConfiguredStorage || isEditingStorage) && (
+                "sheets" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -5644,16 +5625,6 @@ export default function ManageLeadCapturePage() {
                         <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
                           Google connected
                         </span>
-
-                        {hasConfiguredStorage && isEditingStorage && (
-                          <button
-                            type="button"
-                            onClick={() => setIsEditingStorage(false)}
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                          >
-                            Done
-                          </button>
-                        )}
                       </div>
                     ) : (
                       <button
@@ -6042,7 +6013,7 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
-              {storageType === "excel" && (!hasConfiguredStorage || isEditingStorage) && (
+              {storageType === "excel" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -6072,16 +6043,6 @@ export default function ManageLeadCapturePage() {
                           className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingStorage ? "Connecting..." : "Connect Microsoft"}
-                        </button>
-                      )}
-
-                      {hasConfiguredStorage && isEditingStorage && (
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingStorage(false)}
-                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
-                        >
-                          Done
                         </button>
                       )}
                     </div>
@@ -6317,7 +6278,7 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
-              {storageType === "notion" && (!hasConfiguredStorage || isEditingStorage) && (
+              {storageType === "notion" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -6349,16 +6310,6 @@ export default function ManageLeadCapturePage() {
                           className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingStorage ? "Connecting..." : "Connect Notion"}
-                        </button>
-                      )}
-
-                      {hasConfiguredStorage && isEditingStorage && (
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingStorage(false)}
-                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                        >
-                          Done
                         </button>
                       )}
                     </div>
@@ -6630,7 +6581,7 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
-              {storageType === "airtable" && (!hasConfiguredStorage || isEditingStorage) && (
+              {storageType === "airtable" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -6962,7 +6913,7 @@ export default function ManageLeadCapturePage() {
                                 type="button"
                                 onClick={() => {
                                   setStoragePendingUnlink(true);
-                                  setIsEditingStorage(false);
+                                  setIsEditingStorage(true);
                                   setHasUnsavedChanges(true);
                                 }}
                                 className="ml-auto text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
@@ -7195,7 +7146,7 @@ export default function ManageLeadCapturePage() {
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          Choose another destination. Your current destination stays active until you configure the new one and click Save Automation.
+                          Choose another destination. Its full setup opens immediately. Only the destination you save with Save Automation becomes active.
                         </p>
                       </div>
 
@@ -8437,3 +8388,4 @@ function Arrow() {
 
     </div>
   );
+}
