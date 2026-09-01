@@ -5535,7 +5535,7 @@ export default function ManageLeadCapturePage() {
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                      Switch destination or see more integrations.
+                      Use another destination or see more integrations.
                     </p>
                   </button>
 
@@ -5557,13 +5557,21 @@ export default function ManageLeadCapturePage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setIsEditingStorage(true)}
                         className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                       >
                         Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowMoreDestinations(true)}
+                        className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 app-dark:border-indigo-500/30 app-dark:bg-[#11161d] app-dark:text-indigo-300 app-dark:hover:bg-indigo-500/10"
+                      >
+                        Use another destination
                       </button>
 
                       <button
@@ -5603,7 +5611,7 @@ export default function ManageLeadCapturePage() {
                         }}
                         className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                       >
-                        {storageType === "airtable" || storageType === "excel" || storageType === "notion" ? (storageMode === "create_new" ? "Remove" : "Unlink") : storageMode === "create_new" ? "Remove" : "Unlink"}
+                        Unlink
                       </button>
                     </div>
                   </div>
@@ -7187,7 +7195,7 @@ export default function ManageLeadCapturePage() {
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          Choose another available destination or see what&apos;s coming next.
+                          Choose another destination. Your current destination stays active until you configure the new one and click Save Automation.
                         </p>
                       </div>
 
@@ -8429,4 +8437,3 @@ function Arrow() {
 
     </div>
   );
-}
