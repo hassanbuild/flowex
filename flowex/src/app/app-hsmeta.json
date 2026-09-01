@@ -1,0 +1,37 @@
+{
+  "uid": "flowex_app",
+  "type": "app",
+  "config": {
+    "description": "Flowex captures leads and sends them into HubSpot contacts automatically.",
+    "name": "Flowex",
+    "distribution": "marketplace",
+    "auth": {
+      "type": "oauth",
+      "redirectUrls": [
+        "https://flowex-snowy.vercel.app/api/integrations/hubspot/callback"
+      ],
+      "requiredScopes": [
+        "oauth",
+        "crm.objects.contacts.read",
+        "crm.objects.contacts.write",
+        "crm.schemas.contacts.read",
+        "crm.schemas.contacts.write"
+      ],
+      "optionalScopes": [],
+      "conditionallyRequiredScopes": []
+    },
+    "permittedUrls": {
+      "fetch": [
+        "https://api.hubapi.com"
+      ],
+      "iframe": [],
+      "img": []
+    },
+    "support": {
+      "supportEmail": "syedhasanali548@gmail.com",
+      "documentationUrl": "https://flowex-snowy.vercel.app",
+      "supportUrl": "https://flowex-snowy.vercel.app",
+      "supportPhone": "+923373699421"
+    }
+  }
+}

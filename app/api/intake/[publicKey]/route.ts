@@ -20,6 +20,12 @@ import {
   NOTION_PROVIDER,
   NOTION_VERSION,
 } from "@/lib/integrations/notion";
+import {
+  HUBSPOT_API_URL,
+  HUBSPOT_PROVIDER,
+  HUBSPOT_TOKEN_URL,
+  getHubSpotOAuthConfig,
+} from "@/lib/integrations/hubspot";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -1389,6 +1395,270 @@ async function sendLeadToNotion(
   }
 }
 
+
+async function getHubSpotAccessTokenForLead(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials")
+    .eq("user_id", userId)
+    .eq("provider", HUBSPOT_PROVIDER)
+    .maybeSingle();
+
+  if (
+    !connection?.credentials ||
+    typeof connection.credentials !== "object"
+  ) {
+    return null;
+  }
+
+  const credentials = connection.credentials as Record<string, unknown>;
+  const accessToken =
+    typeof credentials.access_token === "string"
+      ? credentials.access_token
+      : "";
+  const expiresAt =
+    typeof credentials.expires_at === "string"
+      ? Date.parse(credentials.expires_at)
+      : 0;
+
+  if (accessToken && (!expiresAt || expiresAt > Date.now() + 60_000)) {
+    return accessToken;
+  }
+
+  const refreshToken =
+    typeof credentials.refresh_token === "string"
+      ? credentials.refresh_token
+      : "";
+
+  if (!refreshToken) {
+    return null;
+  }
+
+  const { clientId, clientSecret } = getHubSpotOAuthConfig();
+
+  const response = await fetch(HUBSPOT_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    }),
+    cache: "no-store",
+  });
+
+  const token = (await response.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+  };
+
+  if (!response.ok || !token.access_token) {
+    return null;
+  }
+
+  await supabase
+    .from("integration_connections")
+    .update({
+      credentials: {
+        ...credentials,
+        access_token: token.access_token,
+        refresh_token: token.refresh_token || refreshToken,
+        expires_in: token.expires_in || null,
+        expires_at:
+          typeof token.expires_in === "number"
+            ? new Date(Date.now() + token.expires_in * 1000).toISOString()
+            : null,
+      },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("provider", HUBSPOT_PROVIDER);
+
+  return token.access_token;
+}
+
+function splitHubSpotName(value: unknown) {
+  const name = String(value ?? "").trim();
+
+  if (!name) {
+    return { firstname: "", lastname: "" };
+  }
+
+  const parts = name.split(/\s+/);
+
+  if (parts.length === 1) {
+    return { firstname: parts[0], lastname: "" };
+  }
+
+  return {
+    firstname: parts[0],
+    lastname: parts.slice(1).join(" "),
+  };
+}
+
+async function sendLeadToHubSpot(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const { data: destination } = await supabase
+    .from("lead_destinations")
+    .select("connected, config")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("provider", "hubspot")
+    .maybeSingle();
+
+  if (!destination || destination.connected !== true) {
+    return;
+  }
+
+  const config = destination.config as {
+    field_map?: unknown;
+  } | null;
+
+  const fieldMap =
+    config?.field_map &&
+    typeof config.field_map === "object" &&
+    !Array.isArray(config.field_map)
+      ? (config.field_map as Record<string, unknown>)
+      : {};
+
+  if (Object.keys(fieldMap).length === 0) {
+    return;
+  }
+
+  const accessToken = await getHubSpotAccessTokenForLead(
+    supabase,
+    lead.userId
+  );
+
+  if (!accessToken) {
+    return;
+  }
+
+  const properties: Record<string, string> = {};
+
+  for (const [key, rawEntry] of Object.entries(fieldMap)) {
+    if (!rawEntry || typeof rawEntry !== "object") {
+      continue;
+    }
+
+    const entry = rawEntry as {
+      property?: unknown;
+      secondary?: unknown;
+      kind?: unknown;
+    };
+
+    const property =
+      typeof entry.property === "string" ? entry.property : "";
+
+    if (!property) {
+      continue;
+    }
+
+    const value = lead.fields[key] ?? "";
+
+    if (entry.kind === "full_name") {
+      const name = splitHubSpotName(value);
+      if (name.firstname) properties[property] = name.firstname;
+
+      if (
+        typeof entry.secondary === "string" &&
+        entry.secondary &&
+        name.lastname
+      ) {
+        properties[entry.secondary] = name.lastname;
+      }
+
+      continue;
+    }
+
+    let finalValue = String(value ?? "").trim();
+
+    if (property === "email" && lead.contact.email) {
+      finalValue = lead.contact.email;
+    }
+
+    if (property === "phone" && lead.contact.phone) {
+      finalValue = lead.contact.phone;
+    }
+
+    if (finalValue) {
+      properties[property] = finalValue;
+    }
+  }
+
+  if (lead.contact.email && !properties.email) {
+    properties.email = lead.contact.email;
+  }
+
+  if (lead.contact.phone && !properties.phone) {
+    properties.phone = lead.contact.phone;
+  }
+
+  if (Object.keys(properties).length === 0) {
+    return;
+  }
+
+  let response: Response;
+
+  if (properties.email) {
+    const { email, ...otherProperties } = properties;
+
+    response = await fetch(
+      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/batch/upsert`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: [
+            {
+              id: email,
+              idProperty: "email",
+              properties: otherProperties,
+            },
+          ],
+        }),
+        cache: "no-store",
+      }
+    );
+  } else {
+    response = await fetch(
+      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          properties,
+          associations: [],
+        }),
+        cache: "no-store",
+      }
+    );
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "HubSpot rejected the lead contact.");
+  }
+}
+
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 
@@ -1840,6 +2110,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex Notion delivery error:",
+      error
+    );
+  }
+
+  try {
+    await sendLeadToHubSpot(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex HubSpot delivery error:",
       error
     );
   }

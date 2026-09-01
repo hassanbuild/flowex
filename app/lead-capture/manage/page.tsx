@@ -1,4 +1,4 @@
-"use client";
+
 
 import Image from "next/image";
 import Link from "next/link";
@@ -65,7 +65,7 @@ const storageProviders: {
     value: "hubspot",
     title: "HubSpot",
     description: "Create or update CRM contacts.",
-    available: false,
+    available: true,
   },
   {
     value: "slack",
@@ -632,6 +632,21 @@ export default function ManageLeadCapturePage() {
 
   const [notionRemovalMode, setNotionRemovalMode] =
     useState<"unlink" | "trash" | null>(null);
+
+  const [hubSpotAccountConnected, setHubSpotAccountConnected] =
+    useState(false);
+
+  const [hubSpotHubId, setHubSpotHubId] =
+    useState("");
+
+  const [hubSpotDestinationReady, setHubSpotDestinationReady] =
+    useState(false);
+
+  const [hubSpotMissingCount, setHubSpotMissingCount] =
+    useState(0);
+
+  const [hubSpotMappedFieldCount, setHubSpotMappedFieldCount] =
+    useState(0);
 
   const [microsoftWorkbooks, setMicrosoftWorkbooks] =
     useState<ExcelWorkbookOption[]>([]);
@@ -2228,7 +2243,32 @@ export default function ManageLeadCapturePage() {
             database_name?: unknown;
             database_url?: unknown;
             parent_page_id?: unknown;
+            hub_id?: unknown;
+            mapped_field_count?: unknown;
+            custom_property_count?: unknown;
           } | null;
+
+        if (provider === "hubspot") {
+          const hubId =
+            typeof config?.hub_id === "string" ||
+            typeof config?.hub_id === "number"
+              ? String(config.hub_id)
+              : "";
+
+          setHubSpotHubId(hubId);
+          setHubSpotMappedFieldCount(
+            typeof config?.mapped_field_count === "number"
+              ? config.mapped_field_count
+              : 0
+          );
+          setHubSpotMissingCount(0);
+          setHubSpotDestinationReady(data.connected === true);
+          setStorageConnected(data.connected === true);
+          setStoragePendingDelete(false);
+          setStoragePendingUnlink(false);
+          setHasUnsavedChanges(false);
+          return;
+        }
 
         if (provider === "notion") {
           const databaseId =
@@ -2772,6 +2812,63 @@ export default function ManageLeadCapturePage() {
     supabase,
   ]);
 
+  useEffect(() => {
+    if (!flowReady || !leadFlowId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadHubSpotConnection =
+      async () => {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (cancelled || !session) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "/api/integrations/hubspot/connect",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
+            }
+          );
+
+          const result = await response.json();
+
+          if (cancelled) {
+            return;
+          }
+
+          setHubSpotAccountConnected(
+            response.ok && result?.connected === true
+          );
+
+          setHubSpotHubId(
+            typeof result?.hubId === "string"
+              ? result.hubId
+              : ""
+          );
+        } catch {
+          if (!cancelled) {
+            setHubSpotAccountConnected(false);
+          }
+        }
+      };
+
+    void loadHubSpotConnection();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flowReady, leadFlowId, supabase]);
+
   const connectStorageProvider =
     async () => {
       if (
@@ -2791,7 +2888,9 @@ export default function ManageLeadCapturePage() {
         storageType !==
           "excel" &&
         storageType !==
-          "notion"
+          "notion" &&
+        storageType !==
+          "hubspot"
       ) {
         setStorageError(
           "This destination is coming soon."
@@ -2829,7 +2928,10 @@ export default function ManageLeadCapturePage() {
                 : storageType ===
                     "notion"
                   ? "/api/integrations/notion/connect"
-                  : "/api/integrations/google/connect",
+                  : storageType ===
+                      "hubspot"
+                    ? "/api/integrations/hubspot/connect"
+                    : "/api/integrations/google/connect",
             {
               method:
                 "POST",
@@ -2868,7 +2970,10 @@ export default function ManageLeadCapturePage() {
                   : storageType ===
                       "notion"
                     ? "Flowex could not start Notion authorization."
-                    : "Flowex could not start Google authorization.")
+                    : storageType ===
+                        "hubspot"
+                      ? "Flowex could not start HubSpot authorization."
+                      : "Flowex could not start Google authorization.")
           );
           return;
         }
@@ -2886,7 +2991,10 @@ export default function ManageLeadCapturePage() {
               : storageType ===
                   "notion"
                 ? "Flowex could not start Notion authorization."
-                : "Flowex could not start Google authorization."
+                : storageType ===
+                    "hubspot"
+                  ? "Flowex could not start HubSpot authorization."
+                  : "Flowex could not start Google authorization."
         );
       } finally {
         setIsConnectingStorage(
@@ -3251,6 +3359,101 @@ export default function ManageLeadCapturePage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageType, storageMode, notionAccountConnected]);
+
+  const callHubSpotDestination =
+    async (payload: Record<string, unknown>) => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error(
+          "Your session could not be verified. Please log in again."
+        );
+      }
+
+      const response = await fetch(
+        "/api/integrations/hubspot/destination",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            ...payload,
+            leadFlowId,
+          }),
+        }
+      );
+
+      const text = await response.text();
+      let result: Record<string, any> = {};
+
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(
+          "Flowex received an invalid response from HubSpot."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error || "Flowex could not update HubSpot."
+        );
+      }
+
+      return result;
+    };
+
+  const inspectHubSpotDestination =
+    async () => {
+      if (!hubSpotAccountConnected || isPreparingStorage) {
+        return;
+      }
+
+      setIsPreparingStorage(true);
+      setStorageError("");
+
+      try {
+        const result = await callHubSpotDestination({
+          action: "inspect",
+        });
+
+        setHubSpotMissingCount(
+          typeof result?.missingCount === "number"
+            ? result.missingCount
+            : 0
+        );
+
+        setHubSpotMappedFieldCount(
+          typeof result?.mappedFieldCount === "number"
+            ? result.mappedFieldCount
+            : 0
+        );
+
+        if (typeof result?.hubId === "string") {
+          setHubSpotHubId(result.hubId);
+        }
+
+        setStorageError(
+          typeof result?.missingCount === "number" && result.missingCount > 0
+            ? `${result.missingCount} missing HubSpot ${result.missingCount === 1 ? "property" : "properties"} will be created when you click Save Automation.`
+            : "HubSpot Contacts is ready for this Lead Flow."
+        );
+
+        setHasUnsavedChanges(true);
+      } catch (error) {
+        setStorageError(
+          error instanceof Error
+            ? error.message
+            : "Flowex could not prepare HubSpot."
+        );
+      } finally {
+        setIsPreparingStorage(false);
+      }
+    };
 
   const callAirtableDestination =
     async (payload: Record<string, unknown>) => {
@@ -4531,6 +4734,59 @@ export default function ManageLeadCapturePage() {
           }
         }
 
+        } else if (storageType === "hubspot") {
+          if (storagePendingUnlink) {
+            try {
+              await callHubSpotDestination({
+                action: "unlink_destination",
+              });
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not unlink HubSpot."
+              );
+              return false;
+            }
+
+            setHubSpotDestinationReady(false);
+            setHubSpotMissingCount(0);
+            setHubSpotMappedFieldCount(0);
+            setStorageConnected(false);
+            setStoragePendingUnlink(false);
+            setSavedStorageMode(null);
+          } else if (hubSpotAccountConnected) {
+            try {
+              const result = await callHubSpotDestination({
+                action: "commit",
+              });
+
+              setHubSpotDestinationReady(true);
+              setStorageConnected(true);
+              setSavedStorageMode("existing");
+              setStorageMode("existing");
+              setHubSpotMissingCount(0);
+              setHubSpotMappedFieldCount(
+                typeof result?.mappedFieldCount === "number"
+                  ? result.mappedFieldCount
+                  : hubSpotMappedFieldCount
+              );
+
+              if (typeof result?.hubId === "string") {
+                setHubSpotHubId(result.hubId);
+              }
+            } catch (error) {
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Flowex could not save the HubSpot destination."
+              );
+              return false;
+            }
+          } else {
+            alert("Connect HubSpot first.");
+            return false;
+          }
         } else if (storageType === "notion") {
           if (
             storagePendingUnlink ||
@@ -4838,7 +5094,9 @@ export default function ManageLeadCapturePage() {
                 ? airtableTableId
                 : storageType === "notion"
                   ? notionDataSourceId
-                  : storageType === "excel"
+                  : storageType === "hubspot"
+                    ? hubSpotDestinationReady ? "contacts" : ""
+                    : storageType === "excel"
                   ? excelWorkbookId
                   : storageMode === "existing"
                   ? existingSheetUrl || storageDestination
@@ -5050,7 +5308,9 @@ export default function ManageLeadCapturePage() {
                   !!notionDataSourceId &&
                   (storageMode === "create_new" || notionExistingVerified)
                 )
-              : false
+              : storageType === "hubspot"
+                ? hubSpotDestinationReady
+                : false
     );
 
   if (
@@ -5502,10 +5762,10 @@ export default function ManageLeadCapturePage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-semibold app-dark:text-white">
-                        {storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : storageType === "notion" ? "Notion" : "Google Sheets"}
+                        {storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : storageType === "notion" ? "Notion" : storageType === "hubspot" ? "HubSpot" : "Google Sheets"}
                       </p>
                       <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                        {storageType === "airtable" ? "Store leads in an Airtable base." : storageType === "excel" ? "Store leads in an Excel workbook." : storageType === "notion" ? "Store leads in a Notion database." : "A structured lead table with mapped columns."}
+                        {storageType === "airtable" ? "Store leads in an Airtable base." : storageType === "excel" ? "Store leads in an Excel workbook." : storageType === "notion" ? "Store leads in a Notion database." : storageType === "hubspot" ? "Create or update contacts in HubSpot CRM." : "A structured lead table with mapped columns."}
                       </p>
                     </div>
                     {storageType === "airtable" ? (
@@ -5514,6 +5774,8 @@ export default function ManageLeadCapturePage() {
                       microsoftAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
                     ) : storageType === "notion" ? (
                       notionAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                    ) : storageType === "hubspot" ? (
+                      hubSpotAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
                     ) : (
                       googleAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
                     )}
@@ -5538,66 +5800,6 @@ export default function ManageLeadCapturePage() {
                     </p>
                   </button>
 
-              </div>
-
-              <div className="mt-3 flex flex-wrap justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowMoreDestinations(true)}
-                  className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50 app-dark:border-indigo-500/30 app-dark:bg-[#11161d] app-dark:text-indigo-300 app-dark:hover:bg-indigo-500/10"
-                >
-                  Use another destination
-                </button>
-
-                <button
-                  type="button"
-                  disabled={
-                    storageType === "sheets"
-                      ? storageMode === "create_new"
-                        ? !createdSheetId
-                        : !existingSheetId
-                      : storageType === "airtable"
-                        ? !airtableBaseId || !airtableTableId
-                        : storageType === "excel"
-                          ? !excelWorkbookId || !excelTableId
-                          : storageType === "notion"
-                            ? !notionDatabaseId || !notionDataSourceId
-                            : true
-                  }
-                  onClick={() => {
-                    if (storageType === "airtable") {
-                      if (airtableCreatedBaseByFlowex) {
-                        setShowAirtableRemoveDialog(true);
-                      } else {
-                        setStoragePendingUnlink(true);
-                        setHasUnsavedChanges(true);
-                      }
-                    } else if (storageType === "excel") {
-                      if (excelCreatedByFlowex) {
-                        setShowExcelRemoveDialog(true);
-                      } else {
-                        setExcelRemovalMode("unlink");
-                        setStoragePendingUnlink(true);
-                        setHasUnsavedChanges(true);
-                      }
-                    } else if (storageType === "notion") {
-                      if (notionCreatedByFlowex) {
-                        setShowNotionRemoveDialog(true);
-                      } else {
-                        setNotionRemovalMode("unlink");
-                        setStoragePendingUnlink(true);
-                        setHasUnsavedChanges(true);
-                      }
-                    } else if (storageMode === "create_new") {
-                      markCreatedSheetDeleted();
-                    } else {
-                      markExistingUnlinked();
-                    }
-                  }}
-                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                >
-                  Unlink
-                </button>
               </div>
 
               {storageType ===
@@ -5647,7 +5849,6 @@ export default function ManageLeadCapturePage() {
 
                   {googleAccountConnected && (
                     <>
-                      {!hasConfiguredStorage && (
                       <div className="mt-5 grid gap-2 sm:grid-cols-2">
 
                         <button
@@ -5685,7 +5886,6 @@ export default function ManageLeadCapturePage() {
                         </button>
 
                       </div>
-                      )}
 
                       {storageMode ===
                         "create_new" && (
@@ -6581,6 +6781,130 @@ export default function ManageLeadCapturePage() {
                 </div>
               )}
 
+              {storageType === "hubspot" && (
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold app-dark:text-white">
+                        HubSpot
+                      </p>
+
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                        {hubSpotAccountConnected
+                          ? hubSpotHubId
+                            ? `Connected to HubSpot account ${hubSpotHubId}`
+                            : "HubSpot account connected"
+                          : "Connect HubSpot once. Flowex can then send this Lead Flow into HubSpot Contacts."}
+                      </p>
+                    </div>
+
+                    {hubSpotAccountConnected ? (
+                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        HubSpot connected
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={connectStorageProvider}
+                        disabled={isConnectingStorage}
+                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isConnectingStorage ? "Connecting..." : "Connect HubSpot"}
+                      </button>
+                    )}
+                  </div>
+
+                  {hubSpotAccountConnected && (
+                    <>
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-semibold app-dark:text-white">
+                              HubSpot Contacts
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                              Standard fields map automatically. Flowex creates any missing custom contact properties from your form when you click Save Automation.
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={inspectHubSpotDestination}
+                            disabled={isPreparingStorage}
+                            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                          >
+                            {isPreparingStorage ? "Checking..." : "Check Mapping"}
+                          </button>
+                        </div>
+
+                        {(hubSpotMappedFieldCount > 0 || hubSpotDestinationReady) && (
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            {hubSpotMappedFieldCount > 0 && (
+                              <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                                {hubSpotMappedFieldCount} mapped {hubSpotMappedFieldCount === 1 ? "field" : "fields"}
+                              </span>
+                            )}
+
+                            {hubSpotMissingCount > 0 && (
+                              <span className="rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 app-dark:bg-amber-500/10 app-dark:text-amber-400">
+                                {hubSpotMissingCount} custom {hubSpotMissingCount === 1 ? "property" : "properties"} to create
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {hubSpotDestinationReady && (
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setStoragePendingUnlink(true);
+                                setHasUnsavedChanges(true);
+                              }}
+                              className="text-xs font-semibold text-red-600 transition hover:underline app-dark:text-red-400"
+                            >
+                              Unlink
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {storagePendingUnlink && hubSpotDestinationReady && (
+                        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 app-dark:border-amber-500/30 app-dark:bg-amber-500/10">
+                          <p className="text-sm font-semibold text-amber-800 app-dark:text-amber-300">
+                            HubSpot will be unlinked from this Lead Flow after Save Automation.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStoragePendingUnlink(false);
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="mt-3 text-xs font-semibold text-amber-800 underline app-dark:text-amber-300"
+                          >
+                            Undo unlink
+                          </button>
+                        </div>
+                      )}
+
+                      {storageError && (
+                        <p className={`mt-4 text-xs font-medium ${
+                          storageError.includes("ready") || storageError.includes("will be created")
+                            ? "text-emerald-600 app-dark:text-emerald-400"
+                            : "text-amber-600 app-dark:text-amber-400"
+                        }`}>
+                          {storageError}
+                        </p>
+                      )}
+
+                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+                        HubSpot becomes this Lead Flow&apos;s active destination only when you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {storageType === "airtable" && (
                 <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -6610,36 +6934,6 @@ export default function ManageLeadCapturePage() {
                           {isConnectingStorage ? "Connecting..." : "Connect Airtable"}
                         </button>
                       )}
-
-                      {hasConfiguredStorage && isEditingStorage ? (
-                        <button
-                          type="button"
-                          onClick={() => setIsEditingStorage(false)}
-                          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                        >
-                          Done
-                        </button>
-                      ) : !hasConfiguredStorage ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStorageType("sheets");
-                            setStorageMode("create_new");
-                            setAirtableBaseId("");
-                            setAirtableTableId("");
-                            setAirtableTableName("");
-                            setAirtableExistingVerified(false);
-                            setAirtableCreatedBaseByFlowex(false);
-                            setAirtableBaseUrl("");
-                            setStoragePendingUnlink(false);
-                            setStorageError("");
-                            setHasUnsavedChanges(true);
-                          }}
-                          className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                        >
-                          Unlink
-                        </button>
-                      ) : null}
                     </div>
                   </div>
 
