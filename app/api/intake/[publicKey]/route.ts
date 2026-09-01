@@ -1543,7 +1543,9 @@ async function sendLeadToHubSpot(
   );
 
   if (!accessToken) {
-    return;
+    throw new Error(
+      "HubSpot access token is unavailable. Reconnect HubSpot."
+    );
   }
 
   const properties: Record<string, string> = {};
@@ -1560,7 +1562,9 @@ async function sendLeadToHubSpot(
     };
 
     const property =
-      typeof entry.property === "string" ? entry.property : "";
+      typeof entry.property === "string"
+        ? entry.property
+        : "";
 
     if (!property) {
       continue;
@@ -1570,7 +1574,10 @@ async function sendLeadToHubSpot(
 
     if (entry.kind === "full_name") {
       const name = splitHubSpotName(value);
-      if (name.firstname) properties[property] = name.firstname;
+
+      if (name.firstname) {
+        properties[property] = name.firstname;
+      }
 
       if (
         typeof entry.secondary === "string" &&
@@ -1607,58 +1614,155 @@ async function sendLeadToHubSpot(
   }
 
   if (Object.keys(properties).length === 0) {
+    throw new Error(
+      "HubSpot contact has no mapped properties to save."
+    );
+  }
+
+  const requestHeaders = {
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  };
+
+  const readHubSpotError = async (
+    response: Response,
+    fallback: string
+  ) => {
+    const text = await response.text();
+
+    if (!text) {
+      return fallback;
+    }
+
+    try {
+      const payload = JSON.parse(text) as {
+        message?: unknown;
+        error?: unknown;
+        errors?: unknown;
+      };
+
+      if (typeof payload.message === "string") {
+        return payload.message;
+      }
+
+      if (typeof payload.error === "string") {
+        return payload.error;
+      }
+
+      if (Array.isArray(payload.errors) && payload.errors.length > 0) {
+        return JSON.stringify(payload.errors);
+      }
+    } catch {
+      // Use raw response below.
+    }
+
+    return text;
+  };
+
+  let existingContactId = "";
+
+  if (properties.email) {
+    const searchResponse = await fetch(
+      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/search`,
+      {
+        method: "POST",
+        headers: requestHeaders,
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "email",
+                  operator: "EQ",
+                  value: properties.email,
+                },
+              ],
+            },
+          ],
+          properties: ["email"],
+          limit: 1,
+        }),
+        cache: "no-store",
+      }
+    );
+
+    if (!searchResponse.ok) {
+      throw new Error(
+        await readHubSpotError(
+          searchResponse,
+          "HubSpot could not search for the contact."
+        )
+      );
+    }
+
+    const searchResult = (await searchResponse.json()) as {
+      results?: Array<{
+        id?: unknown;
+      }>;
+    };
+
+    const first =
+      Array.isArray(searchResult.results)
+        ? searchResult.results[0]
+        : null;
+
+    existingContactId =
+      typeof first?.id === "string"
+        ? first.id
+        : typeof first?.id === "number"
+          ? String(first.id)
+          : "";
+  }
+
+  if (existingContactId) {
+    const updateResponse = await fetch(
+      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/${encodeURIComponent(
+        existingContactId
+      )}`,
+      {
+        method: "PATCH",
+        headers: requestHeaders,
+        body: JSON.stringify({
+          properties,
+        }),
+        cache: "no-store",
+      }
+    );
+
+    if (!updateResponse.ok) {
+      throw new Error(
+        await readHubSpotError(
+          updateResponse,
+          "HubSpot could not update the contact."
+        )
+      );
+    }
+
     return;
   }
 
-  let response: Response;
+  const createResponse = await fetch(
+    `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts`,
+    {
+      method: "POST",
+      headers: requestHeaders,
+      body: JSON.stringify({
+        properties,
+        associations: [],
+      }),
+      cache: "no-store",
+    }
+  );
 
-  if (properties.email) {
-    const { email, ...otherProperties } = properties;
-
-    response = await fetch(
-      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/batch/upsert`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: [
-            {
-              id: email,
-              idProperty: "email",
-              properties: otherProperties,
-            },
-          ],
-        }),
-        cache: "no-store",
-      }
+  if (!createResponse.ok) {
+    throw new Error(
+      await readHubSpotError(
+        createResponse,
+        "HubSpot could not create the contact."
+      )
     );
-  } else {
-    response = await fetch(
-      `${HUBSPOT_API_URL}/crm/objects/2026-03/contacts`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          properties,
-          associations: [],
-        }),
-        cache: "no-store",
-      }
-    );
-  }
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || "HubSpot rejected the lead contact.");
   }
 }
-
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 

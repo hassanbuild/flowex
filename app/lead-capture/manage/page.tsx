@@ -1,4 +1,4 @@
-"use client";
+
 
 import Image from "next/image";
 import Link from "next/link";
@@ -771,6 +771,9 @@ export default function ManageLeadCapturePage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] =
     useState(false);
 
+  const [dirtySteps, setDirtySteps] =
+    useState<Set<string>>(() => new Set());
+
   const [showUnsavedDialog, setShowUnsavedDialog] =
     useState(false);
 
@@ -866,6 +869,7 @@ export default function ManageLeadCapturePage() {
     setShowAirtableRemoveDialog(false);
     setAirtableExistingVerified(false);
     setHasUnsavedChanges(false);
+    setDirtySteps(new Set());
     setReplyType("instant");
     setCustomReply(
       "Thanks for reaching out. We’ve received your message and will get back to you shortly."
@@ -3439,7 +3443,7 @@ export default function ManageLeadCapturePage() {
 
         setStorageError(
           typeof result?.missingCount === "number" && result.missingCount > 0
-            ? `${result.missingCount} missing HubSpot ${result.missingCount === 1 ? "property" : "properties"} will be created when you click Save Automation.`
+            ? `${result.missingCount} missing HubSpot ${result.missingCount === 1 ? "property" : "properties"} will be created when you save this step.`
             : "HubSpot Contacts is ready for this Lead Flow."
         );
 
@@ -3945,7 +3949,7 @@ export default function ManageLeadCapturePage() {
           );
 
           setStorageError(
-            "New Google Sheet prepared. Click Save Automation to attach it to this Lead Flow."
+            "New Google Sheet prepared. Use the Save changes button in this step to attach it to this Lead Flow."
           );
 
           setIsEditingStorage(false);
@@ -4016,7 +4020,7 @@ export default function ManageLeadCapturePage() {
           );
 
           setStorageError(
-            "Existing Google Sheet verified and mapped. Flowex will only reorganize it on Save Automation if the sheet needs structure."
+            "Existing Google Sheet verified and mapped. Flowex will only reorganize it when you save this step if the sheet needs structure."
           );
 
           setIsEditingStorage(false);
@@ -4078,7 +4082,7 @@ export default function ManageLeadCapturePage() {
       );
 
       setStorageError(
-        "This existing sheet will be unlinked when you click Save Automation."
+        "This existing sheet will be unlinked when you save this step."
       );
 
       setHasUnsavedChanges(
@@ -4143,8 +4147,8 @@ export default function ManageLeadCapturePage() {
       setStorageError(
         mode ===
           "trash"
-          ? "This sheet will be removed from the automation and moved to Google Drive Trash when you click Save Automation."
-          : "This sheet will be removed from the automation when you click Save Automation. The Google Sheet itself will stay in your Drive."
+          ? "This sheet will be removed from the automation and moved to Google Drive Trash when you save this step."
+          : "This sheet will be removed from the automation when you save this step. The Google Sheet itself will stay in your Drive."
       );
 
       setHasUnsavedChanges(
@@ -4198,6 +4202,11 @@ export default function ManageLeadCapturePage() {
       setHasUnsavedChanges(
         true
       );
+      setDirtySteps((current) => {
+        const next = new Set(current);
+        next.add("status");
+        return next;
+      });
     };
 
 
@@ -5144,6 +5153,43 @@ export default function ManageLeadCapturePage() {
       }
     };
 
+  const saveStep = async (_step: string) => {
+    const scrollY = window.scrollY;
+    const saved = await saveChanges(false);
+
+    if (saved) {
+      setDirtySteps(new Set());
+      window.requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    }
+
+    return saved;
+  };
+
+  const handleManageInteraction = (
+    event: React.SyntheticEvent<HTMLElement>
+  ) => {
+    const target = event.target as HTMLElement | null;
+    const step = target?.closest<HTMLElement>("[data-flow-step]");
+    const stepNumber = step?.dataset.flowStep;
+
+    if (stepNumber && !target?.closest("[data-step-save]")) {
+      setDirtySteps((current) => {
+        const next = new Set(current);
+        next.add(stepNumber);
+        return next;
+      });
+    }
+
+    const scrollY = window.scrollY;
+    window.requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - scrollY) > 24) {
+        window.scrollTo(0, scrollY);
+      }
+    });
+  };
+
   const discardUnsavedDraft =
     async () => {
       /*
@@ -5322,7 +5368,11 @@ export default function ManageLeadCapturePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f9fb] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <main
+      onClickCapture={handleManageInteraction}
+      onChangeCapture={handleManageInteraction}
+      className="min-h-screen bg-[#f7f9fb] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100"
+    >
 
       {/* NAVBAR */}
 
@@ -5362,20 +5412,7 @@ export default function ManageLeadCapturePage() {
               Back
             </button>
 
-            <button
-              type="button"
-              onClick={() =>
-                void saveChanges()
-              }
-              disabled={
-                isSavingAutomation
-              }
-              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSavingAutomation
-                ? "Saving..."
-                : "Save Automation"}
-            </button>
+
 
           </div>
 
@@ -5466,6 +5503,18 @@ export default function ManageLeadCapturePage() {
                 {active ? "Pause Automation" : "Resume Automation"}
               </button>
 
+              {dirtySteps.has("status") && (
+                <button
+                  type="button"
+                  data-step-save
+                  onClick={() => void saveStep("status")}
+                  disabled={isSavingAutomation}
+                  className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSavingAutomation ? "Saving..." : "Save status"}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={deleteLeadFlow}
@@ -5501,6 +5550,9 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="01"
+              onSave={() => void saveStep("01")}
+              saving={isSavingAutomation}
+              dirty={dirtySteps.has("01")}
               title="Capture Lead"
               description="Choose how new leads enter Flowex."
             >
@@ -5749,6 +5801,9 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="02"
+              onSave={() => void saveStep("02")}
+              saving={isSavingAutomation}
+              dirty={dirtySteps.has("02")}
               title="Send Lead"
               description="Choose where this Lead Flow should send every captured lead."
             >
@@ -5947,8 +6002,8 @@ export default function ManageLeadCapturePage() {
                               <p className="mt-1 text-xs leading-5 text-red-600 app-dark:text-red-400">
                                 {createdSheetRemovalMode ===
                                 "trash"
-                                  ? "It will be removed from this automation and moved to Google Drive Trash after Save Automation."
-                                  : "It will be removed from this automation after Save Automation, but the Google Sheet will stay in Drive."}
+                                  ? "It will be removed from this automation and moved to Google Drive Trash after you save this step."
+                                  : "It will be removed from this automation after you save this step, but the Google Sheet will stay in Drive."}
                               </p>
 
                               <button
@@ -6080,7 +6135,7 @@ export default function ManageLeadCapturePage() {
                               </p>
 
                               <p className="mt-1 text-xs leading-5 text-amber-700 app-dark:text-amber-400">
-                                Flowex will stop sending this Lead Flow to it after Save Automation. The Google Sheet itself will not be deleted.
+                                Flowex will stop sending this Lead Flow to it after you save this step. The Google Sheet itself will not be deleted.
                               </p>
 
                               <button
@@ -6186,7 +6241,7 @@ export default function ManageLeadCapturePage() {
                               </div>
 
                               <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
-                                Verification only checks access and maps the columns. On Save Automation, Flowex preserves a clean existing structure; if the sheet is unstructured or missing required lead columns, Flowex organizes it into the same lead-table style used for new sheets without deleting unrelated columns.
+                                Verification only checks access and maps the columns. When you save this step, Flowex preserves a clean existing structure; if the sheet is unstructured or missing required lead columns, Flowex organizes it into the same lead-table style used for new sheets without deleting unrelated columns.
                               </p>
                             </>
                           )}
@@ -6205,7 +6260,7 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -6292,7 +6347,7 @@ export default function ManageLeadCapturePage() {
                             Use Existing Workbook
                           </p>
                           <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
-                            Flowex maps the table and adds missing lead columns on Save Automation.
+                            Flowex maps the table and adds missing lead columns when you save this step.
                           </p>
                         </button>
                       </div>
@@ -6459,7 +6514,7 @@ export default function ManageLeadCapturePage() {
                           </div>
 
                           <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
-                            Verification checks access and maps the workbook. Missing Flowex lead columns are added only when Save Automation is clicked.
+                            Verification checks access and maps the workbook. Missing Flowex lead columns are added only when this step is saved.
                           </p>
                         </div>
                       )}
@@ -6471,7 +6526,7 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -6564,7 +6619,7 @@ export default function ManageLeadCapturePage() {
                             Use Existing Database
                           </p>
                           <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
-                            Flowex maps it and adds missing form properties on Save Automation.
+                            Flowex maps it and adds missing form properties when you save this step.
                           </p>
                         </button>
                       </div>
@@ -6774,7 +6829,7 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -6823,7 +6878,7 @@ export default function ManageLeadCapturePage() {
                               HubSpot Contacts
                             </p>
                             <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
-                              Standard fields map automatically. Flowex creates any missing custom contact properties from your form when you click Save Automation.
+                              Standard fields map automatically. Flowex creates any missing custom contact properties from your form when you save this step.
                             </p>
                           </div>
 
@@ -6872,7 +6927,7 @@ export default function ManageLeadCapturePage() {
                       {storagePendingUnlink && hubSpotDestinationReady && (
                         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 app-dark:border-amber-500/30 app-dark:bg-amber-500/10">
                           <p className="text-sm font-semibold text-amber-800 app-dark:text-amber-300">
-                            HubSpot will be unlinked from this Lead Flow after Save Automation.
+                            HubSpot will be unlinked from this Lead Flow after you save this step.
                           </p>
                           <button
                             type="button"
@@ -6898,7 +6953,7 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        HubSpot becomes this Lead Flow&apos;s active destination only when you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                        HubSpot becomes this Lead Flow&apos;s active destination only when you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -6940,7 +6995,7 @@ export default function ManageLeadCapturePage() {
                   {storagePendingUnlink ? (
                     <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 app-dark:border-amber-500/30 app-dark:bg-amber-500/10">
                       <p className="text-sm font-semibold text-amber-800 app-dark:text-amber-300">
-                        Airtable will be unlinked from this Lead Flow after Save Automation.
+                        Airtable will be unlinked from this Lead Flow after you save this step.
                       </p>
                       <button
                         type="button"
@@ -7124,7 +7179,7 @@ export default function ManageLeadCapturePage() {
                           {airtableTableId && (
                             <div className="mt-3 flex flex-wrap items-center gap-3">
                               <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
-                                ✓ {airtableTableName || storageName} is ready. Save Automation to use it.
+                                ✓ {airtableTableName || storageName} is ready. Save this step to use it.
                               </span>
                               {airtableBaseUrl && (
                                 <a
@@ -7218,7 +7273,7 @@ export default function ManageLeadCapturePage() {
                           </div>
 
                           <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
-                            Flowex keeps existing Airtable fields and adds any missing fields from this Lead Flow when Save Automation is clicked.
+                            Flowex keeps existing Airtable fields and adds any missing fields from this Lead Flow when this step is saved.
                           </p>
                         </div>
                       )}
@@ -7244,7 +7299,7 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save Automation</span>.
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -7440,7 +7495,7 @@ export default function ManageLeadCapturePage() {
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          Choose another destination. Its full setup opens immediately. Only the destination you save with Save Automation becomes active.
+                          Choose another destination. Its full setup opens immediately. Only the destination you save when you save this step becomes active.
                         </p>
                       </div>
 
@@ -7460,7 +7515,8 @@ export default function ManageLeadCapturePage() {
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
 
-                      {storageProviders
+                      {[...storageProviders]
+                        .sort((a, b) => Number(b.available) - Number(a.available))
                         .filter(
                           (
                             provider
@@ -7563,6 +7619,9 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="03"
+              onSave={() => void saveStep("03")}
+              saving={isSavingAutomation}
+              dirty={dirtySteps.has("03")}
               title="Reply Automatically"
               description="Choose what your lead receives immediately."
             >
@@ -7654,6 +7713,9 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="04"
+              onSave={() => void saveStep("04")}
+              saving={isSavingAutomation}
+              dirty={dirtySteps.has("04")}
               title="Notify Your Team"
               description="Send a notification whenever a new lead arrives."
             >
@@ -7686,6 +7748,9 @@ export default function ManageLeadCapturePage() {
 
             <FlowStep
               number="05"
+              onSave={() => void saveStep("05")}
+              saving={isSavingAutomation}
+              dirty={dirtySteps.has("05")}
               title="Follow Up"
               description="Automatically follow up when a lead hasn't replied."
             >
@@ -7800,29 +7865,6 @@ export default function ManageLeadCapturePage() {
 
           </div>
 
-          {/* BOTTOM SAVE */}
-
-          <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6 app-dark:border-slate-800">
-
-            <p className="text-sm text-gray-400 app-dark:text-slate-500">
-              Changes only apply after saving.
-            </p>
-
-            <button
-  type="button"
-  onClick={() => {
-    void saveChanges();
-  }}
-  disabled={isSavingAutomation}
-  className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
->
-  {isSavingAutomation
-    ? "Saving..."
-    : "Save Automation"}
-</button>
-
-          </div>
-
         </div>
 
       </section>
@@ -7832,7 +7874,7 @@ export default function ManageLeadCapturePage() {
       {showFormCustomizer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm">
 
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[24px] border border-gray-200 bg-[#f7f9fb] shadow-2xl app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-gray-200 bg-[#f7f9fb] shadow-2xl app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
 
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4 app-dark:border-slate-800 app-dark:bg-[#11161d]">
 
@@ -7860,7 +7902,7 @@ export default function ManageLeadCapturePage() {
 
             </div>
 
-            <div className="grid gap-6 p-5 lg:grid-cols-2">
+            <div className="grid min-h-0 flex-1 gap-6 overflow-y-auto p-5 lg:grid-cols-2">
 
               {/* ================= FORM SETUP ================= */}
 
@@ -8209,7 +8251,7 @@ export default function ManageLeadCapturePage() {
 
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-gray-200 bg-white px-5 py-4 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-end gap-3 border-t border-gray-200 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] app-dark:border-slate-800 app-dark:bg-[#11161d]">
 
               <button
                 type="button"
@@ -8602,14 +8644,20 @@ function FlowStep({
   title,
   description,
   children,
+  onSave,
+  saving,
+  dirty,
 }: {
   number: string;
   title: string;
   description: string;
   children: React.ReactNode;
+  onSave: () => void;
+  saving: boolean;
+  dirty: boolean;
 }) {
   return (
-    <div className="relative flex gap-3 sm:gap-4">
+    <div data-flow-step={number} className="relative flex gap-3 sm:gap-4">
 
       <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 via-cyan-400 to-indigo-600 text-xs font-black text-white shadow-sm sm:h-12 sm:w-12">
         {number}
@@ -8627,6 +8675,18 @@ function FlowStep({
 
         <div className="mt-4">
           {children}
+        </div>
+
+        <div className="mt-5 flex justify-end border-t border-gray-100 pt-4 app-dark:border-slate-800">
+          <button
+            type="button"
+            data-step-save
+            onClick={onSave}
+            disabled={saving || !dirty}
+            className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+          >
+            {saving ? "Saving..." : dirty ? "Save changes" : "Saved"}
+          </button>
         </div>
 
       </div>

@@ -189,7 +189,7 @@ function propertySpec(field: SourceField): PropertySpec {
   if (type === "number" || type === "range") {
     return {
       name: hubSpotPropertyName(field.key),
-      label: field.label.slice(0, 100),
+      label: `Flowex – ${field.label}`.slice(0, 100),
       type: "number",
       fieldType: "number",
       options: [],
@@ -199,7 +199,7 @@ function propertySpec(field: SourceField): PropertySpec {
   if (type === "dropdown" || type === "select" || type === "radio") {
     return {
       name: hubSpotPropertyName(field.key),
-      label: field.label.slice(0, 100),
+      label: `Flowex – ${field.label}`.slice(0, 100),
       type: "enumeration",
       fieldType: "select",
       options: field.options,
@@ -209,7 +209,7 @@ function propertySpec(field: SourceField): PropertySpec {
   if (type === "date") {
     return {
       name: hubSpotPropertyName(field.key),
-      label: field.label.slice(0, 100),
+      label: `Flowex – ${field.label}`.slice(0, 100),
       type: "date",
       fieldType: "date",
       options: [],
@@ -219,7 +219,7 @@ function propertySpec(field: SourceField): PropertySpec {
   if (type === "checkbox") {
     return {
       name: hubSpotPropertyName(field.key),
-      label: field.label.slice(0, 100),
+      label: `Flowex – ${field.label}`.slice(0, 100),
       type: "bool",
       fieldType: "booleancheckbox",
       options: [],
@@ -228,7 +228,7 @@ function propertySpec(field: SourceField): PropertySpec {
 
   return {
     name: hubSpotPropertyName(field.key),
-    label: field.label.slice(0, 100),
+    label: `Flowex – ${field.label}`.slice(0, 100),
     type: "string",
     fieldType: type === "long_text" || type === "textarea" ? "textarea" : "text",
     options: [],
