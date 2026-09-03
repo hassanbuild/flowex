@@ -565,6 +565,9 @@ export default function ManageLeadCapturePage() {
   const [isConnectingStorage, setIsConnectingStorage] =
     useState(false);
 
+  const [disconnectingStorageProvider, setDisconnectingStorageProvider] =
+    useState<"sheets" | "airtable" | "excel" | "notion" | "hubspot" | null>(null);
+
   const [isPreparingStorage, setIsPreparingStorage] =
     useState(false);
 
@@ -2900,6 +2903,184 @@ export default function ManageLeadCapturePage() {
       cancelled = true;
     };
   }, [flowReady, leadFlowId, supabase]);
+
+  const disconnectStorageAccount =
+    async (
+      provider:
+        | "sheets"
+        | "airtable"
+        | "excel"
+        | "notion"
+        | "hubspot"
+    ) => {
+      if (disconnectingStorageProvider) {
+        return;
+      }
+
+      const providerLabel =
+        provider === "sheets"
+          ? "Google"
+          : provider === "excel"
+            ? "Microsoft"
+            : provider === "airtable"
+              ? "Airtable"
+              : provider === "notion"
+                ? "Notion"
+                : "HubSpot";
+
+      const confirmed =
+        window.confirm(
+          `Disconnect ${providerLabel} from Flowex? This will not delete any external data, but destinations using this account will stop receiving leads until you reconnect.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setStorageError("");
+      setDisconnectingStorageProvider(provider);
+
+      try {
+        const {
+          data: {
+            session,
+          },
+        } =
+          await supabase.auth.getSession();
+
+        if (!session) {
+          throw new Error(
+            "Your session could not be verified. Please log in again."
+          );
+        }
+
+        const response =
+          await fetch(
+            "/api/integrations/disconnect",
+            {
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                Authorization:
+                  `Bearer ${session.access_token}`,
+              },
+
+              body:
+                JSON.stringify({
+                  provider,
+                }),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result?.error ||
+              `Flowex could not disconnect ${providerLabel}.`
+          );
+        }
+
+        if (provider === "sheets") {
+          setGoogleAccountConnected(false);
+          setGoogleAccountEmail("");
+        } else if (provider === "airtable") {
+          setAirtableAccountConnected(false);
+          setAirtableAccountEmail("");
+        } else if (provider === "excel") {
+          setMicrosoftAccountConnected(false);
+          setMicrosoftAccountEmail("");
+        } else if (provider === "notion") {
+          setNotionAccountConnected(false);
+          setNotionAccountEmail("");
+          setNotionWorkspaceName("");
+          setNotionPages([]);
+          setNotionDatabases([]);
+        } else if (provider === "hubspot") {
+          setHubSpotAccountConnected(false);
+          setHubSpotHubId("");
+        }
+
+        if (storageType === provider) {
+          // Account disconnect means Flowex forgets the destination too.
+          setStorageConnected(false);
+          setStorageMode("create_new");
+          setSavedStorageMode(null);
+          setStorageName("Flowex Leads");
+          setStorageDestination("");
+          setStorageSpreadsheetUrl("");
+          setStoragePendingUnlink(false);
+          setStoragePendingDelete(false);
+          setIsEditingStorage(false);
+
+          if (provider === "sheets") {
+            setCreatedSheetId("");
+            setCreatedSheetUrl("");
+            setExistingSheetId("");
+            setExistingSheetUrl("");
+            setExistingSheetVerified(false);
+            setSavedCreatedSheetId("");
+            setSavedExistingSheetId("");
+            setCreatedSheetRemovalMode(null);
+            setShowCreatedSheetDeleteDialog(false);
+            setIsEditingCreatedSheet(false);
+          } else if (provider === "airtable") {
+            setAirtableBases([]);
+            setAirtableTables([]);
+            setAirtableBaseId("");
+            setAirtableTableId("");
+            setAirtableTableName("");
+            setAirtableWorkspaceId("");
+            setAirtableBaseName("Flowex Leads");
+            setAirtableBaseUrl("");
+            setAirtableCreatedBaseByFlowex(false);
+            setAirtableExistingVerified(false);
+            setShowAirtableRemoveDialog(false);
+          } else if (provider === "excel") {
+            setMicrosoftWorkbooks([]);
+            setExcelWorkbookId("");
+            setExcelWorkbookName("");
+            setExcelWorkbookUrl("");
+            setExcelTableId("");
+            setExcelTableName("");
+            setExcelExistingVerified(false);
+            setExcelCreatedByFlowex(false);
+            setShowExcelRemoveDialog(false);
+            setExcelRemovalMode(null);
+          } else if (provider === "notion") {
+            setNotionParentPageId("");
+            setNotionDatabaseId("");
+            setNotionDataSourceId("");
+            setNotionDatabaseName("");
+            setNotionDatabaseUrl("");
+            setNotionExistingVerified(false);
+            setNotionCreatedByFlowex(false);
+            setNotionMissingCount(0);
+            setShowNotionRemoveDialog(false);
+            setNotionRemovalMode(null);
+          } else if (provider === "hubspot") {
+            setHubSpotDestinationReady(false);
+            setHubSpotMissingCount(0);
+            setHubSpotMappedFieldCount(0);
+          }
+        }
+
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        setStorageError(
+          error instanceof Error
+            ? error.message
+            : `Flowex could not disconnect ${providerLabel}.`
+        );
+      } finally {
+        setDisconnectingStorageProvider(null);
+      }
+    };
 
   const connectStorageProvider =
     async () => {
@@ -6084,10 +6265,25 @@ export default function ManageLeadCapturePage() {
                     </div>
 
                     {googleAccountConnected ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
                           Google connected
                         </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void disconnectStorageAccount("sheets")
+                          }
+                          disabled={
+                            disconnectingStorageProvider !== null
+                          }
+                          className="rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          {disconnectingStorageProvider === "sheets"
+                            ? "Disconnecting..."
+                            : "Disconnect account"}
+                        </button>
                       </div>
                     ) : (
                       <button
@@ -6493,9 +6689,26 @@ export default function ManageLeadCapturePage() {
 
                     <div className="flex items-center gap-2">
                       {microsoftAccountConnected ? (
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                          Microsoft connected
-                        </span>
+                        <>
+                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                            Microsoft connected
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void disconnectStorageAccount("excel")
+                            }
+                            disabled={
+                              disconnectingStorageProvider !== null
+                            }
+                            className="rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          >
+                            {disconnectingStorageProvider === "excel"
+                              ? "Disconnecting..."
+                              : "Disconnect account"}
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"
@@ -6760,9 +6973,26 @@ export default function ManageLeadCapturePage() {
 
                     <div className="flex items-center gap-2">
                       {notionAccountConnected ? (
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                          Notion connected
-                        </span>
+                        <>
+                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                            Notion connected
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void disconnectStorageAccount("notion")
+                            }
+                            disabled={
+                              disconnectingStorageProvider !== null
+                            }
+                            className="rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          >
+                            {disconnectingStorageProvider === "notion"
+                              ? "Disconnecting..."
+                              : "Disconnect account"}
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"
@@ -7060,9 +7290,26 @@ export default function ManageLeadCapturePage() {
                     </div>
 
                     {hubSpotAccountConnected ? (
-                      <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                        HubSpot connected
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          HubSpot connected
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void disconnectStorageAccount("hubspot")
+                          }
+                          disabled={
+                            disconnectingStorageProvider !== null
+                          }
+                          className="rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          {disconnectingStorageProvider === "hubspot"
+                            ? "Disconnecting..."
+                            : "Disconnect account"}
+                        </button>
+                      </div>
                     ) : (
                       <button
                         type="button"
@@ -7182,9 +7429,26 @@ export default function ManageLeadCapturePage() {
 
                     <div className="flex items-center gap-2">
                       {airtableAccountConnected ? (
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                          Airtable connected
-                        </span>
+                        <>
+                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                            Airtable connected
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void disconnectStorageAccount("airtable")
+                            }
+                            disabled={
+                              disconnectingStorageProvider !== null
+                            }
+                            className="rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          >
+                            {disconnectingStorageProvider === "airtable"
+                              ? "Disconnecting..."
+                              : "Disconnect account"}
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"
