@@ -20,7 +20,8 @@ type StorageType =
 type StorageMode =
   | "create_new"
   | "existing";
-type ReplyType = "instant" | "friendly" | "custom";
+type ReplyType = "preset_1" | "preset_2" | "preset_3" | "custom";
+type ReplyChannel = "email" | "whatsapp";
 
 type AirtableBaseOption = { id: string; name: string };
 type AirtableTableOption = { id: string; name: string };
@@ -783,12 +784,30 @@ export default function ManageLeadCapturePage() {
   const [isSavingAutomation, setIsSavingAutomation] =
     useState(false);
 
+  const [replyChannel, setReplyChannel] =
+    useState<ReplyChannel>("email");
+
   const [replyType, setReplyType] =
-    useState<ReplyType>("instant");
+    useState<ReplyType>("preset_1");
 
   const [customReply, setCustomReply] = useState(
     "Thanks for reaching out. We’ve received your message and will get back to you shortly."
   );
+
+  const [replySubject, setReplySubject] =
+    useState("Thanks for reaching out");
+
+  const [emailSenderConnected, setEmailSenderConnected] =
+    useState(false);
+
+  const [emailSenderAddress, setEmailSenderAddress] =
+    useState("");
+
+  const [replySettingsError, setReplySettingsError] =
+    useState("");
+
+  const [isConnectingReplyEmail, setIsConnectingReplyEmail] =
+    useState(false);
 
   const [companyEmail, setCompanyEmail] = useState("");
 
@@ -870,10 +889,13 @@ export default function ManageLeadCapturePage() {
     setAirtableExistingVerified(false);
     setHasUnsavedChanges(false);
     setDirtySteps(new Set());
-    setReplyType("instant");
+    setReplyChannel("email");
+    setReplyType("preset_1");
     setCustomReply(
       "Thanks for reaching out. We’ve received your message and will get back to you shortly."
     );
+    setReplySubject("Thanks for reaching out");
+    setReplySettingsError("");
     setCompanyEmail("");
     setFollowUpEnabled(true);
     setFollowUpDelay("24");
@@ -914,8 +936,14 @@ export default function ManageLeadCapturePage() {
     setStorageDestination(
       data.storageDestination || ""
     );
-    setReplyType(data.replyType || "instant");
-    setCustomReply(data.customReply || "");
+    setReplyChannel(data.replyChannel === "whatsapp" ? "whatsapp" : "email");
+    setReplyType(
+      ["preset_1", "preset_2", "preset_3", "custom"].includes(data.replyType)
+        ? data.replyType
+        : "preset_1"
+    );
+    setCustomReply(data.customReply || data.replyMessage || "");
+    setReplySubject(data.replySubject || "Thanks for reaching out");
     setCompanyEmail(data.companyEmail || "");
     setFollowUpEnabled(
       data.followUpEnabled ?? true
@@ -4182,13 +4210,13 @@ export default function ManageLeadCapturePage() {
 
 
 
-  const replyTemplates = {
-    instant:
+  const replyTemplates: Record<ReplyType, string> = {
+    preset_1:
       "Thanks for reaching out. We’ve received your message and will get back to you shortly.",
-
-    friendly:
-      "Hey! Thanks for contacting us. Your message is in, and someone from our team will be with you soon.",
-
+    preset_2:
+      "Thanks for contacting us. Your inquiry has been received and our team will be in touch soon.",
+    preset_3:
+      "We’ve received your details. Someone from our team will contact you shortly.",
     custom: customReply,
   };
 
@@ -5111,7 +5139,9 @@ export default function ManageLeadCapturePage() {
                   ? existingSheetUrl || storageDestination
                   : createdSheetUrl,
 
+          replyChannel,
           replyType,
+          replySubject,
 
           replyMessage:
             currentReply,
@@ -5153,8 +5183,184 @@ export default function ManageLeadCapturePage() {
       }
     };
 
+  const loadReplySettings = async () => {
+    if (!leadFlowId) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+
+    try {
+      const response = await fetch(
+        `/api/integrations/reply?leadFlowId=${encodeURIComponent(leadFlowId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Flowex could not load reply settings.");
+      }
+
+      setEmailSenderConnected(result.emailConnected === true);
+      setEmailSenderAddress(
+        typeof result.emailAddress === "string" ? result.emailAddress : ""
+      );
+
+      if (result.settings) {
+        setReplyChannel(
+          result.settings.channel === "whatsapp" ? "whatsapp" : "email"
+        );
+        setReplyType(
+          ["preset_1", "preset_2", "preset_3", "custom"].includes(result.settings.template)
+            ? result.settings.template
+            : "preset_1"
+        );
+        setReplySubject(
+          typeof result.settings.subject === "string"
+            ? result.settings.subject
+            : "Thanks for reaching out"
+        );
+        if (typeof result.settings.message === "string") {
+          setCustomReply(result.settings.message);
+        }
+      }
+    } catch (error) {
+      setReplySettingsError(
+        error instanceof Error ? error.message : "Flowex could not load reply settings."
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (flowReady && leadFlowId) {
+      void loadReplySettings();
+    }
+  }, [flowReady, leadFlowId]);
+
+  const connectReplyEmail = async () => {
+    if (!leadFlowId) return;
+
+    setIsConnectingReplyEmail(true);
+    setReplySettingsError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Your session could not be verified.");
+      }
+
+      const response = await fetch("/api/integrations/reply/google/connect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ leadFlowId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.url) {
+        throw new Error(result?.error || "Flowex could not start email connection.");
+      }
+
+      window.location.href = result.url;
+    } catch (error) {
+      setReplySettingsError(
+        error instanceof Error ? error.message : "Flowex could not connect this email."
+      );
+      setIsConnectingReplyEmail(false);
+    }
+  };
+
+  const saveReplyStep = async () => {
+    if (!leadFlowId) return false;
+
+    if (replyChannel === "whatsapp") {
+      setReplySettingsError("WhatsApp connection is coming next. Choose Email for now.");
+      return false;
+    }
+
+    if (!emailSenderConnected || !emailSenderAddress) {
+      setReplySettingsError("Connect the email you want replies sent from first.");
+      return false;
+    }
+
+    const message =
+      replyType === "custom"
+        ? customReply.trim()
+        : replyTemplates[replyType];
+
+    if (!replySubject.trim() || !message) {
+      setReplySettingsError("Add an email subject and message.");
+      return false;
+    }
+
+    setIsSavingAutomation(true);
+    setReplySettingsError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Your session could not be verified.");
+      }
+
+      const response = await fetch("/api/integrations/reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          leadFlowId,
+          channel: replyChannel,
+          template: replyType,
+          subject: replySubject.trim(),
+          message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Flowex could not save Step 03.");
+      }
+
+      setHasUnsavedChanges(false);
+      setDirtySteps((current) => {
+        const next = new Set(current);
+        next.delete("03");
+        return next;
+      });
+      return true;
+    } catch (error) {
+      setReplySettingsError(
+        error instanceof Error ? error.message : "Flowex could not save Step 03."
+      );
+      return false;
+    } finally {
+      setIsSavingAutomation(false);
+    }
+  };
+
   const saveStep = async (_step: string) => {
     const scrollY = window.scrollY;
+
+    if (_step === "03") {
+      const savedReply = await saveReplyStep();
+      if (savedReply) {
+        window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      }
+      return savedReply;
+    }
+
     const saved = await saveChanges(false);
 
     if (saved) {
@@ -7616,95 +7822,148 @@ export default function ManageLeadCapturePage() {
             <Arrow />
 
             {/* ================= STEP 3 ================= */}
-
             <FlowStep
               number="03"
               onSave={() => void saveStep("03")}
               saving={isSavingAutomation}
               dirty={dirtySteps.has("03")}
               title="Reply Automatically"
-              description="Choose what your lead receives immediately."
+              description="Choose where the lead receives an immediate reply."
             >
+              <p className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                Where do you want to reply?
+              </p>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Option
-                  active={
-                    replyType === "instant"
-                  }
+                  active={replyChannel === "email"}
                   onClick={() => {
-                    setReplyType("instant");
-                    setCustomReply(
-                      replyTemplates.instant
-                    );
-
-                    setHasUnsavedChanges(
-                      true
-                    );
+                    setReplyChannel("email");
+                    setReplySettingsError("");
+                    setHasUnsavedChanges(true);
                   }}
-                  title="Professional"
-                  description="Short and business-focused."
+                  title="Email"
+                  description="Send from the email account you connect."
                 />
-
                 <Option
-                  active={
-                    replyType === "friendly"
-                  }
+                  active={replyChannel === "whatsapp"}
                   onClick={() => {
-                    setReplyType("friendly");
-                    setCustomReply(
-                      replyTemplates.friendly
-                    );
-
-                    setHasUnsavedChanges(
-                      true
-                    );
+                    setReplyChannel("whatsapp");
+                    setReplySettingsError("");
+                    setHasUnsavedChanges(true);
                   }}
-                  title="Friendly"
-                  description="More casual and welcoming."
+                  title="WhatsApp"
+                  description="Reply from your connected WhatsApp number."
                 />
-
-                <Option
-                  active={
-                    replyType === "custom"
-                  }
-                  onClick={() => {
-                    setReplyType(
-                      "custom"
-                    );
-
-                    setHasUnsavedChanges(
-                      true
-                    );
-                  }}
-                  title="Custom"
-                  description="Write your own response."
-                />
-
               </div>
 
-              <textarea
-                rows={4}
-                value={
-                  replyType === "custom"
-                    ? customReply
-                    : replyTemplates[
-                        replyType
-                      ]
-                }
-                onChange={(e) => {
-                  setReplyType("custom");
-                  setCustomReply(
-                    e.target.value
-                  );
+              {replyChannel === "email" ? (
+                <div className="mt-5 space-y-5">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold app-dark:text-white">
+                          Email account
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          Connect the email you want automatic replies sent from.
+                        </p>
+                        {emailSenderConnected && emailSenderAddress && (
+                          <p className="mt-2 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+                            ✓ {emailSenderAddress}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void connectReplyEmail()}
+                        disabled={isConnectingReplyEmail}
+                        className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                      >
+                        {isConnectingReplyEmail
+                          ? "Connecting..."
+                          : emailSenderConnected
+                            ? "Change Email"
+                            : "Connect Email"}
+                      </button>
+                    </div>
+                  </div>
 
-                  setHasUnsavedChanges(
-                    true
-                  );
-                }}
-                className="mt-5 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-              />
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                      Subject
+                    </label>
+                    <input
+                      value={replySubject}
+                      onChange={(e) => {
+                        setReplySubject(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
+                      placeholder="Thanks for reaching out"
+                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+                  </div>
 
+                  <div>
+                    <p className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                      Message
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      {(["preset_1", "preset_2", "preset_3", "custom"] as ReplyType[]).map(
+                        (type, index) => (
+                          <Option
+                            key={type}
+                            active={replyType === type}
+                            onClick={() => {
+                              setReplyType(type);
+                              if (type !== "custom") {
+                                setCustomReply(replyTemplates[type]);
+                              }
+                              setHasUnsavedChanges(true);
+                            }}
+                            title={type === "custom" ? "Custom" : `Preset ${index + 1}`}
+                            description={
+                              type === "custom"
+                                ? "Write your own message."
+                                : replyTemplates[type]
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+
+                    <textarea
+                      rows={5}
+                      value={
+                        replyType === "custom"
+                          ? customReply
+                          : replyTemplates[replyType]
+                      }
+                      onChange={(e) => {
+                        setReplyType("custom");
+                        setCustomReply(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
+                      className="mt-4 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-5 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                  <p className="text-sm font-semibold app-dark:text-white">
+                    WhatsApp
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                    WhatsApp account connection is the next channel. Email is fully available first.
+                  </p>
+                </div>
+              )}
+
+              {replySettingsError && (
+                <p className="mt-4 text-xs font-semibold text-amber-600 app-dark:text-amber-400">
+                  {replySettingsError}
+                </p>
+              )}
             </FlowStep>
 
             <Arrow />

@@ -1763,6 +1763,103 @@ async function sendLeadToHubSpot(
     );
   }
 }
+function encodeEmailHeader(value: string) {
+  return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
+async function sendAutomaticEmailReply(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId || !lead.contact.email) return;
+
+  const { data: settings } = await supabase
+    .from("lead_reply_settings")
+    .select("enabled, channel, subject, message")
+    .eq("lead_flow_id", lead.leadFlowId)
+    .eq("user_id", lead.userId)
+    .maybeSingle();
+
+  if (!settings || settings.enabled !== true || settings.channel !== "email") {
+    return;
+  }
+
+  const { data: connection } = await supabase
+    .from("integration_connections")
+    .select("credentials, provider_account_email")
+    .eq("user_id", lead.userId)
+    .eq("provider", "google_email")
+    .maybeSingle();
+
+  if (
+    !connection?.credentials ||
+    typeof connection.credentials !== "object" ||
+    !connection.provider_account_email
+  ) {
+    throw new Error("Connected reply email is unavailable.");
+  }
+
+  const oauth2Client = createGoogleOAuthClient();
+  oauth2Client.setCredentials(connection.credentials);
+
+  oauth2Client.on("tokens", async (tokens) => {
+    if (!tokens.access_token && !tokens.refresh_token) return;
+
+    const current = connection.credentials as Record<string, unknown>;
+
+    await supabase
+      .from("integration_connections")
+      .update({
+        credentials: {
+          ...current,
+          ...tokens,
+          refresh_token: tokens.refresh_token || current.refresh_token,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", lead.userId)
+      .eq("provider", "google_email");
+  });
+
+  const gmail = google.gmail({
+    version: "v1",
+    auth: oauth2Client,
+  });
+
+  const subject =
+    typeof settings.subject === "string" && settings.subject.trim()
+      ? settings.subject.trim()
+      : "Thanks for reaching out";
+
+  const message =
+    typeof settings.message === "string"
+      ? settings.message.trim()
+      : "";
+
+  if (!message) return;
+
+  const sender = connection.provider_account_email;
+  const rawMessage = [
+    `From: ${sender}`,
+    `To: ${lead.contact.email}`,
+    `Reply-To: ${sender}`,
+    `Subject: ${encodeEmailHeader(subject)}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    Buffer.from(message, "utf8").toString("base64"),
+  ].join("\r\n");
+
+  const raw = Buffer.from(rawMessage, "utf8")
+    .toString("base64url");
+
+  await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw },
+  });
+}
+
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 
@@ -2226,6 +2323,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex HubSpot delivery error:",
+      error
+    );
+  }
+
+  try {
+    await sendAutomaticEmailReply(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex automatic email reply error:",
       error
     );
   }
