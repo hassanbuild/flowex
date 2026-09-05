@@ -812,7 +812,20 @@ export default function ManageLeadCapturePage() {
   const [isConnectingReplyEmail, setIsConnectingReplyEmail] =
     useState(false);
 
-  const [companyEmail, setCompanyEmail] = useState("");
+  const [notificationEmails, setNotificationEmails] =
+    useState<Array<{ id: string; email: string }>>([]);
+
+  const [selectedNotificationEmailId, setSelectedNotificationEmailId] =
+    useState("");
+
+  const [newNotificationEmail, setNewNotificationEmail] =
+    useState("");
+
+  const [notificationSettingsError, setNotificationSettingsError] =
+    useState("");
+
+  const [isSavingNotificationSettings, setIsSavingNotificationSettings] =
+    useState(false);
 
   const [followUpEnabled, setFollowUpEnabled] =
     useState(true);
@@ -899,7 +912,6 @@ export default function ManageLeadCapturePage() {
     );
     setReplySubject("Thanks for reaching out");
     setReplySettingsError("");
-    setCompanyEmail("");
     setFollowUpEnabled(true);
     setFollowUpDelay("24");
     setFollowUpMessage(
@@ -947,7 +959,6 @@ export default function ManageLeadCapturePage() {
     );
     setCustomReply(data.customReply || data.replyMessage || "");
     setReplySubject(data.replySubject || "Thanks for reaching out");
-    setCompanyEmail(data.companyEmail || "");
     setFollowUpEnabled(
       data.followUpEnabled ?? true
     );
@@ -5327,7 +5338,6 @@ export default function ManageLeadCapturePage() {
           replyMessage:
             currentReply,
 
-          companyEmail,
           followUpEnabled,
           followUpDelay,
           followUpMessage,
@@ -5531,6 +5541,256 @@ export default function ManageLeadCapturePage() {
     }
   };
 
+  const loadNotificationSettings = async () => {
+    if (!leadFlowId) return;
+
+    setNotificationSettingsError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user?.id) {
+        return;
+      }
+
+      const [{ data: emails, error: emailsError }, { data: flow, error: flowError }] =
+        await Promise.all([
+          supabase
+            .from("notification_emails")
+            .select("id,email")
+            .eq("user_id", session.user.id)
+            .order("created_at", { ascending: true }),
+
+          supabase
+            .from("lead_flows")
+            .select("notification_email_id")
+            .eq("id", leadFlowId)
+            .eq("user_id", session.user.id)
+            .maybeSingle(),
+        ]);
+
+      if (emailsError) {
+        throw emailsError;
+      }
+
+      if (flowError) {
+        throw flowError;
+      }
+
+      const cleanEmails =
+        Array.isArray(emails)
+          ? emails
+              .filter(
+                (item) =>
+                  typeof item?.id === "string" &&
+                  typeof item?.email === "string"
+              )
+              .map((item) => ({
+                id: item.id,
+                email: item.email,
+              }))
+          : [];
+
+      setNotificationEmails(cleanEmails);
+      setSelectedNotificationEmailId(
+        typeof flow?.notification_email_id === "string"
+          ? flow.notification_email_id
+          : ""
+      );
+    } catch (error) {
+      setNotificationSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not load notification emails."
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (flowReady && leadFlowId) {
+      void loadNotificationSettings();
+    }
+  }, [flowReady, leadFlowId]);
+
+  const addNotificationEmail = async () => {
+    const email = newNotificationEmail.trim().toLowerCase();
+
+    if (!email) {
+      setNotificationSettingsError("Enter an email address first.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNotificationSettingsError("Enter a valid email address.");
+      return;
+    }
+
+    if (notificationEmails.length >= 5) {
+      setNotificationSettingsError(
+        "Pro accounts can save up to 5 notification emails."
+      );
+      return;
+    }
+
+    if (
+      notificationEmails.some(
+        (item) => item.email.toLowerCase() === email
+      )
+    ) {
+      setNotificationSettingsError("That notification email is already saved.");
+      return;
+    }
+
+    setIsSavingNotificationSettings(true);
+    setNotificationSettingsError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user?.id) {
+        throw new Error("Your session could not be verified.");
+      }
+
+      const { data, error } =
+        await supabase
+          .from("notification_emails")
+          .insert({
+            user_id: session.user.id,
+            email,
+          })
+          .select("id,email")
+          .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const nextEmail = {
+        id: String(data.id),
+        email: String(data.email),
+      };
+
+      setNotificationEmails((current) => [...current, nextEmail]);
+      setNewNotificationEmail("");
+
+      if (!selectedNotificationEmailId) {
+        setSelectedNotificationEmailId(nextEmail.id);
+      }
+
+      setHasUnsavedChanges(true);
+      setDirtySteps((current) => new Set(current).add("04"));
+    } catch (error) {
+      setNotificationSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not add this notification email."
+      );
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
+  };
+
+  const removeNotificationEmail = async (emailId: string) => {
+    setIsSavingNotificationSettings(true);
+    setNotificationSettingsError("");
+
+    try {
+      const { error } =
+        await supabase
+          .from("notification_emails")
+          .delete()
+          .eq("id", emailId);
+
+      if (error) {
+        throw error;
+      }
+
+      setNotificationEmails((current) =>
+        current.filter((item) => item.id !== emailId)
+      );
+
+      if (selectedNotificationEmailId === emailId) {
+        setSelectedNotificationEmailId("");
+      }
+
+      setHasUnsavedChanges(true);
+      setDirtySteps((current) => new Set(current).add("04"));
+    } catch (error) {
+      setNotificationSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not remove this notification email."
+      );
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
+  };
+
+  const saveNotificationStep = async () => {
+    if (!leadFlowId) return false;
+
+    if (!selectedNotificationEmailId) {
+      setNotificationSettingsError(
+        "Choose the email that should receive notifications for this Lead Flow."
+      );
+      return false;
+    }
+
+    const selectedExists =
+      notificationEmails.some(
+        (item) => item.id === selectedNotificationEmailId
+      );
+
+    if (!selectedExists) {
+      setNotificationSettingsError(
+        "Choose a saved notification email."
+      );
+      return false;
+    }
+
+    setIsSavingNotificationSettings(true);
+    setNotificationSettingsError("");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.user?.id) {
+        throw new Error("Your session could not be verified.");
+      }
+
+      const { error } =
+        await supabase
+          .from("lead_flows")
+          .update({
+            notification_email_id: selectedNotificationEmailId,
+          })
+          .eq("id", leadFlowId)
+          .eq("user_id", session.user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      setHasUnsavedChanges(false);
+      setDirtySteps((current) => {
+        const next = new Set(current);
+        next.delete("04");
+        return next;
+      });
+
+      return true;
+    } catch (error) {
+      setNotificationSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not save Step 04."
+      );
+      return false;
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
+  };
+
   const saveStep = async (_step: string) => {
     const scrollY = window.scrollY;
 
@@ -5540,6 +5800,14 @@ export default function ManageLeadCapturePage() {
         window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
       }
       return savedReply;
+    }
+
+    if (_step === "04") {
+      const savedNotification = await saveNotificationStep();
+      if (savedNotification) {
+        window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      }
+      return savedNotification;
     }
 
     const saved = await saveChanges(false);
@@ -8237,32 +8505,125 @@ export default function ManageLeadCapturePage() {
             <FlowStep
               number="04"
               onSave={() => void saveStep("04")}
-              saving={isSavingAutomation}
+              saving={isSavingNotificationSettings}
               dirty={dirtySteps.has("04")}
               title="Notify Your Team"
               description="Send a notification whenever a new lead arrives."
             >
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 app-dark:text-white">
+                      Notification emails
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      Save up to 5 emails to your Flowex account. This Lead Flow will notify only one.
+                    </p>
+                  </div>
 
-              <label className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
-                Company Email
-              </label>
+                  <span className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                    {notificationEmails.length}/5 saved
+                  </span>
+                </div>
 
-              <input
-                type="email"
-                value={companyEmail}
-                onChange={(e) => {
-                  setCompanyEmail(
-                    e.target.value
-                  );
+                {notificationEmails.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {notificationEmails.map((item) => {
+                      const selected =
+                        selectedNotificationEmailId === item.id;
 
-                  setHasUnsavedChanges(
-                    true
-                  );
-                }}
-                placeholder="team@company.com"
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
-              />
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
+                            selected
+                              ? "border-cyan-300 bg-cyan-50 app-dark:border-cyan-500/50 app-dark:bg-cyan-500/10"
+                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedNotificationEmailId(item.id);
+                              setNotificationSettingsError("");
+                              setHasUnsavedChanges(true);
+                              setDirtySteps((current) =>
+                                new Set(current).add("04")
+                              );
+                            }}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <span className="block truncate text-sm font-semibold text-gray-800 app-dark:text-slate-100">
+                              {item.email}
+                            </span>
+                            <span className="mt-0.5 block text-xs text-gray-500 app-dark:text-slate-400">
+                              {selected
+                                ? "Selected for this Lead Flow"
+                                : "Use for this Lead Flow"}
+                            </span>
+                          </button>
 
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void removeNotificationEmail(item.id)
+                            }
+                            disabled={isSavingNotificationSettings}
+                            className="shrink-0 rounded-lg px-2 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {notificationEmails.length < 5 && (
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="email"
+                      value={newNotificationEmail}
+                      onChange={(e) => {
+                        setNewNotificationEmail(e.target.value);
+                        setNotificationSettingsError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void addNotificationEmail();
+                        }
+                      }}
+                      placeholder="team@company.com"
+                      className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => void addNotificationEmail()}
+                      disabled={
+                        isSavingNotificationSettings ||
+                        !newNotificationEmail.trim()
+                      }
+                      className="rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50 app-dark:bg-white app-dark:text-gray-900 app-dark:hover:bg-slate-100"
+                    >
+                      + Add email
+                    </button>
+                  </div>
+                )}
+
+                {notificationEmails.length === 0 && (
+                  <p className="mt-3 text-xs text-gray-500 app-dark:text-slate-400">
+                    Add the first email that should be available for team notifications.
+                  </p>
+                )}
+
+                {notificationSettingsError && (
+                  <p className="mt-3 text-xs font-semibold text-amber-600 app-dark:text-amber-400">
+                    {notificationSettingsError}
+                  </p>
+                )}
+              </div>
             </FlowStep>
 
             <Arrow />

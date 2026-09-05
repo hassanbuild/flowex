@@ -28,6 +28,7 @@ import {
 } from "@/lib/integrations/hubspot";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendNotificationEmail } from "@/lib/integrations/resend";
 
 export const runtime = "nodejs";
 
@@ -1860,6 +1861,91 @@ async function sendAutomaticEmailReply(
   });
 }
 
+
+async function sendTeamNotificationEmail(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  if (!lead.leadFlowId) {
+    return;
+  }
+
+  const {
+    data: flow,
+    error: flowError,
+  } =
+    await supabase
+      .from("lead_flows")
+      .select("name, notification_email_id")
+      .eq("id", lead.leadFlowId)
+      .eq("user_id", lead.userId)
+      .maybeSingle();
+
+  if (flowError) {
+    throw flowError;
+  }
+
+  if (
+    !flow ||
+    typeof flow.notification_email_id !== "string" ||
+    !flow.notification_email_id
+  ) {
+    return;
+  }
+
+  const {
+    data: notificationEmail,
+    error: notificationEmailError,
+  } =
+    await supabase
+      .from("notification_emails")
+      .select("email")
+      .eq("id", flow.notification_email_id)
+      .eq("user_id", lead.userId)
+      .maybeSingle();
+
+  if (notificationEmailError) {
+    throw notificationEmailError;
+  }
+
+  const recipient =
+    typeof notificationEmail?.email === "string"
+      ? notificationEmail.email.trim()
+      : "";
+
+  if (!recipient) {
+    return;
+  }
+
+  const flowName =
+    typeof flow.name === "string" && flow.name.trim()
+      ? flow.name.trim()
+      : "Lead Flow";
+
+  const submittedFields =
+    Object.entries(lead.fields)
+      .map(([key, value]) => `${key}: ${String(value)}`)
+      .join("\n");
+
+  const message = [
+    "A new lead has been captured by Flowex.",
+    "",
+    `Lead Flow: ${flowName}`,
+    `Received: ${lead.receivedAt}`,
+    "",
+    submittedFields || "No lead fields were provided.",
+    "",
+    "This notification was sent automatically by Flowex.",
+  ].join("\n");
+
+  await sendNotificationEmail({
+    to: recipient,
+    subject: `New lead — ${flowName}`,
+    text: message,
+  });
+}
+
+
 async function getSource(publicKey: string) {
   const supabase = createAdminClient();
 
@@ -2335,6 +2421,18 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex automatic email reply error:",
+      error
+    );
+  }
+
+  try {
+    await sendTeamNotificationEmail(
+      supabase,
+      lead
+    );
+  } catch (error) {
+    console.error(
+      "Flowex team notification email error:",
       error
     );
   }
