@@ -5838,7 +5838,13 @@ export default function ManageLeadCapturePage() {
       return;
     }
 
-    if (dirtySteps.has("03")) {
+    /*
+      Step 03 and Step 04 are flow-critical server settings.
+      Do not rely only on dirtySteps here: a missed DOM dirty marker would make
+      the UI look saved while leaving lead_reply_settings or
+      notification_email_id stale/missing in Supabase.
+    */
+    if (replyChannel === "email" && emailSenderConnected && emailSenderAddress) {
       const replySaved = await saveReplyStep();
       if (!replySaved) {
         setHasUnsavedChanges(true);
@@ -5847,7 +5853,7 @@ export default function ManageLeadCapturePage() {
       }
     }
 
-    if (dirtySteps.has("04")) {
+    if (selectedNotificationEmailId) {
       const notificationSaved = await saveNotificationStep();
       if (!notificationSaved) {
         setHasUnsavedChanges(true);
