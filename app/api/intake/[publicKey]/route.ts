@@ -807,35 +807,47 @@ async function getAirtableAccessTokenForLead(
   return token.access_token;
 }
 
-function airtableLeadName(lead: NormalizedLead) {
-  const preferredKeys = [
-    "name",
-    "full_name",
-    "fullname",
-    "fullName",
-    "first_name",
-    "firstName",
-  ];
-
+async function leadDisplayName(
+  supabase: ReturnType<typeof createAdminClient>,
+  lead: NormalizedLead
+) {
+  const preferredKeys = ["name", "full_name", "fullname", "fullName", "first_name", "firstName"];
   for (const key of preferredKeys) {
     const value = lead.fields[key];
+    if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+  }
+  const direct = Object.entries(lead.fields).find(([key, value]) => key.toLowerCase().includes("name") && String(value).trim());
+  if (direct) return String(direct[1]).trim();
 
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim()
-    ) {
-      return String(value).trim();
+  const { data: source } = await supabase.from("lead_sources")
+    .select("source_type, config, detected_fields")
+    .eq("id", lead.sourceId).eq("user_id", lead.userId).maybeSingle();
+  const candidates: Array<{ key: string; label: string; type: string }> = [];
+  if (source?.source_type === "flowex_form" && source.config && typeof source.config === "object") {
+    const fields = (source.config as { fields?: unknown }).fields;
+    if (Array.isArray(fields)) for (const field of fields) {
+      if (!field || typeof field !== "object") continue;
+      const item = field as { id?: unknown; label?: unknown; type?: unknown };
+      if (typeof item.id === "string") candidates.push({ key: item.id, label: typeof item.label === "string" ? item.label : "", type: typeof item.type === "string" ? item.type : "" });
     }
   }
-
-  const found = Object.entries(lead.fields).find(
-    ([key, value]) =>
-      key.toLowerCase().includes("name") &&
-      String(value).trim()
-  );
-
-  return found ? String(found[1]).trim() : "Lead";
+  if (source?.source_type === "external_form" && Array.isArray(source.detected_fields)) {
+    for (const field of source.detected_fields) {
+      if (!field || typeof field !== "object") continue;
+      const item = field as { key?: unknown; label?: unknown; type?: unknown };
+      if (typeof item.key === "string") candidates.push({ key: item.key, label: typeof item.label === "string" ? item.label : item.key, type: typeof item.type === "string" ? item.type : "" });
+    }
+  }
+  const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const nameField = candidates.find((field) => {
+    const label = normalize(field.label); const type = normalize(field.type);
+    return type === "fullname" || label === "name" || label === "fullname" || label === "contactname";
+  });
+  if (nameField) {
+    const value = lead.fields[nameField.key];
+    if (value !== undefined && value !== null && String(value).trim()) return String(value).trim();
+  }
+  return "Lead";
 }
 
 async function sendLeadToAirtable(
@@ -895,6 +907,8 @@ async function sendLeadToAirtable(
     return;
   }
 
+  const resolvedLeadName = await leadDisplayName(supabase, lead);
+
   const fields: Record<string, string | number | boolean> = {};
 
   for (const [key, mapped] of Object.entries(fieldMapping)) {
@@ -908,7 +922,7 @@ async function sendLeadToAirtable(
     }
 
     if (key === "__name") {
-      fields[fieldName] = airtableLeadName(lead);
+      fields[fieldName] = resolvedLeadName;
       continue;
     }
 
@@ -1131,13 +1145,15 @@ async function sendLeadToMicrosoftExcel(
     return;
   }
 
+  const resolvedLeadName = await leadDisplayName(supabase, lead);
+
   const values = columnKeys.map((key) => {
     if (key === "__date") {
       return lead.receivedAt;
     }
 
     if (key === "__name") {
-      return airtableLeadName(lead);
+      return resolvedLeadName;
     }
 
     if (key === "__email") {
@@ -1338,6 +1354,8 @@ async function sendLeadToNotion(
     return;
   }
 
+  const resolvedLeadName = await leadDisplayName(supabase, lead);
+
   const properties: Record<string, unknown> = {};
 
   for (const [key, rawPropertyName] of Object.entries(propertyMap)) {
@@ -1355,7 +1373,7 @@ async function sendLeadToNotion(
     if (key === "__date") {
       value = lead.receivedAt;
     } else if (key === "__name") {
-      value = airtableLeadName(lead);
+      value = resolvedLeadName;
     } else if (key === "__email") {
       value = lead.contact.email || "";
     } else if (key === "__phone") {

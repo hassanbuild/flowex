@@ -787,6 +787,9 @@ export default function ManageLeadCapturePage() {
   const [isSavingAutomation, setIsSavingAutomation] =
     useState(false);
 
+  const [universalSaveError, setUniversalSaveError] =
+    useState("");
+
   const [replyChannel, setReplyChannel] =
     useState<ReplyChannel>("email");
 
@@ -1188,6 +1191,13 @@ export default function ManageLeadCapturePage() {
     if (
       isConnectingExternal
     ) {
+      return;
+    }
+
+    if (flowexFormSourceId) {
+      setExternalSourceError(
+        "Remove the current Flowex Form before connecting another form source."
+      );
       return;
     }
 
@@ -1645,6 +1655,13 @@ export default function ManageLeadCapturePage() {
     if (
       isSavingFlowexForm
     ) {
+      return;
+    }
+
+    if (externalSourceId) {
+      setFormCustomizerError(
+        "Remove the current Lovable Form before creating a Flowex Form."
+      );
       return;
     }
 
@@ -2119,6 +2136,17 @@ export default function ManageLeadCapturePage() {
 
     if (notionStatus === "connected") {
       setStorageType("notion");
+      setStorageError("");
+    }
+  }, [flowReady, leadFlowId]);
+
+  useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+    const hubspotStatus =
+      new URL(window.location.href).searchParams.get("hubspot");
+
+    if (hubspotStatus === "connected") {
+      setStorageType("hubspot");
       setStorageError("");
     }
   }, [flowReady, leadFlowId]);
@@ -5822,6 +5850,43 @@ export default function ManageLeadCapturePage() {
     return saved;
   };
 
+  const saveEntireFlow = async () => {
+    if (isSavingAutomation || isSavingNotificationSettings) {
+      return;
+    }
+
+    setUniversalSaveError("");
+
+    const coreSaved = await saveChanges(false);
+    if (!coreSaved) {
+      setHasUnsavedChanges(true);
+      setUniversalSaveError("Couldn’t save the flow. Try saving flow again.");
+      return;
+    }
+
+    if (dirtySteps.has("03")) {
+      const replySaved = await saveReplyStep();
+      if (!replySaved) {
+        setHasUnsavedChanges(true);
+        setUniversalSaveError("Couldn’t save the flow. Try saving flow again.");
+        return;
+      }
+    }
+
+    if (dirtySteps.has("04")) {
+      const notificationSaved = await saveNotificationStep();
+      if (!notificationSaved) {
+        setHasUnsavedChanges(true);
+        setUniversalSaveError("Couldn’t save the flow. Try saving flow again.");
+        return;
+      }
+    }
+
+    setDirtySteps(new Set());
+    setHasUnsavedChanges(false);
+    setUniversalSaveError("");
+  };
+
   const handleManageInteraction = (
     event: React.SyntheticEvent<HTMLElement>
   ) => {
@@ -8233,7 +8298,7 @@ export default function ManageLeadCapturePage() {
                         </h3>
 
                         <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          Choose another destination. Its full setup opens immediately. Only the destination you save when you save this step becomes active.
+                          Only one destination can be active for a Lead Flow. Unlink the current destination before choosing another one.
                         </p>
                       </div>
 
@@ -8274,6 +8339,7 @@ export default function ManageLeadCapturePage() {
                               onClick={() => {
                                 if (
                                   provider.available &&
+                                  !hasConfiguredStorage &&
                                   (provider.value ===
                                     "sheets" ||
                                     provider.value ===
@@ -8308,10 +8374,10 @@ export default function ManageLeadCapturePage() {
                                 }
                               }}
                               disabled={
-                                !provider.available
+                                !provider.available || hasConfiguredStorage
                               }
                               className={`rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left app-dark:border-slate-700 app-dark:bg-[#0b0f14] ${
-                                provider.available
+                                provider.available && !hasConfiguredStorage
                                   ? "transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
                                   : "cursor-default"
                               }`}
@@ -9342,6 +9408,28 @@ export default function ManageLeadCapturePage() {
         </div>
       )}
 
+      {(hasUnsavedChanges || universalSaveError) && (
+        <div className="fixed bottom-6 left-1/2 z-[120] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-2xl backdrop-blur app-dark:border-slate-700 app-dark:bg-[#11161d]/95">
+          <div className="flex items-center justify-between gap-3">
+            <p className={`text-sm font-semibold ${universalSaveError ? "text-red-600 app-dark:text-red-400" : "text-gray-700 app-dark:text-slate-200"}`}>
+              {universalSaveError || "You have unsaved changes to this Lead Flow."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void saveEntireFlow()}
+              disabled={isSavingAutomation || isSavingNotificationSettings}
+              className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSavingAutomation || isSavingNotificationSettings
+                ? "Saving..."
+                : universalSaveError
+                  ? "Try saving flow again"
+                  : "Save flow"}
+            </button>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
@@ -9561,17 +9649,7 @@ function FlowStep({
           {children}
         </div>
 
-        <div className="mt-5 flex justify-end border-t border-gray-100 pt-4 app-dark:border-slate-800">
-          <button
-            type="button"
-            data-step-save
-            onClick={onSave}
-            disabled={saving || !dirty}
-            className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-          >
-            {saving ? "Saving..." : dirty ? "Save changes" : "Saved"}
-          </button>
-        </div>
+
 
       </div>
 

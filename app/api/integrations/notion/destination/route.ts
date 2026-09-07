@@ -828,6 +828,35 @@ export async function POST(request: Request) {
         ? body.dataSourceId.trim()
         : "";
 
+    const databaseId =
+      typeof body.databaseId === "string"
+        ? body.databaseId.trim()
+        : "";
+
+    if (action === "trash_created") {
+      if (!databaseId) {
+        return NextResponse.json(
+          { error: "Notion database could not be identified." },
+          { status: 400 }
+        );
+      }
+
+      await notionFetch(
+        connection.accessToken,
+        `/databases/${encodeURIComponent(databaseId)}`,
+        { method: "PATCH", body: JSON.stringify({ in_trash: true }) }
+      );
+
+      await auth.supabase
+        .from("lead_destinations")
+        .delete()
+        .eq("lead_flow_id", leadFlowId)
+        .eq("user_id", auth.user.id)
+        .eq("provider", "notion");
+
+      return NextResponse.json({ deleted: true });
+    }
+
     if (!dataSourceId) {
       return NextResponse.json(
         { error: "Choose a Notion database first." },
@@ -853,56 +882,6 @@ export async function POST(request: Request) {
         propertyTypes: prepared.propertyTypes,
         missingCount: prepared.missingCount,
       });
-    }
-
-    const databaseId =
-      typeof body.databaseId === "string"
-        ? body.databaseId.trim()
-        : "";
-
-    if (action === "trash_created") {
-      if (!databaseId) {
-        return NextResponse.json(
-          { error: "Notion database could not be identified." },
-          { status: 400 }
-        );
-      }
-
-      await notionFetch(
-        connection.accessToken,
-        `/databases/${encodeURIComponent(databaseId)}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ in_trash: true }),
-        }
-      );
-
-      const { data: current } = await auth.supabase
-        .from("lead_destinations")
-        .select("config")
-        .eq("lead_flow_id", leadFlowId)
-        .eq("user_id", auth.user.id)
-        .eq("provider", "notion")
-        .maybeSingle();
-
-      const config =
-        current?.config && typeof current.config === "object"
-          ? (current.config as Record<string, unknown>)
-          : null;
-
-      if (
-        config?.database_id === databaseId &&
-        config?.created_by_flowex === true
-      ) {
-        await auth.supabase
-          .from("lead_destinations")
-          .delete()
-          .eq("lead_flow_id", leadFlowId)
-          .eq("user_id", auth.user.id)
-          .eq("provider", "notion");
-      }
-
-      return NextResponse.json({ deleted: true });
     }
 
     if (action === "commit") {

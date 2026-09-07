@@ -167,7 +167,16 @@ function standardMapping(field: SourceField): HubSpotFieldMapEntry | null {
     return { property: "phone" };
   }
 
-  if (type === "company" || label === "company" || label === "companyname") {
+  if (
+    type === "company" ||
+    type === "organization" ||
+    label === "company" ||
+    label === "companyname" ||
+    label === "business" ||
+    label === "businessname" ||
+    label === "organization" ||
+    label === "organisation"
+  ) {
     return { property: "company" };
   }
 
