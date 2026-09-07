@@ -2636,15 +2636,11 @@ export default function ManageLeadCapturePage() {
     };
   }, [
     flowReady,
-    leadFlowId,
     supabase,
   ]);
 
   useEffect(() => {
-    if (
-      !flowReady ||
-      !leadFlowId
-    ) {
+    if (!flowReady) {
       return;
     }
 
@@ -2716,15 +2712,11 @@ export default function ManageLeadCapturePage() {
     };
   }, [
     flowReady,
-    leadFlowId,
     supabase,
   ]);
 
   useEffect(() => {
-    if (
-      !flowReady ||
-      !leadFlowId
-    ) {
+    if (!flowReady) {
       return;
     }
 
@@ -2796,15 +2788,11 @@ export default function ManageLeadCapturePage() {
     };
   }, [
     flowReady,
-    leadFlowId,
     supabase,
   ]);
 
   useEffect(() => {
-    if (
-      !flowReady ||
-      !leadFlowId
-    ) {
+    if (!flowReady) {
       return;
     }
 
@@ -2882,12 +2870,11 @@ export default function ManageLeadCapturePage() {
     };
   }, [
     flowReady,
-    leadFlowId,
     supabase,
   ]);
 
   useEffect(() => {
-    if (!flowReady || !leadFlowId) {
+    if (!flowReady) {
       return;
     }
 
@@ -2941,7 +2928,7 @@ export default function ManageLeadCapturePage() {
     return () => {
       cancelled = true;
     };
-  }, [flowReady, leadFlowId, supabase]);
+  }, [flowReady, supabase]);
 
   const disconnectStorageAccount =
     async (
@@ -5820,31 +5807,18 @@ export default function ManageLeadCapturePage() {
   };
 
   const saveStep = async (_step: string) => {
-    const scrollY = window.scrollY;
-
     if (_step === "03") {
-      const savedReply = await saveReplyStep();
-      if (savedReply) {
-        window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
-      }
-      return savedReply;
+      return await saveReplyStep();
     }
 
     if (_step === "04") {
-      const savedNotification = await saveNotificationStep();
-      if (savedNotification) {
-        window.requestAnimationFrame(() => window.scrollTo(0, scrollY));
-      }
-      return savedNotification;
+      return await saveNotificationStep();
     }
 
     const saved = await saveChanges(false);
 
     if (saved) {
       setDirtySteps(new Set());
-      window.requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
     }
 
     return saved;
@@ -5902,12 +5876,7 @@ export default function ManageLeadCapturePage() {
       });
     }
 
-    const scrollY = window.scrollY;
-    window.requestAnimationFrame(() => {
-      if (Math.abs(window.scrollY - scrollY) > 24) {
-        window.scrollTo(0, scrollY);
-      }
-    });
+
   };
 
   const discardUnsavedDraft =
@@ -6299,29 +6268,28 @@ export default function ManageLeadCapturePage() {
                     <div className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
+                        onClick={() => {
+                          if (flowexFormSourceId) {
+                            void copyFlowexFormLink();
+                          } else {
+                            void copyLovableSetupInstruction();
+                          }
+                        }}
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                      >
+                        {flowexFormSourceId
+                          ? copiedFormLink ? "Copied" : "Copy"
+                          : copiedLovableSetup ? "Copied" : "Copy"}
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() =>
                           setIsEditingSourceSetup((current) => !current)
                         }
                         className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                       >
                         {isEditingSourceSetup ? "Done" : "Edit"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (flowexFormSourceId) {
-                            void removeFlowexForm();
-                          } else {
-                            void unlinkExternalForm();
-                          }
-                        }}
-                        disabled={isRemovingFlowexForm || isConnectingExternal}
-                        className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                      >
-                        {flowexFormSourceId
-                          ? isRemovingFlowexForm ? "Removing..." : "Unlink"
-                          : isConnectingExternal ? "Unlinking..." : "Unlink"}
                       </button>
                     </div>
                   </div>
@@ -6347,6 +6315,17 @@ export default function ManageLeadCapturePage() {
                           className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
                         >
                           Customize
+                        </button>
+                      </div>
+
+                      <div className="mt-4 flex justify-end border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => void removeFlowexForm()}
+                          disabled={isRemovingFlowexForm}
+                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          {isRemovingFlowexForm ? "Removing..." : "Remove Form"}
                         </button>
                       </div>
 
@@ -6419,6 +6398,17 @@ export default function ManageLeadCapturePage() {
                             <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">Paste the copied instruction into Lovable, let it apply the change, then click Check Connection.</p>
                           </>
                         )}
+                      </div>
+
+                      <div className="mt-4 flex justify-end border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                        <button
+                          type="button"
+                          onClick={() => void unlinkExternalForm()}
+                          disabled={isConnectingExternal}
+                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                        >
+                          {isConnectingExternal ? "Removing..." : "Remove Form"}
+                        </button>
                       </div>
 
                       {externalSourceError && (

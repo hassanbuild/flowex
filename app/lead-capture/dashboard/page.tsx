@@ -755,6 +755,13 @@ export default function LeadCaptureDashboard() {
               </Link>
 
               <Link
+                href="/connections"
+                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              >
+                Connections
+              </Link>
+
+              <Link
                 href="/billing?from=lead-capture"
                 className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
               >
