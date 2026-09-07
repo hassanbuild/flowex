@@ -841,6 +841,9 @@ export default function ManageLeadCapturePage() {
       "Just following up in case you missed our previous message. Let us know if you have any questions."
     );
 
+  const [followUpSettingsError, setFollowUpSettingsError] =
+    useState("");
+
   useEffect(() => {
     if (
       !flowReady ||
@@ -920,6 +923,7 @@ export default function ManageLeadCapturePage() {
     setFollowUpMessage(
       "Just following up in case you missed our previous message. Let us know if you have any questions."
     );
+    setFollowUpSettingsError("");
   }, [
     flowReady,
     leadFlowId,
@@ -988,6 +992,60 @@ export default function ManageLeadCapturePage() {
       );
     }
   }, [flowReady, leadFlowId]);
+
+  useEffect(() => {
+    if (!flowReady || !leadFlowId) return;
+
+    let cancelled = false;
+
+    const loadFollowUpSettings = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user || cancelled) return;
+
+      const { data, error } = await supabase
+        .from("lead_follow_up_settings")
+        .select("enabled, delay_hours, message")
+        .eq("lead_flow_id", leadFlowId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (error) {
+        setFollowUpSettingsError(
+          "Flowex could not load Step 05."
+        );
+        return;
+      }
+
+      if (!data) return;
+
+      setFollowUpEnabled(data.enabled === true);
+
+      const savedDelay = Number(data.delay_hours);
+      setFollowUpDelay(
+        [1, 6, 12, 24].includes(savedDelay)
+          ? String(savedDelay)
+          : "24"
+      );
+
+      if (
+        typeof data.message === "string" &&
+        data.message.trim()
+      ) {
+        setFollowUpMessage(data.message);
+      }
+    };
+
+    void loadFollowUpSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flowReady, leadFlowId, supabase]);
 
   useEffect(() => {
     if (!flowReady || !leadFlowId) return;
@@ -5806,6 +5864,86 @@ export default function ManageLeadCapturePage() {
     }
   };
 
+  const saveFollowUpStep = async () => {
+    if (!leadFlowId) return false;
+
+    setFollowUpSettingsError("");
+
+    if (
+      followUpEnabled &&
+      (!emailSenderConnected || !emailSenderAddress)
+    ) {
+      setFollowUpSettingsError(
+        "Connect the Gmail sender in Step 03 before enabling follow-up."
+      );
+      return false;
+    }
+
+    const delayHours = Number(followUpDelay);
+
+    if (![1, 6, 12, 24].includes(delayHours)) {
+      setFollowUpSettingsError(
+        "Follow-up can only be scheduled up to 24 hours."
+      );
+      return false;
+    }
+
+    if (followUpEnabled && !followUpMessage.trim()) {
+      setFollowUpSettingsError(
+        "Add a follow-up message first."
+      );
+      return false;
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setFollowUpSettingsError(
+          "Your session could not be verified."
+        );
+        return false;
+      }
+
+      const { error } = await supabase
+        .from("lead_follow_up_settings")
+        .upsert(
+          {
+            user_id: user.id,
+            lead_flow_id: leadFlowId,
+            enabled: followUpEnabled,
+            delay_hours: delayHours,
+            message: followUpMessage.trim(),
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "lead_flow_id",
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      setDirtySteps((current) => {
+        const next = new Set(current);
+        next.delete("05");
+        return next;
+      });
+
+      return true;
+    } catch (error) {
+      setFollowUpSettingsError(
+        error instanceof Error
+          ? error.message
+          : "Flowex could not save Step 05."
+      );
+      return false;
+    }
+  };
+
   const saveStep = async (_step: string) => {
     if (_step === "03") {
       return await saveReplyStep();
@@ -5813,6 +5951,12 @@ export default function ManageLeadCapturePage() {
 
     if (_step === "04") {
       return await saveNotificationStep();
+    }
+
+    if (_step === "05") {
+      const coreSaved = await saveChanges(false);
+      if (!coreSaved) return false;
+      return await saveFollowUpStep();
     }
 
     const saved = await saveChanges(false);
@@ -5860,6 +6004,13 @@ export default function ManageLeadCapturePage() {
         setUniversalSaveError("Couldn’t save the flow. Try saving flow again.");
         return;
       }
+    }
+
+    const followUpSaved = await saveFollowUpStep();
+    if (!followUpSaved) {
+      setHasUnsavedChanges(true);
+      setUniversalSaveError("Couldn’t save the flow. Try saving flow again.");
+      return;
     }
 
     setDirtySteps(new Set());
@@ -8698,7 +8849,7 @@ export default function ManageLeadCapturePage() {
               saving={isSavingAutomation}
               dirty={dirtySteps.has("05")}
               title="Follow Up"
-              description="Automatically follow up when a lead hasn't replied."
+              description="Automatically follow up only when a lead has not been marked Contacted."
             >
 
               <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
@@ -8710,7 +8861,7 @@ export default function ManageLeadCapturePage() {
                   </p>
 
                   <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                    Send another message after a set delay.
+                    Send one follow-up if the lead is still New when the timer ends.
                   </p>
 
                 </div>
@@ -8781,10 +8932,6 @@ export default function ManageLeadCapturePage() {
                         24 hours
                       </option>
 
-                      <option value="48">
-                        48 hours
-                      </option>
-
                     </select>
 
                   </div>
@@ -8803,6 +8950,16 @@ export default function ManageLeadCapturePage() {
                     }}
                     className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
                   />
+
+                  <p className="text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                    Uses the Gmail account connected in Step 03. Marking a lead Contacted or Closed before the timer ends cancels the follow-up.
+                  </p>
+
+                  {followUpSettingsError && (
+                    <p className="text-xs font-medium text-red-500 app-dark:text-red-400">
+                      {followUpSettingsError}
+                    </p>
+                  )}
 
                 </div>
               )}

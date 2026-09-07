@@ -1,58 +1,46 @@
-"use client";
+"use client"
 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-const leads = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    phone: "+1 202 555 0142",
-    source: "Website Form",
-    status: "Replied",
-    received: "2 min ago",
-  },
-  {
-    id: 2,
-    name: "Daniel Carter",
-    email: "daniel@example.com",
-    phone: "+1 202 555 0187",
-    source: "Flowex Form",
-    status: "Replied",
-    received: "12 min ago",
-  },
-  {
-    id: 3,
-    name: "Emma Wilson",
-    email: "emma@example.com",
-    phone: "+1 202 555 0164",
-    source: "Website Form",
-    status: "Follow-up",
-    received: "28 min ago",
-  },
-  {
-    id: 4,
-    name: "James Miller",
-    email: "james@example.com",
-    phone: "+1 202 555 0199",
-    source: "Flowex Form",
-    status: "Replied",
-    received: "41 min ago",
-  },
-  {
-    id: 5,
-    name: "Olivia Brown",
-    email: "olivia@example.com",
-    phone: "+1 202 555 0121",
-    source: "Website Form",
-    status: "New",
-    received: "1 hr ago",
-  },
-];
+type LeadStatus = "new" | "contacted" | "closed";
+
+type LeadRow = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  source: string;
+  status: LeadStatus;
+  receivedAt: string;
+  followUpDueAt: string | null;
+  followUpSentAt: string | null;
+};
+
+function formatLeadTime(value: string) {
+  const created = new Date(value);
+  const diffMs = Math.max(0, Date.now() - created.getTime());
+  const minutes = Math.floor(diffMs / 60000);
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function sourceLabel(sourceType: string | null) {
+  if (sourceType === "flowex_form") return "Flowex Form";
+  if (sourceType === "external_form") return "Lovable Form";
+  return "Lead Form";
+}
 
 export default function LeadsPage() {
   const { plan } = useAppAccount();
@@ -61,25 +49,205 @@ export default function LeadsPage() {
   const hasPremiumAccess =
     plan === "trial" || plan === "pro";
 
+  const [supabase] = useState(() => createClient());
+  const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [updatingLeadId, setUpdatingLeadId] = useState("");
+
   useEffect(() => {
     if (!hasPremiumAccess) {
       router.replace("/home");
     }
   }, [hasPremiumAccess, router]);
 
+  useEffect(() => {
+    if (!hasPremiumAccess) return;
+
+    let cancelled = false;
+
+    const loadLeads = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (cancelled) return;
+
+      if (userError || !user) {
+        setLoadError("Your session could not be verified.");
+        setIsLoading(false);
+        return;
+      }
+
+      const cutoff = new Date(
+        Date.now() - 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+      const flowId =
+        new URLSearchParams(window.location.search)
+          .get("flowId")
+          ?.trim() || "";
+
+      let query = supabase
+        .from("leads")
+        .select(
+          "id, name, email, phone, source_type, status, created_at, follow_up_due_at, follow_up_sent_at"
+        )
+        .eq("user_id", user.id)
+        .gte("created_at", cutoff)
+        .order("created_at", { ascending: false });
+
+      if (flowId) {
+        query = query.eq("lead_flow_id", flowId);
+      }
+
+      const { data, error } = await query;
+
+      if (cancelled) return;
+
+      if (error) {
+        setLoadError(error.message || "Flowex could not load your leads.");
+        setLeads([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setLeads(
+        (data || []).map((lead) => ({
+          id: String(lead.id),
+          name:
+            typeof lead.name === "string" && lead.name.trim()
+              ? lead.name.trim()
+              : lead.email ||
+                lead.phone ||
+                "New Lead",
+          email:
+            typeof lead.email === "string" && lead.email.trim()
+              ? lead.email
+              : null,
+          phone:
+            typeof lead.phone === "string" && lead.phone.trim()
+              ? lead.phone
+              : null,
+          source: sourceLabel(
+            typeof lead.source_type === "string"
+              ? lead.source_type
+              : null
+          ),
+          status:
+            lead.status === "contacted" || lead.status === "closed"
+              ? lead.status
+              : "new",
+          receivedAt: lead.created_at,
+          followUpDueAt:
+            typeof lead.follow_up_due_at === "string"
+              ? lead.follow_up_due_at
+              : null,
+          followUpSentAt:
+            typeof lead.follow_up_sent_at === "string"
+              ? lead.follow_up_sent_at
+              : null,
+        }))
+      );
+
+      setIsLoading(false);
+    };
+
+    void loadLeads();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPremiumAccess, supabase]);
+
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("All");
+  const [status, setStatus] = useState<"all" | LeadStatus>("all");
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      lead.name.toLowerCase().includes(search.toLowerCase()) ||
-      lead.email.toLowerCase().includes(search.toLowerCase());
+  const filteredLeads = useMemo(() => {
+    const needle = search.trim().toLowerCase();
 
-    const matchesStatus =
-      status === "All" || lead.status === status;
+    return leads.filter((lead) => {
+      const matchesSearch =
+        !needle ||
+        lead.name.toLowerCase().includes(needle) ||
+        (lead.email || "").toLowerCase().includes(needle) ||
+        (lead.phone || "").toLowerCase().includes(needle);
 
-    return matchesSearch && matchesStatus;
-  });
+      const matchesStatus =
+        status === "all" || lead.status === status;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [leads, search, status]);
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayCount = leads.filter(
+    (lead) =>
+      new Date(lead.receivedAt).getTime() >=
+      todayStart.getTime()
+  ).length;
+
+  const contactedCount = leads.filter(
+    (lead) => lead.status === "contacted"
+  ).length;
+
+  const updateLeadStatus = async (
+    leadId: string,
+    nextStatus: LeadStatus
+  ) => {
+    if (updatingLeadId) return;
+
+    setUpdatingLeadId(leadId);
+    setLoadError("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setLoadError("Your session could not be verified.");
+      setUpdatingLeadId("");
+      return;
+    }
+
+    const contactedAt =
+      nextStatus === "contacted" || nextStatus === "closed"
+        ? new Date().toISOString()
+        : null;
+
+    const { error } = await supabase
+      .from("leads")
+      .update({
+        status: nextStatus,
+        contacted_at: contactedAt,
+      })
+      .eq("id", leadId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      setLoadError(
+        error.message || "Flowex could not update this lead."
+      );
+      setUpdatingLeadId("");
+      return;
+    }
+
+    setLeads((current) =>
+      current.map((lead) =>
+        lead.id === leadId
+          ? { ...lead, status: nextStatus }
+          : lead
+      )
+    );
+
+    setUpdatingLeadId("");
+  };
 
   if (!hasPremiumAccess) {
     return null;
@@ -119,8 +287,6 @@ export default function LeadsPage() {
 
         <div className="mx-auto max-w-7xl">
 
-          {/* HEADER */}
-
           <div>
 
             <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
@@ -132,7 +298,7 @@ export default function LeadsPage() {
             </h1>
 
             <p className="mt-2 text-gray-500 app-dark:text-slate-400">
-              Monitor every lead captured by your Flowex automation.
+              Your last 7 days of Flowex lead activity.
             </p>
 
           </div>
@@ -144,11 +310,11 @@ export default function LeadsPage() {
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
 
               <p className="text-sm text-gray-500 app-dark:text-slate-400">
-                Total Leads
+                Last 7 Days
               </p>
 
               <p className="mt-2 text-3xl font-black app-dark:text-white">
-                127
+                {isLoading ? "—" : leads.length}
               </p>
 
             </div>
@@ -160,7 +326,7 @@ export default function LeadsPage() {
               </p>
 
               <p className="mt-2 text-3xl font-black app-dark:text-white">
-                18
+                {isLoading ? "—" : todayCount}
               </p>
 
             </div>
@@ -168,24 +334,32 @@ export default function LeadsPage() {
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
 
               <p className="text-sm text-gray-500 app-dark:text-slate-400">
-                Replied
+                Contacted
               </p>
 
               <div className="mt-2 flex items-center gap-3">
 
                 <p className="text-3xl font-black app-dark:text-white">
-                  124
+                  {isLoading ? "—" : contactedCount}
                 </p>
 
-                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-                  97.6%
-                </span>
+                {!isLoading && leads.length > 0 && (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                    {Math.round((contactedCount / leads.length) * 100)}%
+                  </span>
+                )}
 
               </div>
 
             </div>
 
           </div>
+
+          {loadError && (
+            <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
+              {loadError}
+            </div>
+          )}
 
           {/* ================= LEADS ================= */}
 
@@ -205,23 +379,27 @@ export default function LeadsPage() {
 
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e) =>
+                  setStatus(
+                    e.target.value as "all" | LeadStatus
+                  )
+                }
                 className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300"
               >
-                <option value="All">
+                <option value="all">
                   All Statuses
                 </option>
 
-                <option value="New">
+                <option value="new">
                   New
                 </option>
 
-                <option value="Replied">
-                  Replied
+                <option value="contacted">
+                  Contacted
                 </option>
 
-                <option value="Follow-up">
-                  Follow-up
+                <option value="closed">
+                  Closed
                 </option>
               </select>
 
@@ -269,14 +447,12 @@ export default function LeadsPage() {
                       className="transition hover:bg-gray-50/70 app-dark:hover:bg-slate-900/60"
                     >
 
-                      {/* LEAD */}
-
                       <td className="px-6 py-5">
 
                         <div className="flex items-center gap-3">
 
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-sm font-bold text-gray-700 app-dark:from-[#00c297]/30 app-dark:via-cyan-500/20 app-dark:to-[#4b52f7]/30 app-dark:text-white">
-                            {lead.name.charAt(0)}
+                            {lead.name.charAt(0).toUpperCase()}
                           </div>
 
                           <p className="font-semibold app-dark:text-white">
@@ -287,36 +463,56 @@ export default function LeadsPage() {
 
                       </td>
 
-                      {/* CONTACT */}
-
                       <td className="px-6 py-5">
 
                         <p className="text-sm font-medium app-dark:text-slate-200">
-                          {lead.email}
+                          {lead.email || lead.phone || "No contact"}
                         </p>
 
-                        <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
-                          {lead.phone}
-                        </p>
+                        {lead.email && lead.phone && (
+                          <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                            {lead.phone}
+                          </p>
+                        )}
 
                       </td>
-
-                      {/* SOURCE */}
 
                       <td className="px-6 py-5 text-sm text-gray-500 app-dark:text-slate-400">
                         {lead.source}
                       </td>
 
-                      {/* STATUS */}
-
                       <td className="px-6 py-5">
-                        <StatusBadge status={lead.status} />
+
+                        <div className="flex flex-col items-start gap-1.5">
+                          <select
+                            value={lead.status}
+                            onChange={(e) =>
+                              void updateLeadStatus(
+                                lead.id,
+                                e.target.value as LeadStatus
+                              )
+                            }
+                            disabled={updatingLeadId === lead.id}
+                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold outline-none disabled:cursor-not-allowed disabled:opacity-60 ${statusClass(
+                              lead.status
+                            )}`}
+                          >
+                            <option value="new">New</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="closed">Closed</option>
+                          </select>
+
+                          {lead.followUpSentAt && (
+                            <span className="text-[11px] font-medium text-amber-600 app-dark:text-amber-400">
+                              Follow-up sent
+                            </span>
+                          )}
+                        </div>
+
                       </td>
 
-                      {/* RECEIVED */}
-
                       <td className="px-6 py-5 text-sm text-gray-400 app-dark:text-slate-500">
-                        {lead.received}
+                        {formatLeadTime(lead.receivedAt)}
                       </td>
 
                     </tr>
@@ -340,29 +536,51 @@ export default function LeadsPage() {
 
                   <div className="flex items-start justify-between gap-4">
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
 
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-sm font-bold text-gray-700 app-dark:from-[#00c297]/30 app-dark:via-cyan-500/20 app-dark:to-[#4b52f7]/30 app-dark:text-white">
-                        {lead.name.charAt(0)}
+                        {lead.name.charAt(0).toUpperCase()}
                       </div>
 
-                      <div>
+                      <div className="min-w-0">
 
-                        <p className="font-semibold app-dark:text-white">
+                        <p className="truncate font-semibold app-dark:text-white">
                           {lead.name}
                         </p>
 
-                        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
-                          {lead.email}
+                        <p className="mt-1 truncate text-sm text-gray-500 app-dark:text-slate-400">
+                          {lead.email || lead.phone || "No contact"}
                         </p>
 
                       </div>
 
                     </div>
 
-                    <StatusBadge status={lead.status} />
+                    <select
+                      value={lead.status}
+                      onChange={(e) =>
+                        void updateLeadStatus(
+                          lead.id,
+                          e.target.value as LeadStatus
+                        )
+                      }
+                      disabled={updatingLeadId === lead.id}
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold outline-none disabled:opacity-60 ${statusClass(
+                        lead.status
+                      )}`}
+                    >
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="closed">Closed</option>
+                    </select>
 
                   </div>
+
+                  {lead.followUpSentAt && (
+                    <p className="mt-3 text-xs font-medium text-amber-600 app-dark:text-amber-400">
+                      Follow-up sent
+                    </p>
+                  )}
 
                   <div className="mt-4 grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 app-dark:border-slate-800">
 
@@ -385,7 +603,7 @@ export default function LeadsPage() {
                       </p>
 
                       <p className="mt-1 text-sm font-medium text-gray-600 app-dark:text-slate-300">
-                        {lead.received}
+                        {formatLeadTime(lead.receivedAt)}
                       </p>
 
                     </div>
@@ -397,9 +615,17 @@ export default function LeadsPage() {
 
             </div>
 
-            {/* ================= NO RESULTS ================= */}
+            {/* ================= LOADING / NO RESULTS ================= */}
 
-            {filteredLeads.length === 0 && (
+            {isLoading && (
+              <div className="px-6 py-16 text-center">
+                <p className="font-semibold text-gray-700 app-dark:text-slate-200">
+                  Loading leads...
+                </p>
+              </div>
+            )}
+
+            {!isLoading && filteredLeads.length === 0 && (
               <div className="px-6 py-16 text-center">
 
                 <p className="font-semibold text-gray-700 app-dark:text-slate-200">
@@ -407,7 +633,7 @@ export default function LeadsPage() {
                 </p>
 
                 <p className="mt-1 text-sm text-gray-400 app-dark:text-slate-500">
-                  Try changing your search or status filter.
+                  Flowex only keeps this lightweight lead view for the last 7 days.
                 </p>
 
               </div>
@@ -423,30 +649,14 @@ export default function LeadsPage() {
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
-  if (status === "Replied") {
-    return (
-      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
-        Replied
-      </span>
-    );
+function statusClass(status: LeadStatus) {
+  if (status === "contacted") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-600 app-dark:border-emerald-500/30 app-dark:bg-emerald-500/10 app-dark:text-emerald-400";
   }
 
-  if (status === "Follow-up") {
-    return (
-      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-600 app-dark:bg-amber-500/10 app-dark:text-amber-300">
-        Follow-up
-      </span>
-    );
+  if (status === "closed") {
+    return "border-gray-200 bg-gray-100 text-gray-600 app-dark:border-slate-700 app-dark:bg-slate-800 app-dark:text-slate-300";
   }
 
-  return (
-    <span className="inline-flex rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-semibold text-cyan-600 app-dark:bg-cyan-500/10 app-dark:text-cyan-400">
-      New
-    </span>
-  );
+  return "border-cyan-200 bg-cyan-50 text-cyan-600 app-dark:border-cyan-500/30 app-dark:bg-cyan-500/10 app-dark:text-cyan-400";
 }

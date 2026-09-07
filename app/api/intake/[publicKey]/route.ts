@@ -1304,10 +1304,16 @@ async function sendLeadToNotion(
   }
 
   const config = destination.config as {
+    database_id?: unknown;
     data_source_id?: unknown;
     property_map?: unknown;
     property_types?: unknown;
   } | null;
+
+  const databaseId =
+    typeof config?.database_id === "string"
+      ? config.database_id
+      : "";
 
   const dataSourceId =
     typeof config?.data_source_id === "string"
@@ -1328,8 +1334,10 @@ async function sendLeadToNotion(
       ? config.property_types as Record<string, unknown>
       : {};
 
-  if (!dataSourceId || Object.keys(propertyMap).length === 0) {
-    return;
+  if ((!dataSourceId && !databaseId) || Object.keys(propertyMap).length === 0) {
+    throw new Error(
+      "The saved Notion destination is incomplete. Re-save the Notion destination."
+    );
   }
 
   const { data: connection } = await supabase
@@ -1386,9 +1394,10 @@ async function sendLeadToNotion(
       notionPropertyValue(type, value);
   }
 
-  const response = await fetch(
-    `${NOTION_API_URL}/pages`,
-    {
+  const createNotionPage = async (
+    parent: Record<string, string>
+  ) =>
+    fetch(`${NOTION_API_URL}/pages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -1396,15 +1405,34 @@ async function sendLeadToNotion(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        parent: {
-          type: "data_source_id",
-          data_source_id: dataSourceId,
-        },
+        parent,
         properties,
       }),
       cache: "no-store",
-    }
-  );
+    });
+
+  let response = dataSourceId
+    ? await createNotionPage({
+        type: "data_source_id",
+        data_source_id: dataSourceId,
+      })
+    : await createNotionPage({
+        type: "database_id",
+        database_id: databaseId,
+      });
+
+  /*
+    Some saved Flowex Notion destinations pre-date the data-source migration.
+    If Notion rejects the data-source parent and the saved database id is also
+    available, retry once with the database parent. A failed first request
+    cannot have created a page, so this cannot duplicate the lead.
+  */
+  if (!response.ok && dataSourceId && databaseId) {
+    response = await createNotionPage({
+      type: "database_id",
+      database_id: databaseId,
+    });
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -1782,6 +1810,95 @@ async function sendLeadToHubSpot(
     );
   }
 }
+async function getFlowexGmailConnection(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string
+) {
+  for (const provider of ["google_email", "google_sheets"] as const) {
+    const { data: connection } = await supabase
+      .from("integration_connections")
+      .select("credentials, provider_account_email")
+      .eq("user_id", userId)
+      .eq("provider", provider)
+      .maybeSingle();
+
+    if (
+      connection?.credentials &&
+      typeof connection.credentials === "object" &&
+      connection.provider_account_email
+    ) {
+      return {
+        provider,
+        credentials: connection.credentials as Record<string, unknown>,
+        email: String(connection.provider_account_email),
+      };
+    }
+  }
+
+  return null;
+}
+
+async function sendGmailMessage(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  input: {
+    to: string;
+    subject: string;
+    text: string;
+  }
+) {
+  const connection = await getFlowexGmailConnection(supabase, userId);
+
+  if (!connection) {
+    throw new Error("Connected Flowex email is unavailable.");
+  }
+
+  const oauth2Client = createGoogleOAuthClient();
+  oauth2Client.setCredentials(connection.credentials);
+
+  oauth2Client.on("tokens", async (tokens) => {
+    if (!tokens.access_token && !tokens.refresh_token) return;
+
+    await supabase
+      .from("integration_connections")
+      .update({
+        credentials: {
+          ...connection.credentials,
+          ...tokens,
+          refresh_token:
+            tokens.refresh_token || connection.credentials.refresh_token,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .eq("provider", connection.provider);
+  });
+
+  const gmail = google.gmail({
+    version: "v1",
+    auth: oauth2Client,
+  });
+
+  const rawMessage = [
+    `From: ${connection.email}`,
+    `To: ${input.to}`,
+    `Reply-To: ${connection.email}`,
+    `Subject: ${encodeEmailHeader(input.subject)}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    Buffer.from(input.text, "utf8").toString("base64"),
+  ].join("\\r\\n");
+
+  const raw = Buffer.from(rawMessage, "utf8").toString("base64url");
+
+  await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw },
+  });
+}
+
 function encodeEmailHeader(value: string) {
   return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
 }
@@ -1803,48 +1920,6 @@ async function sendAutomaticEmailReply(
     return;
   }
 
-  const { data: connection } = await supabase
-    .from("integration_connections")
-    .select("credentials, provider_account_email")
-    .eq("user_id", lead.userId)
-    .eq("provider", "google_email")
-    .maybeSingle();
-
-  if (
-    !connection?.credentials ||
-    typeof connection.credentials !== "object" ||
-    !connection.provider_account_email
-  ) {
-    throw new Error("Connected reply email is unavailable.");
-  }
-
-  const oauth2Client = createGoogleOAuthClient();
-  oauth2Client.setCredentials(connection.credentials);
-
-  oauth2Client.on("tokens", async (tokens) => {
-    if (!tokens.access_token && !tokens.refresh_token) return;
-
-    const current = connection.credentials as Record<string, unknown>;
-
-    await supabase
-      .from("integration_connections")
-      .update({
-        credentials: {
-          ...current,
-          ...tokens,
-          refresh_token: tokens.refresh_token || current.refresh_token,
-        },
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", lead.userId)
-      .eq("provider", "google_email");
-  });
-
-  const gmail = google.gmail({
-    version: "v1",
-    auth: oauth2Client,
-  });
-
   const subject =
     typeof settings.subject === "string" && settings.subject.trim()
       ? settings.subject.trim()
@@ -1857,28 +1932,12 @@ async function sendAutomaticEmailReply(
 
   if (!message) return;
 
-  const sender = connection.provider_account_email;
-  const rawMessage = [
-    `From: ${sender}`,
-    `To: ${lead.contact.email}`,
-    `Reply-To: ${sender}`,
-    `Subject: ${encodeEmailHeader(subject)}`,
-    "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: base64",
-    "",
-    Buffer.from(message, "utf8").toString("base64"),
-  ].join("\r\n");
-
-  const raw = Buffer.from(rawMessage, "utf8")
-    .toString("base64url");
-
-  await gmail.users.messages.send({
-    userId: "me",
-    requestBody: { raw },
+  await sendGmailMessage(supabase, lead.userId, {
+    to: lead.contact.email,
+    subject,
+    text: message,
   });
 }
-
 
 async function sendTeamNotificationEmail(
   supabase: ReturnType<typeof createAdminClient>,
@@ -1956,11 +2015,26 @@ async function sendTeamNotificationEmail(
     "This notification was sent automatically by Flowex.",
   ].join("\n");
 
-  await sendNotificationEmail({
-    to: recipient,
-    subject: `New lead — ${flowName}`,
-    text: message,
-  });
+  const subject = `New lead — ${flowName}`;
+
+  try {
+    await sendNotificationEmail({
+      to: recipient,
+      subject,
+      text: message,
+    });
+  } catch (resendError) {
+    console.error(
+      "Flowex Resend notification delivery error; trying Gmail fallback:",
+      resendError
+    );
+
+    await sendGmailMessage(supabase, lead.userId, {
+      to: recipient,
+      subject,
+      text: message,
+    });
+  }
 }
 
 
@@ -2310,12 +2384,68 @@ export async function POST(
   };
 
   /*
-    Save the normalized lead inside Flowex first.
-
-    Later automation steps (storage destination, instant reply,
-    team notification and follow-up) can all work from this same
-    persisted lead record.
+    Flowex keeps only lightweight lead activity for 7 days.
+    The full submitted payload is still used in-memory for destinations,
+    but it is not retained in the Flowex lead record.
   */
+  const resolvedLeadName =
+    await leadDisplayName(
+      supabase,
+      lead
+    );
+
+  const {
+    data: followUpSettings,
+  } =
+    await supabase
+      .from("lead_follow_up_settings")
+      .select("enabled, delay_hours")
+      .eq(
+        "lead_flow_id",
+        lead.leadFlowId
+      )
+      .eq(
+        "user_id",
+        lead.userId
+      )
+      .maybeSingle();
+
+  const delayHours =
+    Number(
+      followUpSettings
+        ?.delay_hours
+    );
+
+  const followUpDueAt =
+    followUpSettings
+      ?.enabled === true &&
+    lead.contact.email &&
+    [1, 6, 12, 24].includes(
+      delayHours
+    )
+      ? new Date(
+          new Date(
+            lead.receivedAt
+          ).getTime() +
+            delayHours *
+              60 *
+              60 *
+              1000
+        ).toISOString()
+      : null;
+
+  const expiresAt =
+    new Date(
+      new Date(
+        lead.receivedAt
+      ).getTime() +
+        7 *
+          24 *
+          60 *
+          60 *
+          1000
+    ).toISOString();
+
   const {
     data: savedLead,
     error: saveLeadError,
@@ -2335,14 +2465,39 @@ export async function POST(
         source_type:
           lead.sourceType,
 
+        name:
+          resolvedLeadName,
+
         email:
           lead.contact.email,
 
         phone:
           lead.contact.phone,
 
-        fields:
-          lead.fields,
+        /*
+          Keep only the display name in fields for compatibility with
+          the existing Lead Capture dashboard. Full form answers are
+          not retained here.
+        */
+        fields: {
+          name:
+            resolvedLeadName,
+        },
+
+        status:
+          "new",
+
+        contacted_at:
+          null,
+
+        follow_up_due_at:
+          followUpDueAt,
+
+        follow_up_sent_at:
+          null,
+
+        expires_at:
+          expiresAt,
 
         created_at:
           lead.receivedAt,
