@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/follow-up/process",
-      "schedule": "*/5 * * * *"
-    }
-  ]
-}
