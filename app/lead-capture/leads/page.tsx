@@ -42,6 +42,71 @@ function sourceLabel(sourceType: string | null) {
   return "Lead Form";
 }
 
+function fieldDisplayName(fields: unknown) {
+  if (!fields || typeof fields !== "object") return "";
+
+  const record = fields as Record<string, unknown>;
+  const preferredKeys = [
+    "name",
+    "full_name",
+    "fullName",
+    "fullname",
+    "first_name",
+    "firstName",
+    "contact_name",
+  ];
+
+  for (const key of preferredKeys) {
+    const value = record[key];
+    if (
+      typeof value === "string" &&
+      value.trim()
+    ) {
+      return value.trim();
+    }
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    if (
+      /name/i.test(key) &&
+      typeof value === "string" &&
+      value.trim()
+    ) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function formatCountdown(
+  dueAt: string,
+  nowMs: number
+) {
+  const remaining =
+    new Date(dueAt).getTime() - nowMs;
+
+  if (remaining <= 0) {
+    return "Follow-up due";
+  }
+
+  const totalSeconds =
+    Math.floor(remaining / 1000);
+
+  const hours =
+    Math.floor(totalSeconds / 3600);
+
+  const minutes =
+    Math.floor((totalSeconds % 3600) / 60);
+
+  const seconds =
+    totalSeconds % 60;
+
+  return `Follow-up in ${String(hours).padStart(2, "0")}:${String(
+    minutes
+  ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 export default function LeadsPage() {
   const { plan } = useAppAccount();
   const router = useRouter();
@@ -54,12 +119,24 @@ export default function LeadsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [updatingLeadId, setUpdatingLeadId] = useState("");
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     if (!hasPremiumAccess) {
       router.replace("/home");
     }
   }, [hasPremiumAccess, router]);
+
+  useEffect(() => {
+    const timer = window.setInterval(
+      () => setNowMs(Date.now()),
+      1000
+    );
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (!hasPremiumAccess) return;
@@ -95,7 +172,7 @@ export default function LeadsPage() {
       let query = supabase
         .from("leads")
         .select(
-          "id, name, email, phone, source_type, status, created_at, follow_up_due_at, follow_up_sent_at"
+          "id, name, email, phone, fields, source_type, status, created_at, follow_up_due_at, follow_up_sent_at"
         )
         .eq("user_id", user.id)
         .gte("created_at", cutoff)
@@ -122,7 +199,8 @@ export default function LeadsPage() {
           name:
             typeof lead.name === "string" && lead.name.trim()
               ? lead.name.trim()
-              : lead.email ||
+              : fieldDisplayName(lead.fields) ||
+                lead.email ||
                 lead.phone ||
                 "New Lead",
           email:
@@ -221,12 +299,21 @@ export default function LeadsPage() {
         ? new Date().toISOString()
         : null;
 
+    const statusUpdate =
+      nextStatus === "contacted" || nextStatus === "closed"
+        ? {
+            status: nextStatus,
+            contacted_at: contactedAt,
+            follow_up_due_at: null,
+          }
+        : {
+            status: nextStatus,
+            contacted_at: null,
+          };
+
     const { error } = await supabase
       .from("leads")
-      .update({
-        status: nextStatus,
-        contacted_at: contactedAt,
-      })
+      .update(statusUpdate)
       .eq("id", leadId)
       .eq("user_id", user.id);
 
@@ -241,7 +328,15 @@ export default function LeadsPage() {
     setLeads((current) =>
       current.map((lead) =>
         lead.id === leadId
-          ? { ...lead, status: nextStatus }
+          ? {
+              ...lead,
+              status: nextStatus,
+              followUpDueAt:
+                nextStatus === "contacted" ||
+                nextStatus === "closed"
+                  ? null
+                  : lead.followUpDueAt,
+            }
           : lead
       )
     );
@@ -255,9 +350,7 @@ export default function LeadsPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
-     
-      {/* Flowex deployment check */}
-      
+
       {/* ================= NAVBAR ================= */}
 
       <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
@@ -504,11 +597,19 @@ export default function LeadsPage() {
                             <option value="closed">Closed</option>
                           </select>
 
-                          {lead.followUpSentAt && (
+                          {lead.followUpSentAt ? (
                             <span className="text-[11px] font-medium text-amber-600 app-dark:text-amber-400">
                               Follow-up sent
                             </span>
-                          )}
+                          ) : lead.status === "new" && lead.followUpDueAt ? (
+                            <span className="text-[11px] font-semibold text-cyan-600 app-dark:text-cyan-400">
+                              {formatCountdown(lead.followUpDueAt, nowMs)}
+                            </span>
+                          ) : lead.status !== "new" ? (
+                            <span className="text-[11px] font-medium text-gray-400 app-dark:text-slate-500">
+                              Follow-up cancelled
+                            </span>
+                          ) : null}
                         </div>
 
                       </td>
@@ -578,11 +679,19 @@ export default function LeadsPage() {
 
                   </div>
 
-                  {lead.followUpSentAt && (
+                  {lead.followUpSentAt ? (
                     <p className="mt-3 text-xs font-medium text-amber-600 app-dark:text-amber-400">
                       Follow-up sent
                     </p>
-                  )}
+                  ) : lead.status === "new" && lead.followUpDueAt ? (
+                    <p className="mt-3 text-xs font-semibold text-cyan-600 app-dark:text-cyan-400">
+                      {formatCountdown(lead.followUpDueAt, nowMs)}
+                    </p>
+                  ) : lead.status !== "new" ? (
+                    <p className="mt-3 text-xs font-medium text-gray-400 app-dark:text-slate-500">
+                      Follow-up cancelled
+                    </p>
+                  ) : null}
 
                   <div className="mt-4 grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 app-dark:border-slate-800">
 

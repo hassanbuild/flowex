@@ -1,5 +1,6 @@
--- Flowex Step 05 + lightweight 7-day lead activity
--- Run this migration before deploying the updated app files.
+-- Flowex Step 05 — safe additive migration
+-- This migration does NOT rewrite or remove existing lead payloads.
+-- Core intake remains compatible with the original leads schema.
 
 alter table public.leads
   add column if not exists name text,
@@ -15,6 +16,7 @@ begin
     select 1
     from pg_constraint
     where conname = 'leads_status_check'
+      and conrelid = 'public.leads'::regclass
   ) then
     alter table public.leads
       add constraint leads_status_check
@@ -22,34 +24,6 @@ begin
   end if;
 end
 $$;
-
--- Backfill a lightweight display name from common historical keys.
-update public.leads
-set name = coalesce(
-  nullif(name, ''),
-  nullif(fields ->> 'name', ''),
-  nullif(fields ->> 'full_name', ''),
-  nullif(fields ->> 'fullName', ''),
-  nullif(fields ->> 'fullname', ''),
-  nullif(fields ->> 'first_name', ''),
-  nullif(email, ''),
-  nullif(phone, ''),
-  'New Lead'
-)
-where name is null or name = '';
-
--- Existing lead activity is also limited to seven days.
-update public.leads
-set expires_at = created_at + interval '7 days'
-where expires_at is null;
-
--- Remove full historical form payloads from Flowex storage.
--- Keep only the display name for compatibility with the existing dashboard UI.
-update public.leads
-set fields = jsonb_build_object(
-  'name',
-  coalesce(nullif(name, ''), 'New Lead')
-);
 
 create index if not exists leads_user_created_at_idx
   on public.leads (user_id, created_at desc);
@@ -96,7 +70,6 @@ create policy "Users can update their follow up settings"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Leads page needs to update only the signed-in user's lead rows.
 drop policy if exists "Users can update their own leads"
   on public.leads;
 create policy "Users can update their own leads"

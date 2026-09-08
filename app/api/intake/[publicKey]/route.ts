@@ -2384,68 +2384,10 @@ export async function POST(
   };
 
   /*
-    Flowex keeps only lightweight lead activity for 7 days.
-    The full submitted payload is still used in-memory for destinations,
-    but it is not retained in the Flowex lead record.
+    Core lead capture intentionally uses the original working schema.
+    Step 05 is attached AFTER the lead is saved and AFTER the main
+    automations run, so a follow-up problem can never block intake.
   */
-  const resolvedLeadName =
-    await leadDisplayName(
-      supabase,
-      lead
-    );
-
-  const {
-    data: followUpSettings,
-  } =
-    await supabase
-      .from("lead_follow_up_settings")
-      .select("enabled, delay_hours")
-      .eq(
-        "lead_flow_id",
-        lead.leadFlowId
-      )
-      .eq(
-        "user_id",
-        lead.userId
-      )
-      .maybeSingle();
-
-  const delayHours =
-    Number(
-      followUpSettings
-        ?.delay_hours
-    );
-
-  const followUpDueAt =
-    followUpSettings
-      ?.enabled === true &&
-    lead.contact.email &&
-    [1, 6, 12, 24].includes(
-      delayHours
-    )
-      ? new Date(
-          new Date(
-            lead.receivedAt
-          ).getTime() +
-            delayHours *
-              60 *
-              60 *
-              1000
-        ).toISOString()
-      : null;
-
-  const expiresAt =
-    new Date(
-      new Date(
-        lead.receivedAt
-      ).getTime() +
-        7 *
-          24 *
-          60 *
-          60 *
-          1000
-    ).toISOString();
-
   const {
     data: savedLead,
     error: saveLeadError,
@@ -2465,39 +2407,14 @@ export async function POST(
         source_type:
           lead.sourceType,
 
-        name:
-          resolvedLeadName,
-
         email:
           lead.contact.email,
 
         phone:
           lead.contact.phone,
 
-        /*
-          Keep only the display name in fields for compatibility with
-          the existing Lead Capture dashboard. Full form answers are
-          not retained here.
-        */
-        fields: {
-          name:
-            resolvedLeadName,
-        },
-
-        status:
-          "new",
-
-        contacted_at:
-          null,
-
-        follow_up_due_at:
-          followUpDueAt,
-
-        follow_up_sent_at:
-          null,
-
-        expires_at:
-          expiresAt,
+        fields:
+          lead.fields,
 
         created_at:
           lead.receivedAt,
@@ -2606,6 +2523,68 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex team notification email error:",
+      error
+    );
+  }
+
+  /*
+    Step 05 is deliberately non-critical.
+    If its table/columns/settings ever have a problem, the lead has
+    already been saved and Steps 02-04 have already been attempted.
+  */
+  try {
+    const {
+      data: followUpSettings,
+      error: followUpSettingsError,
+    } = await supabase
+      .from("lead_follow_up_settings")
+      .select("enabled, delay_hours")
+      .eq("lead_flow_id", lead.leadFlowId)
+      .eq("user_id", lead.userId)
+      .maybeSingle();
+
+    if (followUpSettingsError) {
+      throw followUpSettingsError;
+    }
+
+    const delayHours =
+      Number(followUpSettings?.delay_hours);
+
+    const followUpDueAt =
+      followUpSettings?.enabled === true &&
+      !!lead.contact.email &&
+      [1, 6, 12, 24].includes(delayHours)
+        ? new Date(
+            new Date(lead.receivedAt).getTime() +
+              delayHours * 60 * 60 * 1000
+          ).toISOString()
+        : null;
+
+    const expiresAt =
+      new Date(
+        new Date(lead.receivedAt).getTime() +
+          7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+
+    const { error: followUpMetadataError } =
+      await supabase
+        .from("leads")
+        .update({
+          status: "new",
+          contacted_at: null,
+          follow_up_due_at: followUpDueAt,
+          follow_up_sent_at: null,
+          expires_at: expiresAt,
+        })
+        .eq("id", savedLead.id)
+        .eq("user_id", lead.userId);
+
+    if (followUpMetadataError) {
+      throw followUpMetadataError;
+    }
+  } catch (error) {
+    console.error(
+      "Flowex follow-up scheduling skipped:",
       error
     );
   }
