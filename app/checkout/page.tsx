@@ -6,6 +6,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAppAccount } from "@/components/AppAccountProvider";
+import { createClient } from "@supabase/supabase-js";
+
+type BillingInterval = "monthly" | "annual";
 
 type CheckoutDraft = {
   fullName: string;
@@ -59,6 +62,12 @@ export default function CheckoutPage() {
 
   const [checkoutError, setCheckoutError] =
     useState("");
+
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>("monthly");
+
+  const [isRedirecting, setIsRedirecting] =
+    useState(false);
 
   const isTrial =
     plan === "trial";
@@ -213,7 +222,7 @@ export default function CheckoutPage() {
     );
   };
 
-  const handleSubmit = (
+  const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
@@ -228,7 +237,6 @@ export default function CheckoutPage() {
       setCheckoutError(
         "Please complete the required billing information."
       );
-
       return;
     }
 
@@ -236,65 +244,72 @@ export default function CheckoutPage() {
       setCheckoutError(
         "Please accept the subscription terms before continuing."
       );
-
       return;
     }
-
-    /*
-      ================= GUEST =================
-
-      Save checkout and let the customer choose
-      Login or Create Account.
-
-      Card details are intentionally not collected
-      before authentication and are never stored in
-      sessionStorage/localStorage.
-    */
 
     if (!isLoggedIn) {
       saveDraft();
       setShowAuthChoice(true);
-
       return;
     }
 
-    /*
-      ================= TRIAL =================
-
-      Trial users already have Pro access.
-    */
-
-    if (isTrial) {
+    if (isTrial || isPro) {
       router.push("/billing");
       return;
     }
 
-    /*
-      ================= PRO =================
+    try {
+      setIsRedirecting(true);
 
-      Pro users should manage their existing
-      subscription instead of purchasing again.
-    */
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-    if (isPro) {
-      router.push("/billing");
-      return;
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.access_token) {
+        setCheckoutError(
+          "Your session could not be verified. Please log in again."
+        );
+        setIsRedirecting(false);
+        return;
+      }
+
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          interval: billingInterval,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.url) {
+        setCheckoutError(
+          result?.error ||
+            "Could not start secure checkout. Please try again."
+        );
+        setIsRedirecting(false);
+        return;
+      }
+
+      window.location.href = result.url;
+    } catch (error) {
+      console.error("Flowex checkout error:", error);
+
+      setCheckoutError(
+        "Could not start secure checkout. Please try again."
+      );
+      setIsRedirecting(false);
     }
-
-    /*
-      ================= FREE =================
-
-      Stripe payment/session creation will replace
-      this development placeholder.
-
-      The future backend will create a secure payment
-      session and the Stripe Payment Element will
-      collect card information.
-    */
-
-    alert(
-      "Checkout is ready. Secure payment processing will be connected next."
-    );
   };
 
   /*
@@ -457,66 +472,68 @@ export default function CheckoutPage() {
 
                 </div>
 
-                <div className="mt-4 rounded-2xl border-2 border-emerald-400 bg-emerald-50/50 p-4 dark:bg-emerald-500/5 app-dark:bg-emerald-500/5">
-
-                  <div className="flex items-start justify-between gap-4">
-
-                    <div className="flex gap-3">
-
-                      <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-500">
-
-                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-
-                      </div>
-
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval("monthly")}
+                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                      billingInterval === "monthly"
+                        ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5 app-dark:bg-emerald-500/5"
+                        : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
                       <div>
-
                         <div className="flex flex-wrap items-center gap-2">
-
-                          <h3
-                            className={`text-lg font-bold ${darkTitle}`}
-                          >
-                            Flowex Pro
+                          <h3 className={`text-lg font-bold ${darkTitle}`}>
+                            Monthly
                           </h3>
-
                           <span className="rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-3 py-1 text-[11px] font-bold text-white">
-                            33% OFF
+                            LAUNCH
                           </span>
-
                         </div>
-
-                        <p
-                          className={`mt-1 text-xs leading-5 text-gray-500 ${darkMuted}`}
-                        >
-                          Complete lead capture automation with everything included.
+                        <p className={`mt-1 text-xs text-gray-500 ${darkMuted}`}>
+                          Flowex Pro · 7-day free trial
                         </p>
-
                       </div>
-
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm text-gray-400 line-through">$25</p>
+                        <p className={`text-2xl font-black ${darkTitle}`}>$15</p>
+                        <p className={`text-xs text-gray-500 ${darkMuted}`}>/month</p>
+                      </div>
                     </div>
+                  </button>
 
-                    <div className="shrink-0 text-right">
-
-                      <p className="text-sm text-gray-400 line-through">
-                        $15
-                      </p>
-
-                      <p
-                        className={`text-2xl font-black ${darkTitle}`}
-                      >
-                        $10
-                      </p>
-
-                      <p
-                        className={`text-xs text-gray-500 ${darkMuted}`}
-                      >
-                        /month
-                      </p>
-
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval("annual")}
+                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                      billingInterval === "annual"
+                        ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5 app-dark:bg-emerald-500/5"
+                        : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className={`text-lg font-bold ${darkTitle}`}>
+                            Annual
+                          </h3>
+                          <span className="rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-3 py-1 text-[11px] font-bold text-white">
+                            BEST VALUE
+                          </span>
+                        </div>
+                        <p className={`mt-1 text-xs text-gray-500 ${darkMuted}`}>
+                          $120 billed annually · 7-day free trial
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm text-gray-400 line-through">$25</p>
+                        <p className={`text-2xl font-black ${darkTitle}`}>$10</p>
+                        <p className={`text-xs text-gray-500 ${darkMuted}`}>/month</p>
+                      </div>
                     </div>
-
-                  </div>
-
+                  </button>
                 </div>
 
               </div>
@@ -725,85 +742,21 @@ export default function CheckoutPage() {
 
                 </div>
 
-                {/* STRIPE PLACEHOLDER */}
+                {/* LEMON SQUEEZY HOSTED CHECKOUT */}
 
                 <div
-                  className={`mt-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 ${
+                  className={`mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 ${
                     isLoggedIn
                       ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
                       : "dark:border-slate-700 dark:bg-[#0b0f14]"
                   }`}
                 >
-
-                  <div className="grid gap-3">
-
-                    <div>
-
-                      <label className="text-xs font-semibold text-gray-500">
-                        Card number
-                      </label>
-
-                      <div
-                        className={`mt-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-400 ${
-                          isLoggedIn
-                            ? "app-dark:border-slate-700 app-dark:bg-[#11161d]"
-                            : "dark:border-slate-700 dark:bg-[#11161d]"
-                        }`}
-                      >
-                        Secure card field
-                      </div>
-
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-
-                      <div>
-
-                        <label className="text-xs font-semibold text-gray-500">
-                          Expiry
-                        </label>
-
-                        <div
-                          className={`mt-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-400 ${
-                            isLoggedIn
-                              ? "app-dark:border-slate-700 app-dark:bg-[#11161d]"
-                              : "dark:border-slate-700 dark:bg-[#11161d]"
-                          }`}
-                        >
-                          MM / YY
-                        </div>
-
-                      </div>
-
-                      <div>
-
-                        <label className="text-xs font-semibold text-gray-500">
-                          CVC
-                        </label>
-
-                        <div
-                          className={`mt-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-400 ${
-                            isLoggedIn
-                              ? "app-dark:border-slate-700 app-dark:bg-[#11161d]"
-                              : "dark:border-slate-700 dark:bg-[#11161d]"
-                          }`}
-                        >
-                          •••
-                        </div>
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                  <p
-                    className={`mt-3 text-xs leading-5 text-gray-400 ${darkMuted}`}
-                  >
-                    Secure card entry will be enabled through the payment processor.
-                    Flowex will not store raw card details.
+                  <p className={`text-sm font-semibold ${darkTitle}`}>
+                    Payment details are entered securely on Lemon Squeezy.
                   </p>
-
+                  <p className={`mt-1.5 text-xs leading-5 text-gray-400 ${darkMuted}`}>
+                    After you continue, you&apos;ll be redirected to the secure checkout to add your card. Flowex does not store raw card details.
+                  </p>
                 </div>
 
               </div>
@@ -850,9 +803,11 @@ export default function CheckoutPage() {
                       Privacy Policy
                     </Link>
 
-                    , and authorize Flowex to charge
-                    $10/month after my 7-day free trial unless
-                    I cancel beforehand.
+                    , and authorize Flowex to charge{" "}
+                    {billingInterval === "monthly"
+                      ? "$15/month"
+                      : "$120/year"}{" "}
+                    after my 7-day free trial unless I cancel beforehand.
                   </span>
 
                 </label>
@@ -894,7 +849,9 @@ export default function CheckoutPage() {
                     <p
                       className={`mt-1 text-xs leading-5 text-gray-500 ${darkMuted}`}
                     >
-                      Monthly subscription
+                      {billingInterval === "monthly"
+                        ? "Monthly subscription"
+                        : "Annual subscription"}
                     </p>
 
                   </div>
@@ -902,13 +859,13 @@ export default function CheckoutPage() {
                   <div className="text-right">
 
                     <p className="text-sm text-gray-400 line-through">
-                      $15
+                      $25
                     </p>
 
                     <p
                       className={`text-2xl font-black ${darkTitle}`}
                     >
-                      $10
+                      {billingInterval === "monthly" ? "$15" : "$10"}
                     </p>
 
                     <p
@@ -972,7 +929,9 @@ export default function CheckoutPage() {
                     <span
                       className={`font-bold ${darkTitle}`}
                     >
-                      $10/month
+                      {billingInterval === "monthly"
+                        ? "$15/month"
+                        : "$120/year"}
                     </span>
 
                   </div>
@@ -1047,11 +1006,14 @@ export default function CheckoutPage() {
 
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                    disabled={isRedirecting}
+                    className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isLoggedIn
-                      ? "Start 7-Day Free Trial"
-                      : "Proceed"}
+                    {isRedirecting
+                      ? "Opening Secure Checkout..."
+                      : isLoggedIn
+                        ? "Start 7-Day Free Trial"
+                        : "Proceed"}
                   </button>
 
                 )}
