@@ -30,8 +30,6 @@ export default function CheckoutPage() {
     isLoggedIn,
     authReady,
     plan,
-    name,
-    email: accountEmail,
   } = useAppAccount();
 
   const [fullName, setFullName] =
@@ -92,13 +90,8 @@ export default function CheckoutPage() {
             savedDraft
           ) as CheckoutDraft;
 
-        setFullName(
-          draft.fullName || ""
-        );
-
-        setEmail(
-          draft.email || accountEmail || ""
-        );
+        setFullName(draft.fullName || "");
+        setEmail(draft.email || "");
 
 
 
@@ -112,17 +105,12 @@ export default function CheckoutPage() {
           CHECKOUT_DRAFT_KEY
         );
       }
-    } else if (isLoggedIn) {
-      setFullName(name || "");
-      setEmail(accountEmail || "");
     }
 
     setDraftLoaded(true);
   }, [
     authReady,
     isLoggedIn,
-    name,
-    accountEmail,
   ]);
 
   /*
