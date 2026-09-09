@@ -6,10 +6,17 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const lemonApiKey = process.env.LEMONSQUEEZY_API_KEY;
 const lemonStoreId = process.env.LEMONSQUEEZY_STORE_ID;
-const monthlyVariantId = process.env.LEMONSQUEEZY_MONTHLY_VARIANT_ID;
-const annualVariantId = process.env.LEMONSQUEEZY_ANNUAL_VARIANT_ID;
+const lemonMonthlyVariantId = process.env.LEMONSQUEEZY_MONTHLY_VARIANT_ID;
+const lemonAnnualVariantId = process.env.LEMONSQUEEZY_ANNUAL_VARIANT_ID;
 
 type BillingInterval = "monthly" | "annual";
+
+type CheckoutBody = {
+  interval?: BillingInterval;
+  fullName?: string;
+  phone?: string;
+  country?: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,9 +25,10 @@ export async function POST(request: NextRequest) {
       !supabaseServiceRoleKey ||
       !lemonApiKey ||
       !lemonStoreId ||
-      !monthlyVariantId ||
-      !annualVariantId
+      !lemonMonthlyVariantId ||
+      !lemonAnnualVariantId
     ) {
+      console.error("Flowex billing environment variables are missing.");
       return NextResponse.json(
         { error: "Billing is not configured correctly." },
         { status: 500 }
@@ -28,26 +36,20 @@ export async function POST(request: NextRequest) {
     }
 
     const authorization = request.headers.get("authorization");
+    const accessToken = authorization?.startsWith("Bearer ")
+      ? authorization.slice(7)
+      : null;
 
-    if (!authorization?.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 }
-      );
+    if (!accessToken) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const accessToken = authorization.slice("Bearer ".length);
-
-    const supabase = createClient(
-      supabaseUrl,
-      supabaseServiceRoleKey,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
 
     const {
       data: { user },
@@ -55,102 +57,102 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(accessToken);
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const body = await request.json();
-
-    const interval = body?.interval as BillingInterval;
+    const body = (await request.json()) as CheckoutBody;
+    const interval = body.interval;
+    const fullName = body.fullName?.trim();
+    const phone = body.phone?.trim();
+    const country = body.country?.trim().toUpperCase();
 
     if (interval !== "monthly" && interval !== "annual") {
       return NextResponse.json(
-        { error: "Invalid billing interval." },
+        { error: "Choose a valid billing interval." },
+        { status: 400 }
+      );
+    }
+
+    if (!fullName || !phone || !country || !/^[A-Z]{2}$/.test(country)) {
+      return NextResponse.json(
+        { error: "Complete your name, phone number, and country before continuing." },
         { status: 400 }
       );
     }
 
     const variantId =
-      interval === "monthly"
-        ? monthlyVariantId
-        : annualVariantId;
+      interval === "annual" ? lemonAnnualVariantId : lemonMonthlyVariantId;
 
-    const checkoutResponse = await fetch(
-      "https://api.lemonsqueezy.com/v1/checkouts",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/vnd.api+json",
-          "Content-Type": "application/vnd.api+json",
-          Authorization: `Bearer ${lemonApiKey}`,
-        },
-        body: JSON.stringify({
-          data: {
-            type: "checkouts",
-            attributes: {
-              checkout_data: {
-                email: user.email ?? undefined,
-                custom: {
-                  user_id: user.id,
-                  billing_interval: interval,
-                },
+    const lemonResponse = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${lemonApiKey}`,
+      },
+      body: JSON.stringify({
+        data: {
+          type: "checkouts",
+          attributes: {
+            checkout_data: {
+              email: user.email ?? undefined,
+              name: fullName,
+              billing_address: {
+                country,
               },
-              product_options: {
-                redirect_url:
-                  "https://flowex-snowy.vercel.app/dashboard",
+              custom: {
+                user_id: user.id,
+                billing_interval: interval,
+                phone,
+                country,
               },
             },
-            relationships: {
-              store: {
-                data: {
-                  type: "stores",
-                  id: lemonStoreId,
-                },
+            product_options: {
+              redirect_url: "https://flowex-snowy.vercel.app/dashboard",
+              enabled_variants: [Number(variantId)],
+            },
+          },
+          relationships: {
+            store: {
+              data: {
+                type: "stores",
+                id: lemonStoreId,
               },
-              variant: {
-                data: {
-                  type: "variants",
-                  id: variantId,
-                },
+            },
+            variant: {
+              data: {
+                type: "variants",
+                id: variantId,
               },
             },
           },
-        }),
-      }
-    );
+        },
+      }),
+    });
 
-    const checkoutData = await checkoutResponse.json();
+    const checkoutData = await lemonResponse.json();
 
-    if (!checkoutResponse.ok) {
-      console.error(
-        "Lemon Squeezy checkout error:",
-        checkoutData
+    if (!lemonResponse.ok) {
+      console.error("Lemon Squeezy checkout error:", checkoutData);
+      return NextResponse.json(
+        { error: "Could not create checkout." },
+        { status: lemonResponse.status }
       );
+    }
 
+    const checkoutUrl = checkoutData?.data?.attributes?.url;
+
+    if (!checkoutUrl) {
+      console.error("Lemon Squeezy checkout URL missing:", checkoutData);
       return NextResponse.json(
         { error: "Could not create checkout." },
         { status: 500 }
       );
     }
 
-    const checkoutUrl =
-      checkoutData?.data?.attributes?.url;
-
-    if (!checkoutUrl) {
-      return NextResponse.json(
-        { error: "Checkout URL was not returned." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      url: checkoutUrl,
-    });
+    return NextResponse.json({ url: checkoutUrl });
   } catch (error) {
-    console.error("Flowex billing checkout error:", error);
-
+    console.error("Flowex checkout route error:", error);
     return NextResponse.json(
       { error: "Could not create checkout." },
       { status: 500 }
