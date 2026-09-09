@@ -14,8 +14,7 @@ type BillingInterval = "monthly" | "annual";
 type CheckoutBody = {
   interval?: BillingInterval;
   fullName?: string;
-  phone?: string;
-  country?: string;
+  email?: string;
 };
 
 export async function POST(request: NextRequest) {
@@ -63,8 +62,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as CheckoutBody;
     const interval = body.interval;
     const fullName = body.fullName?.trim();
-    const phone = body.phone?.trim();
-    const country = body.country?.trim().toUpperCase();
+    const email = body.email?.trim();
 
     if (interval !== "monthly" && interval !== "annual") {
       return NextResponse.json(
@@ -73,9 +71,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!fullName || !phone || !country || !/^[A-Z]{2}$/.test(country)) {
+    if (!fullName || !email) {
       return NextResponse.json(
-        { error: "Complete your name, phone number, and country before continuing." },
+        { error: "Please enter your name and email." },
         { status: 400 }
       );
     }
@@ -95,16 +93,11 @@ export async function POST(request: NextRequest) {
           type: "checkouts",
           attributes: {
             checkout_data: {
-              email: user.email ?? undefined,
+              email,
               name: fullName,
-              billing_address: {
-                country,
-              },
               custom: {
                 user_id: user.id,
                 billing_interval: interval,
-                phone,
-                country,
               },
             },
             product_options: {

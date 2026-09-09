@@ -97,9 +97,7 @@ export default function CheckoutPage() {
         );
 
         setEmail(
-          isLoggedIn
-            ? accountEmail
-            : draft.email || ""
+          draft.email || accountEmail || ""
         );
 
 
@@ -124,26 +122,6 @@ export default function CheckoutPage() {
     authReady,
     isLoggedIn,
     name,
-    accountEmail,
-  ]);
-
-  /*
-    If authentication happened after a guest
-    prepared checkout, always use the authenticated
-    Flowex email address.
-  */
-
-  useEffect(() => {
-    if (
-      authReady &&
-      isLoggedIn &&
-      accountEmail
-    ) {
-      setEmail(accountEmail);
-    }
-  }, [
-    authReady,
-    isLoggedIn,
     accountEmail,
   ]);
 
@@ -266,6 +244,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           interval: billingInterval,
           fullName: fullName.trim(),
+          email: email.trim(),
         }),
       });
 
@@ -523,10 +502,9 @@ export default function CheckoutPage() {
                       autoComplete="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      readOnly={isLoggedIn}
                       placeholder="you@company.com"
                       required
-                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 read-only:cursor-default read-only:opacity-70 ${darkInput}`}
+                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 ${darkInput}`}
                     />
                   </div>
                 </div>
