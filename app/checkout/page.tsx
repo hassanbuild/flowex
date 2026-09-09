@@ -344,7 +344,7 @@ export default function CheckoutPage() {
 
   return (
     <main
-      className={`min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 ${darkMain}`}
+      className={`min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 lg:h-screen lg:overflow-hidden ${darkMain}`}
     >
 
       {/* ================= HEADER ================= */}
@@ -353,7 +353,7 @@ export default function CheckoutPage() {
         className={`border-b border-gray-200/70 bg-white/90 backdrop-blur-xl ${darkHeader}`}
       >
 
-        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
+        <div className="mx-auto flex h-[58px] max-w-7xl items-center justify-between px-5 lg:px-7">
 
           <Link href={backPath}>
 
@@ -398,87 +398,69 @@ export default function CheckoutPage() {
 
       {/* ================= CHECKOUT ================= */}
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
+      <section className="relative px-4 py-4 sm:px-6 lg:h-[calc(100vh-58px)] lg:overflow-hidden lg:px-7 lg:py-4">
 
-        <div className="mx-auto max-w-7xl">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-emerald-300/10 blur-3xl" />
+          <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-indigo-400/10 blur-3xl" />
+        </div>
 
-          <div className="mb-5">
+        <div className="relative mx-auto flex h-full max-w-7xl flex-col">
 
-            <p className="text-sm font-semibold text-emerald-600">
-              CHECKOUT
+          <div className="mb-3 flex shrink-0 items-end justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-600">
+                  Flowex Pro Checkout
+                </p>
+              </div>
+              <h1 className={`mt-1 text-2xl font-black tracking-tight sm:text-[28px] ${darkTitle}`}>
+                Start automating in minutes.
+              </h1>
+            </div>
+            <p className={`hidden max-w-md text-right text-xs leading-5 text-gray-500 md:block ${darkMuted}`}>
+              Choose your plan, confirm your account details, then complete payment securely with Lemon Squeezy.
             </p>
-
-            <h1
-              className={`mt-1 text-3xl font-black sm:text-[34px] ${darkTitle}`}
-            >
-              Complete your order.
-            </h1>
-
-            <p
-              className={`mt-1.5 text-sm text-gray-500 ${darkMuted}`}
-            >
-              Start your Flowex Pro trial and automate your lead workflow.
-            </p>
-
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid items-start gap-5 lg:grid-cols-[1.32fr_0.68fr]"
-          >
+          <form onSubmit={handleSubmit} className="grid min-h-0 flex-1 items-stretch gap-4 lg:grid-cols-[1.28fr_0.72fr]">
 
             {/* ================= LEFT ================= */}
-
-            <div className="space-y-4">
+            <div className="grid min-h-0 gap-4 lg:grid-rows-[auto_1fr]">
 
               {/* PLAN */}
-
-              <div
-                className={`rounded-[22px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6 ${darkCard}`}
-              >
-
-                <div>
-
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                    Step 1
-                  </p>
-
-                  <h2
-                    className={`mt-1.5 text-lg font-bold ${darkTitle}`}
-                  >
-                    Choose your plan
-                  </h2>
-
+              <div className={`rounded-[22px] border border-gray-200 bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Step 1</p>
+                    <h2 className={`mt-0.5 text-base font-bold ${darkTitle}`}>Choose your plan</h2>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                    7 DAYS FREE
+                  </span>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() => setBillingInterval("monthly")}
-                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                    className={`group relative rounded-2xl border-2 p-3.5 text-left transition-all ${
                       billingInterval === "monthly"
-                        ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5 app-dark:bg-emerald-500/5"
+                        ? "border-emerald-400 bg-gradient-to-br from-emerald-50 to-cyan-50/50 shadow-[0_8px_30px_rgba(16,185,129,0.10)] dark:bg-none dark:bg-emerald-500/5 app-dark:bg-none app-dark:bg-emerald-500/5"
                         : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    {billingInterval === "monthly" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-black text-white">✓</span>}
+                    <div className="flex items-end justify-between gap-4 pr-6">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className={`text-lg font-bold ${darkTitle}`}>
-                            Monthly
-                          </h3>
-                          <span className="rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-3 py-1 text-[11px] font-bold text-white">
-                            LAUNCH
-                          </span>
-                        </div>
-                        <p className={`mt-1 text-xs text-gray-500 ${darkMuted}`}>
-                          Flowex Pro · 7-day free trial
-                        </p>
+                        <h3 className={`text-base font-bold ${darkTitle}`}>Monthly</h3>
+                        <p className={`mt-0.5 text-[11px] text-gray-500 ${darkMuted}`}>Flexible monthly billing</p>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm text-gray-400 line-through">$25</p>
-                        <p className={`text-2xl font-black ${darkTitle}`}>$15</p>
-                        <p className={`text-xs text-gray-500 ${darkMuted}`}>/month</p>
+                      <div className="text-right">
+                        <span className="mr-1 text-xs text-gray-400 line-through">$25</span>
+                        <span className={`text-2xl font-black ${darkTitle}`}>$15</span>
+                        <span className={`text-[11px] text-gray-500 ${darkMuted}`}>/mo</span>
                       </div>
                     </div>
                   </button>
@@ -486,59 +468,39 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setBillingInterval("annual")}
-                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                    className={`group relative rounded-2xl border-2 p-3.5 text-left transition-all ${
                       billingInterval === "annual"
-                        ? "border-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/5 app-dark:bg-emerald-500/5"
+                        ? "border-indigo-400 bg-gradient-to-br from-cyan-50/60 to-indigo-50 shadow-[0_8px_30px_rgba(79,70,229,0.10)] dark:bg-none dark:bg-indigo-500/5 app-dark:bg-none app-dark:bg-indigo-500/5"
                         : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <span className="absolute -top-2.5 left-3 rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-2.5 py-0.5 text-[9px] font-black text-white">BEST VALUE</span>
+                    {billingInterval === "annual" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[11px] font-black text-white">✓</span>}
+                    <div className="flex items-end justify-between gap-4 pr-6">
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className={`text-lg font-bold ${darkTitle}`}>
-                            Annual
-                          </h3>
-                          <span className="rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-3 py-1 text-[11px] font-bold text-white">
-                            BEST VALUE
-                          </span>
-                        </div>
-                        <p className={`mt-1 text-xs text-gray-500 ${darkMuted}`}>
-                          $120 billed annually · 7-day free trial
-                        </p>
+                        <h3 className={`text-base font-bold ${darkTitle}`}>Annual</h3>
+                        <p className={`mt-0.5 text-[11px] text-gray-500 ${darkMuted}`}>$120 billed yearly</p>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-sm text-gray-400 line-through">$25</p>
-                        <p className={`text-2xl font-black ${darkTitle}`}>$10</p>
-                        <p className={`text-xs text-gray-500 ${darkMuted}`}>/month</p>
+                      <div className="text-right">
+                        <span className="mr-1 text-xs text-gray-400 line-through">$25</span>
+                        <span className={`text-2xl font-black ${darkTitle}`}>$10</span>
+                        <span className={`text-[11px] text-gray-500 ${darkMuted}`}>/mo</span>
                       </div>
                     </div>
                   </button>
                 </div>
-
               </div>
 
               {/* INFORMATION */}
+              <div className={`flex min-h-0 flex-col rounded-[22px] border border-gray-200 bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Step 2</p>
+                  <h2 className={`mt-0.5 text-base font-bold ${darkTitle}`}>Your account details</h2>
+                </div>
 
-              <div
-                className={`rounded-[22px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6 ${darkCard}`}
-              >
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                  Step 2
-                </p>
-
-                <h2
-                  className={`mt-1.5 text-lg font-bold ${darkTitle}`}
-                >
-                  Your information
-                </h2>
-
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="checkout-full-name" className="text-sm font-semibold">
-                      Full name
-                    </label>
+                    <label htmlFor="checkout-full-name" className={`text-xs font-semibold ${darkTitle}`}>Full name</label>
                     <input
                       id="checkout-full-name"
                       name="fullName"
@@ -548,14 +510,12 @@ export default function CheckoutPage() {
                       onChange={(event) => setFullName(event.target.value)}
                       placeholder="Your name"
                       required
-                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 ${darkInput}`}
+                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 ${darkInput}`}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="checkout-email" className="text-sm font-semibold">
-                      Email
-                    </label>
+                    <label htmlFor="checkout-email" className={`text-xs font-semibold ${darkTitle}`}>Email</label>
                     <input
                       id="checkout-email"
                       name="email"
@@ -566,356 +526,118 @@ export default function CheckoutPage() {
                       readOnly={isLoggedIn}
                       placeholder="you@company.com"
                       required
-                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 read-only:cursor-default read-only:opacity-70 ${darkInput}`}
+                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 read-only:cursor-default read-only:opacity-70 ${darkInput}`}
                     />
                   </div>
-
                 </div>
 
-              </div>
-
-              {/* PAYMENT */}
-
-              <div
-                className={`rounded-[22px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6 ${darkCard}`}
-              >
-
-                <div className="flex items-start justify-between gap-4">
-
+                <div className={`mt-3 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 via-cyan-50/50 to-indigo-50/60 p-3 dark:border-emerald-500/15 dark:bg-none dark:bg-[#0b0f14] app-dark:border-emerald-500/15 app-dark:bg-none app-dark:bg-[#0b0f14]`}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-sm shadow-sm dark:bg-slate-800 app-dark:bg-slate-800">🛡️</div>
                   <div>
-
-                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                      Step 3
+                    <p className={`text-xs font-bold ${darkTitle}`}>Built for privacy. Your data stays yours.</p>
+                    <p className={`mt-0.5 text-[11px] leading-4 text-gray-500 ${darkMuted}`}>
+                      Flowex only keeps the account information needed to provide the service. Payment and billing details are handled securely by Lemon Squeezy — Flowex never stores your card details.
                     </p>
-
-                    <h2
-                      className={`mt-1.5 text-lg font-bold ${darkTitle}`}
-                    >
-                      Payment method
-                    </h2>
-
                   </div>
-
-                  <div
-                    className={`rounded-xl border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 ${
-                      isLoggedIn
-                        ? "app-dark:border-slate-700 app-dark:text-slate-400"
-                        : "dark:border-slate-700 dark:text-slate-400"
-                    }`}
-                  >
-                    🔒 Secure
-                  </div>
-
                 </div>
 
-                <div className="mt-4 rounded-2xl border-2 border-emerald-400 p-4">
-
-                  <div className="flex items-center justify-between gap-4">
-
-                    <div className="flex items-center gap-3">
-
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-emerald-500">
-
-                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-
-                      </div>
-
-                      <div>
-
-                        <p
-                          className={`font-semibold ${darkTitle}`}
-                        >
-                          Credit or Debit Card
-                        </p>
-
-                        <p
-                          className={`mt-1 text-xs text-gray-400 ${darkMuted}`}
-                        >
-                          Visa, Mastercard and supported cards
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    <span className="text-xl">
-                      💳
-                    </span>
-
-                  </div>
-
+                <div className={`mt-auto hidden items-center gap-5 pt-3 text-[11px] font-medium text-gray-400 sm:flex ${darkMuted}`}>
+                  <span>✓ No card data stored</span>
+                  <span>✓ Cancel anytime</span>
+                  <span>✓ Secure billing</span>
                 </div>
-
-                {/* LEMON SQUEEZY HOSTED CHECKOUT */}
-
-                <div
-                  className={`mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 ${
-                    isLoggedIn
-                      ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
-                      : "dark:border-slate-700 dark:bg-[#0b0f14]"
-                  }`}
-                >
-                  <p className={`text-sm font-semibold ${darkTitle}`}>
-                    Built for privacy. Your data stays yours.
-                  </p>
-                  <p className={`mt-1.5 text-xs leading-5 text-gray-400 ${darkMuted}`}>
-                    Flowex only keeps the account information needed to provide the service. Payment and billing details are collected and handled securely by Lemon Squeezy — Flowex never stores your card details.
-                  </p>
-                </div>
-
               </div>
-
             </div>
 
             {/* ================= SUMMARY ================= */}
-
-            <aside className="lg:sticky lg:top-4">
-
-              <div
-                className={`rounded-[24px] border border-gray-200 bg-white p-5 shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-6 ${darkCard}`}
-              >
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">
-                  Order Summary
-                </p>
-
-                <div className="mt-4 flex items-start justify-between gap-4">
-
-                  <div>
-
-                    <h2
-                      className={`text-lg font-black ${darkTitle}`}
-                    >
-                      Flowex Pro
-                    </h2>
-
-                    <p
-                      className={`mt-1 text-xs leading-5 text-gray-500 ${darkMuted}`}
-                    >
-                      {billingInterval === "monthly"
-                        ? "Monthly subscription"
-                        : "Annual subscription"}
-                    </p>
-
-                  </div>
-
-                  <div className="text-right">
-
-                    <p className="text-sm text-gray-400 line-through">
-                      $25
-                    </p>
-
-                    <p
-                      className={`text-2xl font-black ${darkTitle}`}
-                    >
-                      {billingInterval === "monthly" ? "$15" : "$10"}
-                    </p>
-
-                    <p
-                      className={`text-xs text-gray-400 ${darkMuted}`}
-                    >
-                      /month
-                    </p>
-
-                  </div>
-
+            <aside className="min-h-0">
+              <div className={`flex h-full flex-col rounded-[24px] border border-gray-200 bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-5 ${darkCard}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Order Summary</p>
+                  <span className="rounded-lg bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-500 dark:bg-[#0b0f14] app-dark:bg-[#0b0f14]">🔒 Secure</span>
                 </div>
 
-                <div
-                  className={`my-4 h-px bg-gray-100 ${
-                    isLoggedIn
-                      ? "app-dark:bg-slate-800"
-                      : "dark:bg-slate-800"
-                  }`}
-                />
+                <div className="mt-3 rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#172554] to-[#064e3b] p-4 text-white shadow-lg">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-300">Flowex Pro</p>
+                      <h2 className="mt-1 text-xl font-black">Every lead. Automated.</h2>
+                      <p className="mt-1 text-[11px] text-slate-300">7-day free trial included</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400 line-through">$25</p>
+                      <p className="text-3xl font-black">{billingInterval === "monthly" ? "$15" : "$10"}</p>
+                      <p className="text-[10px] text-slate-300">/month</p>
+                    </div>
+                  </div>
+                </div>
 
-                <div className="space-y-2.5 text-sm">
-
+                <div className={`mt-3 space-y-2 text-xs ${darkMuted}`}>
                   <div className="flex items-center justify-between">
-
-                    <span
-                      className={`text-gray-500 ${darkMuted}`}
-                    >
-                      7-Day Free Trial
-                    </span>
-
-                    <span className="font-semibold text-emerald-600">
-                      Included
-                    </span>
-
+                    <span>Due today</span><span className="font-bold text-emerald-600">$0.00</span>
                   </div>
-
                   <div className="flex items-center justify-between">
-
-                    <span
-                      className={`text-gray-500 ${darkMuted}`}
-                    >
-                      Due today
-                    </span>
-
-                    <span
-                      className={`font-bold ${darkTitle}`}
-                    >
-                      $0.00
-                    </span>
-
+                    <span>After trial</span><span className={`font-bold ${darkTitle}`}>{billingInterval === "monthly" ? "$15/month" : "$120/year"}</span>
                   </div>
-
-                  <div className="flex items-center justify-between">
-
-                    <span
-                      className={`text-gray-500 ${darkMuted}`}
-                    >
-                      After trial
-                    </span>
-
-                    <span
-                      className={`font-bold ${darkTitle}`}
-                    >
-                      {billingInterval === "monthly"
-                        ? "$15/month"
-                        : "$120/year"}
-                    </span>
-
-                  </div>
-
                 </div>
 
-                <div
-                  className={`my-4 h-px bg-gray-100 ${
-                    isLoggedIn
-                      ? "app-dark:bg-slate-800"
-                      : "dark:bg-slate-800"
-                  }`}
-                />
+                <div className={`my-3 h-px bg-gray-100 ${isLoggedIn ? "app-dark:bg-slate-800" : "dark:bg-slate-800"}`} />
 
-                <div
-                  className={`grid gap-2 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-1 ${darkMuted}`}
-                >
-
-                  <p>
-                    ✓ Unlimited Leads
-                  </p>
-
-                  <p>
-                    ✓ Instant Customer Replies
-                  </p>
-
-                  <p>
-                    ✓ Lead Storage & Integrations
-                  </p>
-
-                  <p>
-                    ✓ Team Notifications
-                  </p>
-
-                  <p>
-                    ✓ Automatic Follow-Ups
-                  </p>
-
-                  <p>
-                    ✓ Live Dashboard
-                  </p>
-
+                <div className={`grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-gray-600 ${darkMuted}`}>
+                  <p>✓ Lead capture</p>
+                  <p>✓ Instant replies</p>
+                  <p>✓ Integrations</p>
+                  <p>✓ Team alerts</p>
+                  <p>✓ Follow-ups</p>
+                  <p>✓ Live dashboard</p>
                 </div>
 
-                <div
-                  className={`my-4 h-px bg-gray-100 ${
-                    isLoggedIn
-                      ? "app-dark:bg-slate-800"
-                      : "dark:bg-slate-800"
-                  }`}
-                />
+                <div className="mt-auto pt-3">
+                  <label htmlFor="checkout-terms" className="mb-2.5 flex cursor-pointer items-start gap-2.5">
+                    <input
+                      id="checkout-terms"
+                      name="acceptedTerms"
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(event) => setAcceptedTerms(event.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#4b52f7]"
+                    />
+                    <span className={`text-[10.5px] leading-4 text-gray-500 ${darkMuted}`}>
+                      I agree to the{" "}
+                      <Link href="/terms" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">Terms of Service</Link>
+                      {" "}and{" "}
+                      <Link href="/privacy" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">Privacy Policy</Link>, and authorize {billingInterval === "monthly" ? "$15/month" : "$120/year"} after my 7-day free trial unless cancelled beforehand.
+                    </span>
+                  </label>
 
-                <label htmlFor="checkout-terms" className="mb-4 flex cursor-pointer items-start gap-2.5">
-                  <input
-                    id="checkout-terms"
-                    name="acceptedTerms"
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(event) => setAcceptedTerms(event.target.checked)}
-                    className="mt-1 h-4 w-4 shrink-0 cursor-pointer accent-[#4b52f7]"
-                  />
-                  <span className={`text-xs leading-5 text-gray-500 ${darkMuted}`}>
-                    I agree to the{" "}
-                    <Link href="/terms" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">
-                      Terms of Service
-                    </Link>
-                    ,{" "}
-                    <Link href="/privacy" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">
-                      Privacy Policy
-                    </Link>
-                    , and authorize Flowex to charge{" "}
-                    {billingInterval === "monthly" ? "$15/month" : "$120/year"}{" "}
-                    after my 7-day free trial unless I cancel beforehand.
-                  </span>
-                </label>
+                  {checkoutError && (
+                    <div className="mb-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
+                      {checkoutError}
+                    </div>
+                  )}
 
-                {checkoutError && (
-                  <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
-                    {checkoutError}
-                  </div>
-                )}
+                  {isTrial ? (
+                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300">Trial Already Active</button>
+                  ) : isPro ? (
+                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300">Manage Current Plan</button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isRedirecting}
+                      className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isRedirecting ? "Opening Secure Checkout..." : isLoggedIn ? "Start 7-Day Free Trial" : "Proceed"}
+                    </button>
+                  )}
 
-                {isTrial ? (
-
-                  <button
-                    type="submit"
-                    className="w-full rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-500 transition dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300"
-                  >
-                    Trial Already Active
-                  </button>
-
-                ) : isPro ? (
-
-                  <button
-                    type="submit"
-                    className="w-full rounded-xl bg-gray-100 py-3 text-sm font-bold text-gray-500 transition dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300"
-                  >
-                    Manage Current Plan
-                  </button>
-
-                ) : (
-
-                  <button
-                    type="submit"
-                    disabled={isRedirecting}
-                    className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isRedirecting
-                      ? "Opening Secure Checkout..."
-                      : isLoggedIn
-                        ? "Start 7-Day Free Trial"
-                        : "Proceed"}
-                  </button>
-
-                )}
-
-                <p
-                  className={`mt-3 text-center text-xs leading-5 text-gray-400 ${darkMuted}`}
-                >
-                  You won&apos;t be charged today.
-                  Cancel anytime before your trial ends.
-                </p>
-
-                <div
-                  className={`mt-3 rounded-xl bg-gray-50 p-2.5 text-center text-xs text-gray-400 ${
-                    isLoggedIn
-                      ? "app-dark:bg-[#0b0f14] app-dark:text-slate-500"
-                      : "dark:bg-[#0b0f14] dark:text-slate-500"
-                  }`}
-                >
-                  🔒 Secure checkout
+                  <p className={`mt-2 text-center text-[10px] leading-4 text-gray-400 ${darkMuted}`}>
+                    No charge today · Cancel before your trial ends
+                  </p>
                 </div>
-
               </div>
-
             </aside>
-
           </form>
-
         </div>
-
       </section>
 
       {/* ================= AUTH CHOICE ================= */}
