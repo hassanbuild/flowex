@@ -35,6 +35,19 @@ export const runtime = "nodejs";
 const MAX_FIELDS = 100;
 const MAX_KEY_LENGTH = 120;
 const MAX_VALUE_LENGTH = 10000;
+const MAX_REQUEST_BYTES = 1_000_000;
+const INTAKE_RATE_LIMIT = 10;
+const INTAKE_RATE_WINDOW_MS = 60 * 1000;
+
+function getClientIp(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return request.headers.get("x-real-ip")?.trim() || "unknown";
+}
 
 type IntakePayload = Record<string, unknown>;
 
@@ -193,6 +206,53 @@ async function readPayload(
   }
 
   throw new Error("UNSUPPORTED_CONTENT_TYPE");
+}
+
+async function ensureRequestSize(request: Request) {
+  const contentLength = request.headers.get("content-length");
+
+  if (contentLength) {
+    const length = Number(contentLength);
+
+    if (!Number.isFinite(length) || length < 0) {
+      throw new Error("INVALID_CONTENT_LENGTH");
+    }
+
+    if (length > MAX_REQUEST_BYTES) {
+      throw new Error("REQUEST_TOO_LARGE");
+    }
+  }
+
+  if (!request.body) {
+    return;
+  }
+
+  const reader = request.clone().body?.getReader();
+
+  if (!reader) {
+    return;
+  }
+
+  let size = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        return;
+      }
+
+      size += value.byteLength;
+
+      if (size > MAX_REQUEST_BYTES) {
+        await reader.cancel();
+        throw new Error("REQUEST_TOO_LARGE");
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function parseDetectedFields(value: unknown): DetectedField[] {
@@ -2094,7 +2154,7 @@ function originMatches(
   const origin = request.headers.get("origin");
 
   if (!origin) {
-    return true;
+    return false;
   }
 
   return !!allowedOrigin && origin === allowedOrigin;
@@ -2297,6 +2357,67 @@ export async function POST(
           "This submission did not come from the connected form.",
       },
       403,
+      allowedOrigin
+    );
+  }
+
+  const clientIp = getClientIp(request);
+  const windowStart = new Date(
+    Math.floor(Date.now() / INTAKE_RATE_WINDOW_MS) *
+      INTAKE_RATE_WINDOW_MS
+  ).toISOString();
+
+  const { data: rateLimitAllowed, error: rateLimitError } =
+    await supabase.rpc("check_intake_rate_limit", {
+      p_source_id: source.id,
+      p_client_ip: clientIp,
+      p_window_start: windowStart,
+      p_limit: INTAKE_RATE_LIMIT,
+    });
+
+  if (rateLimitError) {
+    console.error(
+      "Flowex intake rate-limit check error:",
+      rateLimitError.message
+    );
+
+    return json(
+      {
+        success: false,
+        error: "Flowex could not verify this submission.",
+      },
+      500,
+      allowedOrigin
+    );
+  }
+
+  if (rateLimitAllowed !== true) {
+    return json(
+      {
+        success: false,
+        error:
+          "Too many submissions. Please try again in a minute.",
+      },
+      429,
+      allowedOrigin
+    );
+  }
+
+  try {
+    await ensureRequestSize(request);
+  } catch (error) {
+    const code =
+      error instanceof Error ? error.message : "";
+
+    return json(
+      {
+        success: false,
+        error:
+          code === "REQUEST_TOO_LARGE"
+            ? "Submission is too large."
+            : "Invalid submission size.",
+      },
+      code === "REQUEST_TOO_LARGE" ? 413 : 400,
       allowedOrigin
     );
   }
