@@ -1,8 +1,6 @@
-import { lookup } from "dns/promises";
-import { isIP } from "net";
-
 import { NextResponse } from "next/server";
 
+import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -36,130 +34,6 @@ type BrowserField = {
   label: string;
   required: boolean;
 };
-
-const safeHostCache =
-  new Map<string, boolean>();
-
-function isPrivateIPv4(ip: string) {
-  const parts =
-    ip.split(".").map(Number);
-
-  if (parts.length !== 4) {
-    return true;
-  }
-
-  const [a, b] = parts;
-
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 100 && b >= 64 && b <= 127)
-  );
-}
-
-function isPrivateIPv6(ip: string) {
-  const value =
-    ip.toLowerCase();
-
-  return (
-    value === "::" ||
-    value === "::1" ||
-    value.startsWith("fc") ||
-    value.startsWith("fd") ||
-    value.startsWith("fe8") ||
-    value.startsWith("fe9") ||
-    value.startsWith("fea") ||
-    value.startsWith("feb")
-  );
-}
-
-function isPrivateIP(ip: string) {
-  const version =
-    isIP(ip);
-
-  if (version === 4) {
-    return isPrivateIPv4(ip);
-  }
-
-  if (version === 6) {
-    return isPrivateIPv6(ip);
-  }
-
-  return true;
-}
-
-async function isSafePublicUrl(value: string) {
-  let url: URL;
-
-  try {
-    url = new URL(value);
-  } catch {
-    return false;
-  }
-
-  if (
-    url.protocol !== "https:" &&
-    url.protocol !== "http:"
-  ) {
-    return false;
-  }
-
-  if (url.username || url.password) {
-    return false;
-  }
-
-  const hostname =
-    url.hostname
-      .toLowerCase()
-      .replace(/\.$/, "");
-
-  if (
-    hostname === "localhost" ||
-    hostname.endsWith(".localhost") ||
-    hostname.endsWith(".local") ||
-    hostname.endsWith(".internal")
-  ) {
-    return false;
-  }
-
-  if (safeHostCache.has(hostname)) {
-    return safeHostCache.get(hostname) === true;
-  }
-
-  if (isIP(hostname)) {
-    const safe = !isPrivateIP(hostname);
-    safeHostCache.set(hostname, safe);
-    return safe;
-  }
-
-  try {
-    const addresses =
-      await lookup(
-        hostname,
-        {
-          all: true,
-          verbatim: true,
-        }
-      );
-
-    const safe =
-      addresses.length > 0 &&
-      addresses.every(
-        (entry) =>
-          !isPrivateIP(entry.address)
-      );
-
-    safeHostCache.set(hostname, safe);
-    return safe;
-  } catch {
-    safeHostCache.set(hostname, false);
-    return false;
-  }
-}
 
 function cleanKey(value: string) {
   return value
@@ -313,7 +187,7 @@ async function inspectRenderedForm(
   sourceUrl: string
 ) {
   if (
-    !(await isSafePublicUrl(sourceUrl))
+    !(await isSafeExternalUrl(sourceUrl))
   ) {
     throw new Error("UNSAFE_URL");
   }
@@ -394,7 +268,7 @@ async function inspectRenderedForm(
         }
 
         const safe =
-          await isSafePublicUrl(
+          await isSafeExternalUrl(
             requestUrl
           );
 
@@ -432,7 +306,7 @@ async function inspectRenderedForm(
       page.url();
 
     if (
-      !(await isSafePublicUrl(finalUrl))
+      !(await isSafeExternalUrl(finalUrl))
     ) {
       throw new Error(
         "UNSAFE_URL"

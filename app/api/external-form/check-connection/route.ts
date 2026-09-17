@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -192,6 +193,16 @@ export async function POST(
     );
   }
 
+  if (!(await isSafeExternalUrl(config.source_url))) {
+    return NextResponse.json(
+      {
+        connected: false,
+        error: "The connected form URL is unavailable.",
+      },
+      { status: 422 }
+    );
+  }
+
   let connected = false;
 
   /*
@@ -249,6 +260,24 @@ export async function POST(
 
     const page =
       await browser.newPage();
+
+    await page.setRequestInterception(true);
+
+    page.on("request", async (request) => {
+      const requestUrl = request.url();
+
+      if (requestUrl.startsWith("data:") || requestUrl.startsWith("blob:")) {
+        await request.continue();
+        return;
+      }
+
+      if (!(await isSafeExternalUrl(requestUrl))) {
+        await request.abort("blockedbyclient");
+        return;
+      }
+
+      await request.continue();
+    });
 
     /*
       A newly published Lovable project can take a moment to
