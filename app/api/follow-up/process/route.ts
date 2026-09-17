@@ -45,6 +45,7 @@ async function sendFollowUpEmail(
     to: string;
     subject: string;
     text: string;
+    messageId: string;
   }
 ) {
   const connection =
@@ -108,6 +109,7 @@ async function sendFollowUpEmail(
     `From: ${connection.email}`,
     `To: ${input.to}`,
     `Reply-To: ${connection.email}`,
+    `Message-ID: ${input.messageId}`,
     `Subject: ${encodeEmailHeader(input.subject)}`,
     "MIME-Version: 1.0",
     'Content-Type: text/plain; charset="UTF-8"',
@@ -119,7 +121,7 @@ async function sendFollowUpEmail(
     ).toString("base64"),
   ].join("\r\n");
 
-  await gmail.users.messages.send({
+  const response = await gmail.users.messages.send({
     userId: "me",
     requestBody: {
       raw: Buffer.from(
@@ -128,6 +130,44 @@ async function sendFollowUpEmail(
       ).toString("base64url"),
     },
   });
+
+  if (!response.data.id) {
+    throw new Error("Gmail did not return a message ID.");
+  }
+
+  return response.data.id;
+}
+
+function followUpMessageId(leadId: string) {
+  return `<flowex-follow-up-${leadId}@flowex.app>`;
+}
+
+async function findFollowUpEmail(
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  messageId: string
+) {
+  const connection = await getGmailConnection(supabase, userId);
+
+  if (!connection) {
+    throw new Error("Connected Flowex Gmail account is unavailable.");
+  }
+
+  const oauth2Client = createGoogleOAuthClient();
+  oauth2Client.setCredentials(connection.credentials);
+
+  const gmail = google.gmail({
+    version: "v1",
+    auth: oauth2Client,
+  });
+
+  const response = await gmail.users.messages.list({
+    userId: "me",
+    q: `rfc822msgid:${messageId.slice(1, -1)}`,
+    maxResults: 1,
+  });
+
+  return response.data.messages?.[0]?.id || null;
 }
 
 function authorized(request: Request) {
@@ -237,6 +277,30 @@ export async function GET(
       continue;
     }
 
+    const claimToken = crypto.randomUUID();
+
+    const {
+      data: claimed,
+      error: claimError,
+    } = await supabase.rpc("claim_due_follow_up", {
+      p_lead_id: lead.id,
+      p_claim_token: claimToken,
+    });
+
+    if (claimError) {
+      failed += 1;
+      console.error(
+        "Flowex follow-up claim error:",
+        claimError.message
+      );
+      continue;
+    }
+
+    if (claimed !== true) {
+      skipped += 1;
+      continue;
+    }
+
     const {
       data: settings,
     } =
@@ -266,8 +330,11 @@ export async function GET(
         .from("leads")
         .update({
           follow_up_due_at: null,
+          follow_up_claim_token: null,
+          follow_up_claimed_at: null,
         })
-        .eq("id", lead.id);
+        .eq("id", lead.id)
+        .eq("follow_up_claim_token", claimToken);
 
       skipped += 1;
       continue;
@@ -289,31 +356,54 @@ export async function GET(
         )
         .maybeSingle();
 
+    let gmailMessageId: string | null = null;
+
     try {
-      await sendFollowUpEmail(
+      const messageId = followUpMessageId(lead.id);
+      gmailMessageId = await findFollowUpEmail(
         supabase,
-        {
-          userId:
-            lead.user_id,
-          to:
-            lead.email,
-          subject:
-            `Follow-up — ${
-              flow?.name ||
-              "Flowex"
-            }`,
-          text:
-            settings.message.trim(),
-        }
+        lead.user_id,
+        messageId
       );
 
-      await supabase
+      if (!gmailMessageId) {
+        gmailMessageId = await sendFollowUpEmail(
+          supabase,
+          {
+            userId:
+              lead.user_id,
+            to:
+              lead.email,
+            subject:
+              `Follow-up — ${
+                flow?.name ||
+                "Flowex"
+              }`,
+            text:
+              settings.message.trim(),
+            messageId,
+          }
+        );
+      }
+
+      if (!gmailMessageId) {
+        throw new Error("Gmail did not return a message ID.");
+      }
+
+      const {
+        data: finalizedLead,
+        error: finalizeError,
+      } = await supabase
         .from("leads")
         .update({
           follow_up_sent_at:
             new Date().toISOString(),
+          follow_up_claim_token: null,
+          follow_up_claimed_at: null,
+          follow_up_gmail_message_id: gmailMessageId,
         })
         .eq("id", lead.id)
+        .eq("follow_up_claim_token", claimToken)
         .eq("status", "new")
         .is(
           "contacted_at",
@@ -322,10 +412,47 @@ export async function GET(
         .is(
           "follow_up_sent_at",
           null
+        )
+        .select("id")
+        .maybeSingle();
+
+      if (finalizeError || !finalizedLead) {
+        throw new Error(
+          finalizeError?.message ||
+            "Flowex could not finalize the follow-up."
         );
+      }
 
       sent += 1;
     } catch (error) {
+      if (!gmailMessageId) {
+        const messageId = followUpMessageId(lead.id);
+
+        gmailMessageId = await findFollowUpEmail(
+          supabase,
+          lead.user_id,
+          messageId
+        ).catch(() => null);
+      }
+
+      if (!gmailMessageId) {
+        const { error: releaseError } = await supabase
+          .from("leads")
+          .update({
+            follow_up_claim_token: null,
+            follow_up_claimed_at: null,
+          })
+          .eq("id", lead.id)
+          .eq("follow_up_claim_token", claimToken);
+
+        if (releaseError) {
+          console.error(
+            "Flowex follow-up claim release error:",
+            releaseError.message
+          );
+        }
+      }
+
       failed += 1;
       console.error(
         "Flowex follow-up delivery error:",
