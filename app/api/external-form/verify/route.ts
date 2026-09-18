@@ -203,17 +203,11 @@ async function inspectRenderedForm(
   ] =
     await Promise.all([
       import("puppeteer-core"),
-      import("@sparticuz/chromium-min"),
+      import("@sparticuz/chromium"),
     ]);
 
-  const chromiumPackUrl =
-    process.env.CHROMIUM_REMOTE_EXEC_PATH ||
-    "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
-
   const executablePath =
-    await chromium.executablePath(
-      chromiumPackUrl
-    );
+    await chromium.executablePath();
 
   const browser =
     await puppeteer.launch({
