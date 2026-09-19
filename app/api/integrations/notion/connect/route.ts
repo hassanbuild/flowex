@@ -6,6 +6,7 @@ import {
   NOTION_PROVIDER,
   getNotionOAuthConfig,
 } from "@/lib/integrations/notion";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -81,6 +82,13 @@ export async function GET(
     );
   }
 
+  const accessError =
+    await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
+  }
+
   const {
     data: connection,
   } =
@@ -147,6 +155,13 @@ export async function POST(
         status: 401,
       }
     );
+  }
+
+  const accessError =
+    await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   let body: {

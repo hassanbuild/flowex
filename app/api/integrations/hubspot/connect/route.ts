@@ -7,6 +7,7 @@ import {
   HUBSPOT_SCOPES,
   getHubSpotOAuthConfig,
 } from "@/lib/integrations/hubspot";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -70,6 +71,13 @@ export async function GET(
         status: 401,
       }
     );
+  }
+
+  const accessError =
+    await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   const {
@@ -136,6 +144,13 @@ export async function POST(
         status: 401,
       }
     );
+  }
+
+  const accessError =
+    await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   let body: {

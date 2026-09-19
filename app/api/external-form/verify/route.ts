@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -580,6 +581,12 @@ export async function POST(
     );
   }
 
+  const accessError = await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
+  }
+
   let body:
     VerifyBody;
 
@@ -1033,6 +1040,12 @@ export async function DELETE(
         status: 401,
       }
     );
+  }
+
+  const accessError = await requirePremiumAccess(auth.user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   let body:

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 
 import {
   NOTION_API_URL,
@@ -611,6 +612,9 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
+
+  const accessError = await requirePremiumAccess(auth.user.id);
+  if (accessError) return accessError;
 
   let body: Record<string, unknown>;
 

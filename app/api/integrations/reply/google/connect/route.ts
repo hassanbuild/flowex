@@ -60,6 +60,10 @@ export async function POST(
     );
   }
 
+  if ("accessError" in auth) {
+    return auth.accessError;
+  }
+
   const body =
     (await request
       .json()

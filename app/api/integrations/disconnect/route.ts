@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -114,6 +115,9 @@ export async function POST(
       }
     );
   }
+
+  const accessError = await requirePremiumAccess(auth.user.id);
+  if (accessError) return accessError;
 
   const body =
     (await request

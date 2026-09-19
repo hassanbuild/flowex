@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import {
   AIRTABLE_API_URL,
   AIRTABLE_PROVIDER,
@@ -518,6 +519,9 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
+
+  const accessError = await requirePremiumAccess(auth.user.id);
+  if (accessError) return accessError;
 
   let body: Record<string, unknown>;
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -191,6 +192,12 @@ export async function POST(
         status: 422,
       }
     );
+  }
+
+  const accessError = await requirePremiumAccess(user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   if (!(await isSafeExternalUrl(config.source_url))) {

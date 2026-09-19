@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 
 export async function authenticateRequest(
   request: Request
@@ -35,6 +36,12 @@ export async function authenticateRequest(
     !user
   ) {
     return null;
+  }
+
+  const accessError = await requirePremiumAccess(user.id);
+
+  if (accessError) {
+    return { accessError };
   }
 
   return {

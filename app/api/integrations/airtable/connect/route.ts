@@ -9,6 +9,7 @@ import {
 } from "@/lib/integrations/airtable";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 
 export const runtime = "nodejs";
 
@@ -80,6 +81,9 @@ export async function GET(
     );
   }
 
+  const accessError = await requirePremiumAccess(auth.user.id);
+  if (accessError) return accessError;
+
   const {
     data: connection,
   } =
@@ -147,6 +151,9 @@ export async function POST(
       }
     );
   }
+
+  const accessError = await requirePremiumAccess(auth.user.id);
+  if (accessError) return accessError;
 
   try {
     getAirtableOAuthConfig();

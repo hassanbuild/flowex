@@ -8,6 +8,7 @@ import {
   createMicrosoftPkce,
   getMicrosoftOAuthConfig,
 } from "@/lib/integrations/microsoft";
+import { requirePremiumAccess } from "@/lib/billing/plan";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -83,6 +84,13 @@ export async function GET(
         status: 401,
       }
     );
+  }
+
+  const accessError =
+    await requirePremiumAccess(user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   const {
@@ -202,6 +210,13 @@ export async function POST(
         status: 401,
       }
     );
+  }
+
+  const accessError =
+    await requirePremiumAccess(user.id);
+
+  if (accessError) {
+    return accessError;
   }
 
   let body: {

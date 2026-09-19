@@ -24,6 +24,10 @@ export async function GET(
     );
   }
 
+  if ("accessError" in auth) {
+    return auth.accessError;
+  }
+
   const url =
     new URL(
       request.url
@@ -126,6 +130,10 @@ export async function POST(
         status: 401,
       }
     );
+  }
+
+  if ("accessError" in auth) {
+    return auth.accessError;
   }
 
   const body =
