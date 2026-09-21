@@ -208,6 +208,21 @@ export async function POST(request: NextRequest) {
     const status =
       attributes.status?.toString() ?? "";
 
+    const providerUpdatedAt =
+      typeof attributes.updated_at === "string"
+        ? attributes.updated_at
+        : "";
+
+    if (
+      !providerUpdatedAt ||
+      Number.isNaN(new Date(providerUpdatedAt).getTime())
+    ) {
+      return NextResponse.json(
+        { error: "Invalid subscription payload." },
+        { status: 400 }
+      );
+    }
+
     const trialEndsAt =
       attributes.trial_ends_at ?? null;
 
@@ -250,89 +265,40 @@ export async function POST(request: NextRequest) {
       billingInterval = "annual";
     }
 
-    const subscriptionValues = {
-      plan: flowexPlan,
-      lemon_squeezy_customer_id: customerId,
-      lemon_squeezy_subscription_id: subscriptionId,
-      lemon_squeezy_variant_id: variantId,
-      lemon_squeezy_status: status,
-      billing_interval: billingInterval,
+    const deliveryHash = crypto
+      .createHash("sha256")
+      .update(rawBody)
+      .digest("hex");
 
-      trial_ends_at: trialEndsAt,
+    const { error: syncError } = await supabase.rpc(
+      "apply_lemon_squeezy_subscription_webhook",
+      {
+        p_delivery_hash: deliveryHash,
+        p_event_name: eventName,
+        p_user_id: userId,
+        p_customer_id: customerId,
+        p_subscription_id: subscriptionId,
+        p_variant_id: variantId,
+        p_status: status,
+        p_billing_interval: billingInterval,
+        p_trial_ends_at: trialEndsAt,
+        p_current_period_ends_at: endsAt ?? renewsAt,
+        p_cancel_at_period_end: cancelled,
+        p_plan: flowexPlan,
+        p_provider_updated_at: providerUpdatedAt,
+      }
+    );
 
-      /*
-        Our migration called this current_period_ends_at.
-
-        Lemon Squeezy calls the normal recurring boundary
-        "renews_at". For cancelled/expired subscriptions,
-        "ends_at" is the actual access end.
-      */
-      current_period_ends_at:
-        endsAt ?? renewsAt,
-
-      cancel_at_period_end: cancelled,
-      updated_at: new Date().toISOString(),
-    };
-
-    const {
-      data: existingRows,
-      error: existingError,
-    } = await supabase
-      .from("subscriptions")
-      .select("user_id")
-      .eq("user_id", userId)
-      .limit(1);
-
-    if (existingError) {
+    if (syncError) {
       console.error(
-        "Flowex subscription existence check error:",
-        existingError.message
+        "Flowex subscription sync error:",
+        syncError.message
       );
 
       return NextResponse.json(
         { error: "Could not sync subscription." },
         { status: 500 }
       );
-    }
-
-    if (existingRows && existingRows.length > 0) {
-      const { error: updateError } =
-        await supabase
-          .from("subscriptions")
-          .update(subscriptionValues)
-          .eq("user_id", userId);
-
-      if (updateError) {
-        console.error(
-          "Flowex subscription update error:",
-          updateError.message
-        );
-
-        return NextResponse.json(
-          { error: "Could not sync subscription." },
-          { status: 500 }
-        );
-      }
-    } else {
-      const { error: insertError } =
-        await supabase
-          .from("subscriptions")
-          .insert({
-            user_id: userId,
-            ...subscriptionValues,
-          });
-
-      if (insertError) {
-        console.error(
-          "Flowex subscription insert error:",
-          insertError.message
-        );
-
-        return NextResponse.json(
-          { error: "Could not sync subscription." },
-          { status: 500 }
-        );
-      }
     }
 
     return NextResponse.json({
