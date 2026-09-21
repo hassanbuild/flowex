@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
+import { createClient } from "@/lib/supabase/client";
 
 const avatars = [
   "/avatars/avatar-1.png",
@@ -31,11 +32,59 @@ function AccountPageContent() {
   } = useAppAccount();
 
   const [showAvatars, setShowAvatars] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   const saveChanges = () => {
     saveAccount();
     alert("Changes saved!");
+  };
+
+  const deleteAccount = async () => {
+    if (
+      isDeleting ||
+      !window.confirm(
+        "Delete your Flowex account and stored Flowex data? This cannot be undone. External integration data and subscriptions are not deleted."
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const supabase = createClient();
+      const {
+        data: {
+          session,
+        },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error("Your session could not be verified.");
+      }
+
+      const response = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Flowex could not delete this account.");
+      }
+
+      await supabase.auth.signOut({
+        scope: "local",
+      });
+
+      window.location.assign("/");
+    } catch (error) {
+      console.error("Flowex account deletion error:", error);
+      alert("Flowex could not delete this account. Please try again.");
+      setIsDeleting(false);
+    }
   };
 
   const hasPremiumAccess =
@@ -350,7 +399,12 @@ function AccountPageContent() {
 
               {/* DELETE */}
 
-              <button className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10">
+              <button
+                type="button"
+                onClick={deleteAccount}
+                disabled={isDeleting}
+                className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+              >
                 Delete Account
               </button>
 

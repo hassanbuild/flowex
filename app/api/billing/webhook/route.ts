@@ -205,6 +205,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const {
+      data: {
+        user: accountUser,
+      },
+      error: accountUserError,
+    } = await supabase.auth.admin.getUserById(userId);
+
+    if (accountUserError || !accountUser) {
+      console.warn(
+        "Flowex ignored a webhook for a deleted account:",
+        subscriptionId
+      );
+
+      return NextResponse.json({
+        received: true,
+        ignored: true,
+      });
+    }
+
     const status =
       attributes.status?.toString() ?? "";
 
