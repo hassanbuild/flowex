@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requirePremiumAccess } from "@/lib/billing/plan";
 import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
+import { consumeExternalFormBrowserCheck } from "@/lib/external-form/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -207,6 +208,31 @@ export async function POST(
         error: "The connected form URL is unavailable.",
       },
       { status: 422 }
+    );
+  }
+
+  const rateLimit = await consumeExternalFormBrowserCheck(
+    supabase,
+    user.id
+  );
+
+  if (rateLimit.failed) {
+    return NextResponse.json(
+      {
+        connected: false,
+        error: "Flowex could not verify this request.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        connected: false,
+        error: "Too many verification attempts. Please wait a minute and try again.",
+      },
+      { status: 429 }
     );
   }
 

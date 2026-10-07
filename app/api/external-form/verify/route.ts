@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requirePremiumAccess } from "@/lib/billing/plan";
 import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
+import { consumeExternalFormBrowserCheck } from "@/lib/external-form/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -622,6 +623,31 @@ export async function POST(
       {
         status: 400,
       }
+    );
+  }
+
+  const rateLimit = await consumeExternalFormBrowserCheck(
+    auth.supabase,
+    auth.user.id
+  );
+
+  if (rateLimit.failed) {
+    return NextResponse.json(
+      {
+        verified: false,
+        error: "Flowex could not verify this request.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        verified: false,
+        error: "Too many verification attempts. Please wait a minute and try again.",
+      },
+      { status: 429 }
     );
   }
 
