@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createGoogleOAuthClient } from "@/lib/integrations/google";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
+import { createContactActionUrl } from "@/lib/leads/contact-action";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ async function sendFollowUpEmail(
     subject: string;
     text: string;
     messageId: string;
+    contactActionUrl: string;
   }
 ) {
   const connection =
@@ -106,6 +108,7 @@ async function sendFollowUpEmail(
       auth: oauth2Client,
     });
 
+  const htmlBody = `${escapeHtml(input.text).replace(/\r?\n/g, "<br>")}<p style="margin-top:24px"><a href="${escapeHtml(input.contactActionUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Contacted</a></p>`;
   const rawMessage = [
     `From: ${connection.email}`,
     `To: ${input.to}`,
@@ -113,11 +116,11 @@ async function sendFollowUpEmail(
     `Message-ID: ${input.messageId}`,
     `Subject: ${encodeEmailHeader(input.subject)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Type: text/html; charset="UTF-8"',
     "Content-Transfer-Encoding: base64",
     "",
     Buffer.from(
-      input.text,
+      htmlBody,
       "utf8"
     ).toString("base64"),
   ].join("\r\n");
@@ -137,6 +140,16 @@ async function sendFollowUpEmail(
   }
 
   return response.data.id;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] || character);
 }
 
 function followUpMessageId(leadId: string) {
@@ -226,7 +239,7 @@ export async function GET(
     await supabase
       .from("leads")
       .select(
-        "id, user_id, lead_flow_id, email, status, contacted_at, follow_up_due_at, follow_up_sent_at"
+        "id, user_id, lead_flow_id, email, status, contacted_at, follow_up_due_at, follow_up_sent_at, expires_at"
       )
       .eq("status", "new")
       .is("contacted_at", null)
@@ -261,7 +274,7 @@ export async function GET(
       await supabase
         .from("leads")
         .select(
-          "id, user_id, lead_flow_id, email, status, contacted_at, follow_up_due_at, follow_up_sent_at"
+          "id, user_id, lead_flow_id, email, status, contacted_at, follow_up_due_at, follow_up_sent_at, expires_at, follow_up_claim_token"
         )
         .eq("id", candidate.id)
         .maybeSingle();
@@ -368,6 +381,55 @@ export async function GET(
       );
 
       if (!gmailMessageId) {
+        const { data: currentLead, error: currentLeadError } = await supabase
+          .from("leads")
+          .select("id, user_id, email, status, contacted_at, follow_up_sent_at, expires_at, follow_up_claim_token")
+          .eq("id", lead.id)
+          .maybeSingle();
+
+        if (
+          currentLeadError ||
+          !currentLead ||
+          currentLead.status !== "new" ||
+          currentLead.contacted_at ||
+          currentLead.follow_up_sent_at ||
+          currentLead.follow_up_claim_token !== claimToken ||
+          !currentLead.email
+        ) {
+          skipped += 1;
+          continue;
+        }
+
+        const contactActionUrl = await createContactActionUrl({
+          supabase,
+          leadId: currentLead.id,
+          userId: currentLead.user_id,
+          origin: new URL(request.url).origin,
+          expiresAt: currentLead.expires_at || new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+        });
+
+        // Contacted can be clicked while the claim or token is being created.
+        // Re-read after those steps, immediately before the external send.
+        const { data: sendableLead, error: sendableLeadError } = await supabase
+          .from("leads")
+          .select("id, status, contacted_at, follow_up_sent_at, follow_up_claim_token")
+          .eq("id", lead.id)
+          .maybeSingle();
+
+        if (
+          sendableLeadError ||
+          !sendableLead ||
+          sendableLead.status !== "new" ||
+          sendableLead.contacted_at ||
+          sendableLead.follow_up_sent_at ||
+          sendableLead.follow_up_claim_token !== claimToken
+        ) {
+          skipped += 1;
+          continue;
+        }
+
         gmailMessageId = await sendFollowUpEmail(
           supabase,
           {
@@ -383,6 +445,7 @@ export async function GET(
             text:
               settings.message.trim(),
             messageId,
+            contactActionUrl,
           }
         );
       }

@@ -2,12 +2,14 @@ type SendNotificationEmailInput = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 };
 
 export async function sendNotificationEmail({
   to,
   subject,
   text,
+  html,
 }: SendNotificationEmailInput) {
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "";
@@ -24,7 +26,7 @@ export async function sendNotificationEmail({
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from, to: [to], subject, text }),
+      body: JSON.stringify({ from, to: [to], subject, text, ...(html ? { html } : {}) }),
       cache: "no-store",
     });
 

@@ -30,6 +30,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { sendNotificationEmail } from "@/lib/integrations/resend";
+import { createContactActionUrl } from "@/lib/leads/contact-action";
 
 export const runtime = "nodejs";
 
@@ -1902,6 +1903,7 @@ async function sendGmailMessage(
     to: string;
     subject: string;
     text: string;
+    contactActionUrl?: string;
   }
 ) {
   const connection = await getFlowexGmailConnection(supabase, userId);
@@ -1936,16 +1938,23 @@ async function sendGmailMessage(
     auth: oauth2Client,
   });
 
+  const body = input.contactActionUrl
+    ? `${escapeHtml(input.text).replace(/\r?\n/g, "<br>")}<p style="margin-top:24px"><a href="${escapeHtml(input.contactActionUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Contacted</a></p>`
+    : input.text;
+  const contentType = input.contactActionUrl
+    ? 'text/html; charset="UTF-8"'
+    : 'text/plain; charset="UTF-8"';
+
   const rawMessage = [
     `From: ${connection.email}`,
     `To: ${input.to}`,
     `Reply-To: ${connection.email}`,
     `Subject: ${encodeEmailHeader(input.subject)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
+    `Content-Type: ${contentType}`,
     "Content-Transfer-Encoding: base64",
     "",
-    Buffer.from(input.text, "utf8").toString("base64"),
+    Buffer.from(body, "utf8").toString("base64"),
   ].join("\\r\\n");
 
   const raw = Buffer.from(rawMessage, "utf8").toString("base64url");
@@ -1954,6 +1963,16 @@ async function sendGmailMessage(
     userId: "me",
     requestBody: { raw },
   });
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] || character);
 }
 
 function encodeEmailHeader(value: string) {
@@ -1998,7 +2017,9 @@ async function sendAutomaticEmailReply(
 
 async function sendTeamNotificationEmail(
   supabase: ReturnType<typeof createAdminClient>,
-  lead: NormalizedLead
+  lead: NormalizedLead,
+  leadId: string,
+  origin: string
 ) {
   if (!lead.leadFlowId) {
     return;
@@ -2073,12 +2094,22 @@ async function sendTeamNotificationEmail(
   ].join("\n");
 
   const subject = `New lead — ${flowName}`;
+  const actionUrl = await createContactActionUrl({
+    supabase,
+    leadId,
+    userId: lead.userId,
+    origin,
+    expiresAt: new Date(
+      new Date(lead.receivedAt).getTime() + 7 * 24 * 60 * 60 * 1000
+    ).toISOString(),
+  });
 
   try {
     await sendNotificationEmail({
       to: recipient,
       subject,
-      text: message,
+      text: `${message}\n\nContacted? Mark this lead here: ${actionUrl}`,
+      html: `${escapeHtml(message).replace(/\r?\n/g, "<br>")}<p style="margin-top:24px"><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Contacted</a></p>`,
     });
   } catch (resendError) {
     console.error(
@@ -2089,7 +2120,8 @@ async function sendTeamNotificationEmail(
     await sendGmailMessage(supabase, lead.userId, {
       to: recipient,
       subject,
-      text: message,
+      text: `${message}\n\nContacted? Mark this lead here: ${actionUrl}`,
+      contactActionUrl: actionUrl,
     });
   }
 }
@@ -2636,7 +2668,9 @@ export async function POST(
   try {
     await sendTeamNotificationEmail(
       supabase,
-      lead
+      lead,
+      savedLead.id,
+      new URL(request.url).origin
     );
   } catch (error) {
     console.error(
@@ -2695,7 +2729,9 @@ export async function POST(
           expires_at: expiresAt,
         })
         .eq("id", savedLead.id)
-        .eq("user_id", lead.userId);
+        .eq("user_id", lead.userId)
+        .eq("status", "new")
+        .is("contacted_at", null);
 
     if (followUpMetadataError) {
       throw followUpMetadataError;
