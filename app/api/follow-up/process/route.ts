@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createGoogleOAuthClient } from "@/lib/integrations/google";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ async function getGmailConnection(
     ) {
       return {
         provider,
-        credentials: data.credentials as Record<string, unknown>,
+        credentials: readOAuthCredentials(data.credentials),
         email: String(data.provider_account_email),
       };
     }
@@ -80,14 +81,14 @@ async function sendFollowUpEmail(
       await supabase
         .from("integration_connections")
         .update({
-          credentials: {
+          credentials: encryptOAuthCredentials({
             ...connection.credentials,
             ...tokens,
             refresh_token:
               tokens.refresh_token ||
               connection.credentials
                 .refresh_token,
-          },
+          }),
           updated_at:
             new Date().toISOString(),
         })

@@ -8,6 +8,7 @@ import {
 } from "@/lib/integrations/google";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { requirePremiumAccess } from "@/lib/billing/plan";
 
 export const runtime = "nodejs";
@@ -1491,9 +1492,8 @@ export async function POST(
   const oauth2Client =
     createGoogleOAuthClient();
 
-  oauth2Client.setCredentials(
-    connection.credentials
-  );
+  const credentials = readOAuthCredentials(connection.credentials);
+  oauth2Client.setCredentials(credentials);
 
   oauth2Client.on(
     "tokens",
@@ -1507,25 +1507,21 @@ export async function POST(
         return;
       }
 
-      const current =
-        connection.credentials as Record<
-          string,
-          unknown
-        >;
+      const current = credentials;
 
       await auth.supabase
         .from(
           "integration_connections"
         )
         .update({
-          credentials: {
+          credentials: encryptOAuthCredentials({
             ...current,
             ...tokens,
 
             refresh_token:
               tokens.refresh_token ||
               current.refresh_token,
-          },
+          }),
 
           updated_at:
             new Date().toISOString(),

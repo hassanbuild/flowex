@@ -8,6 +8,7 @@ import {
   getNotionOAuthConfig,
 } from "@/lib/integrations/notion";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -293,7 +294,7 @@ export async function GET(
               userEmail,
 
             credentials:
-              storedCredentials,
+              encryptOAuthCredentials(storedCredentials),
 
             updated_at:
               new Date().toISOString(),

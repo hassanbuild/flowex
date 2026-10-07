@@ -28,6 +28,7 @@ import {
 } from "@/lib/integrations/hubspot";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { sendNotificationEmail } from "@/lib/integrations/resend";
 
 export const runtime = "nodejs";
@@ -508,9 +509,8 @@ async function sendLeadToGoogleSheets(
   const oauth2Client =
     createGoogleOAuthClient();
 
-  oauth2Client.setCredentials(
-    connection.credentials
-  );
+  const googleCredentials = readOAuthCredentials(connection.credentials);
+  oauth2Client.setCredentials(googleCredentials);
 
   oauth2Client.on(
     "tokens",
@@ -525,24 +525,21 @@ async function sendLeadToGoogleSheets(
       }
 
       const current =
-        connection.credentials as Record<
-          string,
-          unknown
-        >;
+        googleCredentials;
 
       await supabase
         .from(
           "integration_connections"
         )
         .update({
-          credentials: {
+          credentials: encryptOAuthCredentials({
             ...current,
             ...tokens,
 
             refresh_token:
               tokens.refresh_token ||
               current.refresh_token,
-          },
+          }),
 
           updated_at:
             new Date().toISOString(),
@@ -783,7 +780,7 @@ async function getAirtableAccessTokenForLead(
   }
 
   const credentials =
-    connection.credentials as AirtableStoredCredentials;
+    readOAuthCredentials(connection.credentials) as AirtableStoredCredentials;
 
   const accessToken =
     typeof credentials.access_token === "string"
@@ -858,7 +855,7 @@ async function getAirtableAccessTokenForLead(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: updated,
+      credentials: encryptOAuthCredentials(updated),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)
@@ -1058,7 +1055,7 @@ async function getMicrosoftAccessTokenForLead(
   }
 
   const credentials =
-    connection.credentials as Record<string, unknown>;
+    readOAuthCredentials(connection.credentials);
 
   const accessToken =
     typeof credentials.access_token === "string"
@@ -1125,7 +1122,7 @@ async function getMicrosoftAccessTokenForLead(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: {
+      credentials: encryptOAuthCredentials({
         ...credentials,
         access_token: token.access_token,
         refresh_token:
@@ -1139,7 +1136,7 @@ async function getMicrosoftAccessTokenForLead(
                   token.expires_in * 1000
               ).toISOString()
             : null,
-      },
+      }),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)
@@ -1410,7 +1407,7 @@ async function sendLeadToNotion(
   const credentials =
     connection?.credentials &&
     typeof connection.credentials === "object"
-      ? connection.credentials as Record<string, unknown>
+      ? readOAuthCredentials(connection.credentials)
       : null;
 
   const accessToken =
@@ -1521,7 +1518,7 @@ async function getHubSpotAccessTokenForLead(
     return null;
   }
 
-  const credentials = connection.credentials as Record<string, unknown>;
+  const credentials = readOAuthCredentials(connection.credentials);
   const accessToken =
     typeof credentials.access_token === "string"
       ? credentials.access_token
@@ -1573,7 +1570,7 @@ async function getHubSpotAccessTokenForLead(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: {
+      credentials: encryptOAuthCredentials({
         ...credentials,
         access_token: token.access_token,
         refresh_token: token.refresh_token || refreshToken,
@@ -1582,7 +1579,7 @@ async function getHubSpotAccessTokenForLead(
           typeof token.expires_in === "number"
             ? new Date(Date.now() + token.expires_in * 1000).toISOString()
             : null,
-      },
+      }),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)
@@ -1889,7 +1886,7 @@ async function getFlowexGmailConnection(
     ) {
       return {
         provider,
-        credentials: connection.credentials as Record<string, unknown>,
+        credentials: readOAuthCredentials(connection.credentials),
         email: String(connection.provider_account_email),
       };
     }
@@ -1922,12 +1919,12 @@ async function sendGmailMessage(
     await supabase
       .from("integration_connections")
       .update({
-        credentials: {
+        credentials: encryptOAuthCredentials({
           ...connection.credentials,
           ...tokens,
           refresh_token:
             tokens.refresh_token || connection.credentials.refresh_token,
-        },
+        }),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId)

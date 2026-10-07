@@ -9,6 +9,7 @@ import {
   getMicrosoftOAuthConfig,
 } from "@/lib/integrations/microsoft";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -185,7 +186,7 @@ async function getAccessToken(
     throw new Error("Connect your Microsoft account first.");
   }
 
-  const credentials = connection.credentials as MicrosoftCredentials;
+  const credentials = readOAuthCredentials(connection.credentials) as MicrosoftCredentials;
 
   const accessToken =
     typeof credentials.access_token === "string"
@@ -268,7 +269,7 @@ async function getAccessToken(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: updated,
+      credentials: encryptOAuthCredentials(updated),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)

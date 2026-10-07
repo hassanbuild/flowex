@@ -6,6 +6,7 @@ import {
   getHubSpotOAuthConfig,
 } from "@/lib/integrations/hubspot";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -109,7 +110,7 @@ export async function GET(request: Request) {
           lead_flow_id: null,
           provider: HUBSPOT_PROVIDER,
           provider_account_email: null,
-          credentials: storedCredentials,
+          credentials: encryptOAuthCredentials(storedCredentials),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id,provider" }

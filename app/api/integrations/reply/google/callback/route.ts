@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -203,11 +204,7 @@ export async function GET(
       typeof previousConnection
         .credentials ===
         "object"
-        ? previousConnection
-            .credentials as Record<
-              string,
-              unknown
-            >
+        ? readOAuthCredentials(previousConnection.credentials)
         : {};
 
     const credentials = {
@@ -241,7 +238,7 @@ export async function GET(
             provider_account_email:
               profile.email,
 
-            credentials,
+            credentials: encryptOAuthCredentials(credentials),
 
             updated_at:
               new Date().toISOString(),

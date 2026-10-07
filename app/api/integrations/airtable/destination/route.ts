@@ -7,6 +7,7 @@ import {
   getAirtableOAuthConfig,
 } from "@/lib/integrations/airtable";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -286,7 +287,7 @@ async function getAccessToken(
   }
 
   const credentials =
-    connection.credentials as AirtableCredentials;
+    readOAuthCredentials(connection.credentials) as AirtableCredentials;
 
   const accessToken =
     typeof credentials.access_token === "string"
@@ -370,7 +371,7 @@ async function getAccessToken(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: updated,
+      credentials: encryptOAuthCredentials(updated),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)

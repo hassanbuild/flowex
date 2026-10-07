@@ -9,6 +9,7 @@ import {
 } from "@/lib/integrations/hubspot";
 import { requirePremiumAccess } from "@/lib/billing/plan";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -101,11 +102,7 @@ export async function GET(
     typeof connection.credentials ===
       "object"
       ? (
-          connection.credentials as
-            Record<
-              string,
-              unknown
-            >
+          readOAuthCredentials(connection.credentials)
         )
       : null;
 

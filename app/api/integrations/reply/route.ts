@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { authenticateRequest } from "@/lib/integrations/reply-auth";
+import { readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -103,6 +104,7 @@ export async function GET(
       !!connection?.credentials &&
       typeof connection.credentials ===
         "object" &&
+      !!readOAuthCredentials(connection.credentials) &&
       !!connection.provider_account_email,
 
     emailAddress:

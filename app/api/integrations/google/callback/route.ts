@@ -6,6 +6,7 @@ import {
 } from "@/lib/integrations/google";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -164,11 +165,7 @@ export async function GET(
       typeof previousConnection
         .credentials ===
         "object"
-        ? previousConnection
-            .credentials as Record<
-              string,
-              unknown
-            >
+        ? readOAuthCredentials(previousConnection.credentials)
         : {};
 
     const credentials = {
@@ -203,7 +200,7 @@ export async function GET(
               profile.email ||
               null,
 
-            credentials,
+            credentials: encryptOAuthCredentials(credentials),
 
             updated_at:
               new Date().toISOString(),

@@ -9,6 +9,7 @@ import {
 } from "@/lib/integrations/airtable";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { requirePremiumAccess } from "@/lib/billing/plan";
 
 export const runtime = "nodejs";
@@ -108,10 +109,7 @@ export async function GET(
     connection?.credentials &&
     typeof connection.credentials ===
       "object"
-      ? connection.credentials as Record<
-          string,
-          unknown
-        >
+      ? readOAuthCredentials(connection.credentials)
       : null;
 
   const connected =

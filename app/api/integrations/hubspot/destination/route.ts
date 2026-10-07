@@ -10,6 +10,7 @@ import {
   hubSpotPropertyName,
 } from "@/lib/integrations/hubspot";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -280,7 +281,7 @@ async function getHubSpotAccessToken(
     throw new Error("Connect your HubSpot account first.");
   }
 
-  const credentials = connection.credentials as Record<string, unknown>;
+  const credentials = readOAuthCredentials(connection.credentials);
   const accessToken =
     typeof credentials.access_token === "string"
       ? credentials.access_token
@@ -362,7 +363,7 @@ async function getHubSpotAccessToken(
   await supabase
     .from("integration_connections")
     .update({
-      credentials: updatedCredentials,
+      credentials: encryptOAuthCredentials(updatedCredentials),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId)

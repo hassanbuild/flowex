@@ -7,6 +7,7 @@ import {
   getMicrosoftOAuthConfig,
 } from "@/lib/integrations/microsoft";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -258,7 +259,7 @@ export async function GET(
               profile?.mail ||
               profile?.userPrincipalName ||
               null,
-            credentials,
+            credentials: encryptOAuthCredentials(credentials),
             updated_at:
               new Date().toISOString(),
           },

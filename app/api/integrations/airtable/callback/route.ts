@@ -8,6 +8,7 @@ import {
 } from "@/lib/integrations/airtable";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { encryptOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -257,7 +258,7 @@ export async function GET(
               whoAmI?.email ||
               null,
             credentials:
-              storedCredentials,
+              encryptOAuthCredentials(storedCredentials),
             updated_at:
               new Date().toISOString(),
           },

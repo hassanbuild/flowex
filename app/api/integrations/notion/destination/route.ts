@@ -7,6 +7,7 @@ import {
   NOTION_VERSION,
 } from "@/lib/integrations/notion";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 
 export const runtime = "nodejs";
 
@@ -418,7 +419,7 @@ async function getNotionConnection(
 
   const credentials =
     connection?.credentials && typeof connection.credentials === "object"
-      ? (connection.credentials as Record<string, unknown>)
+      ? readOAuthCredentials(connection.credentials)
       : null;
 
   const accessToken =
