@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 
 import type { createAdminClient } from "@/lib/supabase/admin";
 
@@ -29,6 +29,45 @@ export async function createContactActionUrl(input: {
   if (error) {
     throw new Error("Could not create the lead contact action.");
   }
+
+  return new URL(
+    `/api/lead-contact?token=${encodeURIComponent(token)}`,
+    input.origin
+  ).toString();
+}
+
+export async function createStableContactActionUrl(input: {
+  supabase: ReturnType<typeof createAdminClient>;
+  leadId: string;
+  outboxId: string;
+  userId: string;
+  origin: string;
+  expiresAt: string;
+}) {
+  const encodedSecret = process.env.FLOWEX_CONTACT_ACTION_SECRET?.trim() || "";
+  const secret = Buffer.from(encodedSecret, "base64url");
+  if (!/^[A-Za-z0-9_-]{43}$/.test(encodedSecret) || secret.byteLength !== 32) {
+    throw new Error("Contact action signing is not configured.");
+  }
+
+  const token = createHmac("sha256", secret)
+    .update(`flowex-team-notification:${input.outboxId}`)
+    .digest("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+
+  const { error } = await input.supabase
+    .from("lead_contact_action_tokens")
+    .upsert(
+      {
+        token_hash: tokenHash,
+        lead_id: input.leadId,
+        user_id: input.userId,
+        expires_at: input.expiresAt,
+      },
+      { onConflict: "token_hash", ignoreDuplicates: true }
+    );
+
+  if (error) throw new Error("Could not create the lead contact action.");
 
   return new URL(
     `/api/lead-contact?token=${encodeURIComponent(token)}`,

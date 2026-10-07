@@ -2533,53 +2533,31 @@ export async function POST(
     fields,
   };
 
-  /*
-    Core lead capture intentionally uses the original working schema.
-    Step 05 is attached AFTER the lead is saved and AFTER the main
-    automations run, so a follow-up problem can never block intake.
-  */
-  const {
-    data: savedLead,
-    error: saveLeadError,
-  } =
-    await supabase
-      .from("leads")
-      .insert({
-        user_id:
-          lead.userId,
+  let displayName = "Lead";
+  try {
+    displayName = await leadDisplayName(supabase, lead);
+  } catch {
+    // The display name is optional metadata for destination payloads.
+  }
 
-        lead_flow_id:
-          lead.leadFlowId,
+  const { data: savedLeadId, error: saveLeadError } =
+    await supabase.rpc("create_lead_with_outbox", {
+      p_user_id: lead.userId,
+      p_lead_flow_id: lead.leadFlowId,
+      p_source_id: lead.sourceId,
+      p_source_type: lead.sourceType,
+      p_email: lead.contact.email,
+      p_phone: lead.contact.phone,
+      p_fields: lead.fields,
+      p_received_at: lead.receivedAt,
+      p_origin: new URL(request.url).origin,
+      p_display_name: displayName,
+    });
 
-        source_id:
-          lead.sourceId,
-
-        source_type:
-          lead.sourceType,
-
-        email:
-          lead.contact.email,
-
-        phone:
-          lead.contact.phone,
-
-        fields:
-          lead.fields,
-
-        created_at:
-          lead.receivedAt,
-      })
-      .select("id")
-      .single();
-
-  if (
-    saveLeadError ||
-    !savedLead
-  ) {
+  if (saveLeadError || !savedLeadId) {
     console.error(
-      "Flowex lead save error:",
-      saveLeadError?.message ||
-        "Unknown lead save error"
+      "Flowex lead and outbox save failed:",
+      saveLeadError?.code || "unknown"
     );
 
     return json(
@@ -2593,158 +2571,8 @@ export async function POST(
     );
   }
 
-  try {
-    await sendLeadToGoogleSheets(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex Google Sheets delivery error:",
-      error
-    );
-  }
-
-  try {
-    await sendLeadToAirtable(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex Airtable delivery error:",
-      error
-    );
-  }
-
-  try {
-    await sendLeadToMicrosoftExcel(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex Microsoft Excel delivery error:",
-      error
-    );
-  }
-
-  try {
-    await sendLeadToNotion(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex Notion delivery error:",
-      error
-    );
-  }
-
-  try {
-    await sendLeadToHubSpot(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex HubSpot delivery error:",
-      error
-    );
-  }
-
-  try {
-    await sendAutomaticEmailReply(
-      supabase,
-      lead
-    );
-  } catch (error) {
-    console.error(
-      "Flowex automatic email reply error:",
-      error
-    );
-  }
-
-  try {
-    await sendTeamNotificationEmail(
-      supabase,
-      lead,
-      savedLead.id,
-      new URL(request.url).origin
-    );
-  } catch (error) {
-    console.error(
-      "Flowex team notification email error:",
-      error
-    );
-  }
-
-  /*
-    Step 05 is deliberately non-critical.
-    If its table/columns/settings ever have a problem, the lead has
-    already been saved and Steps 02-04 have already been attempted.
-  */
-  try {
-    const {
-      data: followUpSettings,
-      error: followUpSettingsError,
-    } = await supabase
-      .from("lead_follow_up_settings")
-      .select("enabled, delay_hours")
-      .eq("lead_flow_id", lead.leadFlowId)
-      .eq("user_id", lead.userId)
-      .maybeSingle();
-
-    if (followUpSettingsError) {
-      throw followUpSettingsError;
-    }
-
-    const delayHours =
-      Number(followUpSettings?.delay_hours);
-
-    const followUpDueAt =
-      followUpSettings?.enabled === true &&
-      !!lead.contact.email &&
-      [1, 6, 12, 24].includes(delayHours)
-        ? new Date(
-            new Date(lead.receivedAt).getTime() +
-              delayHours * 60 * 60 * 1000
-          ).toISOString()
-        : null;
-
-    const expiresAt =
-      new Date(
-        new Date(lead.receivedAt).getTime() +
-          7 * 24 * 60 * 60 * 1000
-      ).toISOString();
-
-    const { error: followUpMetadataError } =
-      await supabase
-        .from("leads")
-        .update({
-          status: "new",
-          contacted_at: null,
-          follow_up_due_at: followUpDueAt,
-          follow_up_sent_at: null,
-          expires_at: expiresAt,
-        })
-        .eq("id", savedLead.id)
-        .eq("user_id", lead.userId)
-        .eq("status", "new")
-        .is("contacted_at", null);
-
-    if (followUpMetadataError) {
-      throw followUpMetadataError;
-    }
-  } catch (error) {
-    console.error(
-      "Flowex follow-up scheduling skipped:",
-      error
-    );
-  }
-
   console.log("Flowex lead received:", {
-    leadId: savedLead.id,
+    leadId: savedLeadId,
     sourceId: lead.sourceId,
     sourceType: lead.sourceType,
     leadFlowId: lead.leadFlowId,
