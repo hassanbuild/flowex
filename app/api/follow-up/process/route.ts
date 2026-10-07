@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { google } from "googleapis";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createGoogleOAuthClient } from "@/lib/integrations/google";
@@ -185,17 +186,24 @@ async function findFollowUpEmail(
 }
 
 function authorized(request: Request) {
-  const secret =
-    process.env.CRON_SECRET;
+  const secret = process.env.CRON_SECRET?.trim();
 
   if (!secret) {
     return process.env.NODE_ENV !== "production";
   }
 
+  const authorization = request.headers.get("authorization");
+  if (!authorization?.startsWith("Bearer ")) {
+    return false;
+  }
+
+  const expected = Buffer.from(secret, "utf8");
+  const provided = Buffer.from(authorization.slice(7).trim(), "utf8");
+
   return (
-    request.headers.get(
-      "authorization"
-    ) === `Bearer ${secret}`
+    expected.byteLength >= 32 &&
+    provided.byteLength === expected.byteLength &&
+    timingSafeEqual(provided, expected)
   );
 }
 
