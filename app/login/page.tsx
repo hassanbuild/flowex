@@ -214,29 +214,29 @@ function LoginPageContent() {
   return (
     <RouteGuard access="guest">
 
-      <main className="relative min-h-screen overflow-x-hidden bg-[#fbfcfd] text-gray-900 transition-colors duration-300 dark:bg-[#0b0f14] dark:text-slate-100">
+      <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
         {/* ================= AMBIENT BACKGROUND ================= */}
 
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
 
-          <div className="absolute -left-40 top-10 h-[420px] w-[420px] rounded-full bg-emerald-300/20 blur-[150px] dark:bg-emerald-500/10" />
+          <div className="absolute -left-40 top-10 h-[420px] w-[420px] rounded-full bg-transparent blur-[150px] app-dark:bg-surface-subtle/10" />
 
-          <div className="absolute right-[-120px] top-20 h-[420px] w-[420px] rounded-full bg-indigo-300/20 blur-[150px] dark:bg-indigo-500/10" />
+          <div className="absolute right-[-120px] top-20 h-[420px] w-[420px] rounded-full bg-transparent blur-[150px] app-dark:bg-surface-subtle/10" />
 
-          <div className="absolute left-1/2 top-[55%] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-cyan-300/20 blur-[140px] dark:bg-cyan-500/10" />
+          <div className="absolute left-1/2 top-[55%] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-transparent blur-[140px] app-dark:bg-surface-subtle/10" />
 
         </div>
 
         {/* ================= TOP BAR ================= */}
 
-        <div className="border-b border-gray-200/70 bg-white/80 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+        <div className="border-b border-border-subtle/70 bg-white/80 backdrop-blur-xl app-dark:border-border-subtle/80 app-dark:bg-surface">
 
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
             <Link href="/">
               <Image
-                src="/flowex-logo.png"
+                src="/flowex-logo-brand.png"
                 alt="Flowex"
                 width={120}
                 height={34}
@@ -244,12 +244,12 @@ function LoginPageContent() {
               />
             </Link>
 
-            <p className="text-sm text-gray-500 dark:text-slate-200">
+            <p className="text-sm text-gray-500 app-dark:text-gray-100">
               Don&apos;t have an account?{" "}
 
               <Link
                 href={signupPath}
-                className="font-semibold text-gray-900 transition hover:text-emerald-600 dark:text-white dark:hover:text-emerald-400"
+                className="font-semibold text-foreground transition hover:text-brand-primary app-dark:text-gray-100 app-dark:hover:text-brand-primary"
               >
                 Sign Up
               </Link>
@@ -271,7 +271,7 @@ function LoginPageContent() {
                 Welcome Back
               </h1>
 
-              <p className="mt-3 text-gray-500 dark:text-slate-400">
+              <p className="mt-3 text-gray-500 app-dark:text-muted">
                 {returnTo
                   ? "Log in to continue your Flowex checkout."
                   : "Log in to your Flowex account."}
@@ -279,7 +279,7 @@ function LoginPageContent() {
 
             </div>
 
-            <div className="rounded-[28px] border border-gray-200/80 bg-white/90 p-7 shadow-[0_25px_70px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:border-slate-800 dark:bg-[#11161d]/95 dark:shadow-[0_25px_70px_rgba(0,0,0,0.35)]">
+            <div className="rounded-[28px] border border-border-subtle/80 bg-white/90 p-7  backdrop-blur-xl app-dark:border-border-subtle app-dark:bg-surface/95 ">
 
               <form
                 onSubmit={handleLogin}
@@ -292,7 +292,7 @@ function LoginPageContent() {
 
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-gray-700 dark:text-slate-200"
+                    className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100"
                   >
                     Email
                   </label>
@@ -310,7 +310,7 @@ function LoginPageContent() {
                     required
                     autoComplete="email"
                     disabled={isLoggingIn}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/10"
+                    className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                   />
 
                 </div>
@@ -323,14 +323,14 @@ function LoginPageContent() {
 
                     <label
                       htmlFor="password"
-                      className="text-sm font-semibold text-gray-700 dark:text-slate-200"
+                      className="text-sm font-semibold text-gray-700 app-dark:text-gray-100"
                     >
                       Password
                     </label>
 
                     <Link
                       href="#"
-                      className="text-xs font-semibold text-gray-500 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
+                      className="text-xs font-semibold text-gray-500 transition hover:text-brand-primary app-dark:text-muted app-dark:hover:text-brand-primary"
                     >
                       Forgot password?
                     </Link>
@@ -350,7 +350,7 @@ function LoginPageContent() {
                     required
                     autoComplete="current-password"
                     disabled={isLoggingIn}
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white dark:placeholder:text-slate-500 dark:focus:border-cyan-500 dark:focus:ring-cyan-500/10"
+                    className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                   />
 
                 </div>
@@ -358,7 +358,7 @@ function LoginPageContent() {
                 {/* ================= ERROR ================= */}
 
                 {loginError && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
                     {loginError}
                   </div>
                 )}
@@ -368,7 +368,7 @@ function LoginPageContent() {
                 <button
                   type="submit"
                   disabled={isLoggingIn}
-                  className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3.5 font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="w-full rounded-xl bg-brand-primary    py-3.5 font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   {isLoggingIn
                     ? "Logging in..."
@@ -383,13 +383,13 @@ function LoginPageContent() {
 
               <div className="my-6 flex items-center gap-4">
 
-                <div className="h-px flex-1 bg-gray-200 dark:bg-slate-700" />
+                <div className="h-px flex-1 bg-gray-200 app-dark:bg-surface" />
 
-                <span className="text-xs uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                <span className="text-xs uppercase tracking-wider text-muted app-dark:text-slate-500">
                   or
                 </span>
 
-                <div className="h-px flex-1 bg-gray-200 dark:bg-slate-700" />
+                <div className="h-px flex-1 bg-gray-200 app-dark:bg-surface" />
 
               </div>
 
@@ -399,7 +399,7 @@ function LoginPageContent() {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isLoggingIn || isGoogleLoading}
-                className="w-full rounded-xl border border-gray-200 bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-[#0b0f14] dark:text-slate-200 dark:hover:bg-slate-900"
+                className="w-full rounded-xl border border-border-subtle bg-white py-3.5 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
               >
                 {isGoogleLoading
                   ? "Connecting to Google..."

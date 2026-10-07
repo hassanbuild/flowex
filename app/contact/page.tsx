@@ -16,27 +16,27 @@ export default function ContactPage() {
 
   return (
     <main
-      className={`min-h-screen bg-[#fbfcfd] text-gray-900 transition-colors duration-300 ${
+      className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${
         isLoggedIn
-          ? "app-dark:bg-[#0b0f14] app-dark:text-slate-100"
-          : "dark:bg-[#0b0f14] dark:text-slate-100"
+          ? "app-dark:bg-surface app-dark:text-gray-100"
+          : "app-dark:bg-surface app-dark:text-gray-100"
       }`}
     >
 
       {/* NAVBAR */}
 
       <nav
-        className={`border-b border-gray-200/70 bg-white/85 backdrop-blur-xl ${
+        className={`border-b border-border-subtle/70 bg-white/85 backdrop-blur-xl ${
           isLoggedIn
-            ? "app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
         <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
 
           <Link href={backPath}>
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={115}
               height={32}
@@ -46,10 +46,10 @@ export default function ContactPage() {
 
           <Link
             href={backPath}
-            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-gray-900 ${
+            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-foreground ${
               isLoggedIn
-                ? "app-dark:text-slate-200 app-dark:hover:text-white"
-                : "dark:text-slate-200 dark:hover:text-white"
+                ? "app-dark:text-gray-100 app-dark:hover:text-gray-100"
+                : "app-dark:text-gray-100 app-dark:hover:text-gray-100"
             }`}
           >
             ← Back to Flowex
@@ -64,13 +64,13 @@ export default function ContactPage() {
 
         <div className="mx-auto max-w-2xl text-center">
 
-          <div className="mb-6 inline-flex rounded-full bg-gradient-to-r from-[#00c297] to-[#4b52f7] p-[1px]">
+          <div className="mb-6 inline-flex rounded-full bg-surface   p-[1px]">
 
             <div
               className={`rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 ${
                 isLoggedIn
-                  ? "app-dark:bg-[#0b0f14] app-dark:text-white"
-                  : "dark:bg-[#0b0f14] dark:text-white"
+                  ? "app-dark:bg-surface app-dark:text-gray-100"
+                  : "app-dark:bg-surface app-dark:text-gray-100"
               }`}
             >
               Contact Flowex
@@ -85,8 +85,8 @@ export default function ContactPage() {
           <p
             className={`mt-5 text-base leading-7 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             Have a question about Flowex, your account, or your automation?
@@ -98,10 +98,10 @@ export default function ContactPage() {
         {/* FORM */}
 
         <div
-          className={`mx-auto mt-12 max-w-2xl rounded-3xl border border-gray-200 bg-white p-8 ${
+          className={`mx-auto mt-12 max-w-2xl rounded-3xl border border-border-subtle bg-white p-8 ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -116,10 +116,10 @@ export default function ContactPage() {
               <input
                 type="text"
                 placeholder="Your name"
-                className={`mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4b52f7] ${
+                className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                   isLoggedIn
-                    ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
-                    : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white"
+                    ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
+                    : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                 }`}
               />
 
@@ -134,10 +134,10 @@ export default function ContactPage() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className={`mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4b52f7] ${
+                className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                   isLoggedIn
-                    ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
-                    : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white"
+                    ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
+                    : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                 }`}
               />
 
@@ -154,10 +154,10 @@ export default function ContactPage() {
             <input
               type="text"
               placeholder="What do you need help with?"
-              className={`mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4b52f7] ${
+              className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
-                  : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white"
+                  ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
+                  : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
               }`}
             />
 
@@ -172,10 +172,10 @@ export default function ContactPage() {
             <textarea
               rows={6}
               placeholder="Tell us more..."
-              className={`mt-2 w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#4b52f7] ${
+              className={`mt-2 w-full resize-none rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
-                  : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white"
+                  ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
+                  : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
               }`}
             />
 
@@ -183,16 +183,16 @@ export default function ContactPage() {
 
           <button
             type="button"
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] py-3 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            className="mt-6 w-full rounded-xl bg-brand-primary   py-3 text-sm font-bold text-gray-100 transition-opacity hover:opacity-90"
           >
             Send Message
           </button>
 
           <p
-            className={`mt-3 text-center text-xs text-gray-400 ${
+            className={`mt-3 text-center text-xs text-muted ${
               isLoggedIn
                 ? "app-dark:text-slate-500"
-                : "dark:text-slate-500"
+                : "app-dark:text-slate-500"
             }`}
           >
             Support replies are sent to the email address you provide.
@@ -205,10 +205,10 @@ export default function ContactPage() {
       {/* FOOTER */}
 
       <footer
-        className={`border-t border-gray-200/70 bg-white/85 backdrop-blur-xl ${
+        className={`border-t border-border-subtle/70 bg-white/85 backdrop-blur-xl ${
           isLoggedIn
-            ? "app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
 
@@ -217,17 +217,17 @@ export default function ContactPage() {
           <div className="flex items-center gap-4">
 
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={110}
               height={30}
             />
 
             <span
-              className={`hidden text-sm text-gray-400 lg:block ${
+              className={`hidden text-sm text-muted lg:block ${
                 isLoggedIn
-                  ? "app-dark:text-slate-200"
-                  : "dark:text-slate-200"
+                  ? "app-dark:text-gray-100"
+                  : "app-dark:text-gray-100"
               }`}
             >
               Automate your business.
@@ -236,10 +236,10 @@ export default function ContactPage() {
           </div>
 
           <p
-            className={`text-xs text-gray-400 ${
+            className={`text-xs text-muted ${
               isLoggedIn
-                ? "app-dark:text-slate-300"
-                : "dark:text-slate-300"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             © 2026 Flowex. All rights reserved.

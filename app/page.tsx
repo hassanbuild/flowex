@@ -40,31 +40,31 @@ export default function Home() {
 
 return (
   <RouteGuard access="guest">
-    <main className="relative min-h-screen overflow-x-hidden bg-[#fbfcfd] text-gray-900 transition-colors duration-300 dark:bg-[#0b0f14] dark:text-slate-100">
+    <main className="relative min-h-screen overflow-x-hidden bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= AMBIENT BACKGROUND ================= */}
 
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
 
         {/* Emerald glow - top left */}
-       <div className="absolute -left-40 top-20 h-[500px] w-[500px] animate-[float1_18s_ease-in-out_infinite] rounded-full bg-emerald-300/20 blur-[150px]" />
+       <div className="absolute -left-40 top-20 h-[500px] w-[500px] animate-[float1_18s_ease-in-out_infinite] rounded-full bg-transparent blur-[150px]" />
 
         {/* Cyan glow - hero center */}
-       <div className="absolute left-[40%] top-[250px] h-[420px] w-[420px] animate-[float2_22s_ease-in-out_infinite] rounded-full bg-cyan-300/20 blur-[160px]" />
+       <div className="absolute left-[40%] top-[250px] h-[420px] w-[420px] animate-[float2_22s_ease-in-out_infinite] rounded-full bg-transparent blur-[160px]" />
 
        {/* Indigo glow - top right */}
-       <div className="absolute -right-40 top-10 h-[500px] w-[500px] animate-[float3_20s_ease-in-out_infinite] rounded-full bg-indigo-300/20 blur-[160px]" />
+       <div className="absolute -right-40 top-10 h-[500px] w-[500px] animate-[float3_20s_ease-in-out_infinite] rounded-full bg-transparent blur-[160px]" />
 
       </div>
 
       {/* ================= NAVBAR ================= */}
 
-      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-gray-200/70 bg-white/85 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <nav className="fixed left-0 right-0 top-0 z-50 border-b border-border-subtle/70 bg-white/85 backdrop-blur-xl app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[55px] max-w-8xl items-center justify-between px-6 lg:px-8">
 
           <Image
-            src="/flowex-logo.png"
+            src="/flowex-logo-brand.png"
             alt="Flowex"
             width={125}
             height={34}
@@ -75,21 +75,21 @@ return (
 
             <a
               href="#product"
-             className="transition hover:text-gray-900 dark:hover:text-white"
+             className="transition hover:text-foreground app-dark:hover:text-gray-100"
             >
               Product
            </a>
 
             <a
               href="#solutions"
-              className="transition hover:text-gray-900 dark:hover:text-white"
+              className="transition hover:text-foreground app-dark:hover:text-gray-100"
             >
               Solutions
            </a>
 
             <a
              href="#pricing"
-             className="transition hover:text-gray-900 dark:hover:text-white"
+             className="transition hover:text-foreground app-dark:hover:text-gray-100"
             >
              Pricing
            </a>
@@ -101,14 +101,14 @@ return (
              {/* Logged out state */}
            <Link
              href="/login"
-             className="hidden rounded-xl px-4 py-2 text-sm font-medium text-gray-600 dark:text-slate-300 transition hover:bg-gray-100 hover:text-black dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white md:block"
+             className="hidden rounded-xl px-4 py-2 text-sm font-medium text-muted app-dark:text-muted transition hover:bg-gray-100 hover:text-black app-dark:text-muted app-dark:hover:bg-brand-primary app-dark:hover:text-gray-100 md:block"
              >
               Login
            </Link>
 
             <Link
              href="/signup"
-             className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+             className="rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5"
              >
               Sign Up
              </Link>
@@ -129,8 +129,8 @@ return (
 
           <div>
 
-            <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 p-[1px] text-sm font-semibold text-emerald-700 dark:border-0 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7]">
-              <span className="rounded-full px-5 py-2 dark:bg-[#0b0f14] dark:text-white">
+            <span className="inline-flex rounded-full border border-border-subtle bg-surface-subtle p-[1px] text-sm font-semibold text-brand-primary app-dark:border-0 app-dark:bg-surface  ">
+              <span className="rounded-full px-5 py-2 app-dark:bg-surface app-dark:text-gray-100">
                Setup in under 2 minutes
              </span>
            </span>
@@ -145,7 +145,7 @@ return (
 
               <br />
 
-              <span className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-surface     ">
 
                 Lead
 
@@ -153,7 +153,7 @@ return (
 
             </h1>
 
-            <p className="mt-6 max-w-lg text-lg leading-8 text-gray-600 dark:text-slate-300">
+            <p className="mt-6 max-w-lg text-lg leading-8 text-muted app-dark:text-muted">
 
               Flowex captures every lead, replies instantly, notifies your team,
               and keeps your business running 24/7—so you never miss another customer.
@@ -164,14 +164,14 @@ return (
 
               <Link
   href="/checkout"
-  className="rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-8 py-4 text-center font-semibold text-white shadow-xl transition hover:-translate-y-1"
+  className="rounded-2xl bg-brand-primary    px-8 py-4 text-center font-semibold text-gray-100 shadow-sm transition hover:-translate-y-1"
 >
   Start 7-Day Free Trial
 </Link>
 
             </div>
 
-            <div className="mt-10 flex flex-wrap gap-8 text-sm font-medium text-gray-500 dark:text-slate-400">
+            <div className="mt-10 flex flex-wrap gap-8 text-sm font-medium text-gray-500 app-dark:text-muted">
 
               <span>✓ Setup in 2 Minutes</span>
 
@@ -188,15 +188,15 @@ return (
 <div className="relative">
 
   {/* Dashboard Glow */}
-  <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-emerald-200/30 via-cyan-200/30 to-indigo-200/30 blur-3xl" />
+  <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-surface    blur-3xl" />
 
   {/* Dashboard Card */}
-  <div className="animate-[dashboard_8s_ease-in-out_infinite] rounded-[36px] border border-white/50 bg-white/90 dark:border-slate-700/70 dark:bg-slate-900/90 p-8 shadow-[0_30px_80px_rgba(0,0,0,0.08)] backdrop-blur">
+  <div className="animate-[dashboard_8s_ease-in-out_infinite] rounded-[36px] border border-white/50 bg-white/90 app-dark:border-border-subtle/70 app-dark:bg-surface/90 p-8  backdrop-blur">
 
     <div className="mb-8 flex items-center justify-between">
 
       <div>
-        <p className="text-sm text-gray-500 dark:text-slate-400">
+        <p className="text-sm text-gray-500 app-dark:text-muted">
           Flowex Dashboard
         </p>
 
@@ -205,8 +205,8 @@ return (
         </h3>
       </div>
 
-      <div className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-       <span className="rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
+      <div className="inline-flex rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
+       <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
          ● Active
        </span>
       </div>
@@ -219,22 +219,22 @@ return (
 
       <div className="grid grid-cols-3 gap-4">
 
-        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-          <p className="text-xs text-gray-500 dark:text-slate-400">Leads</p>
+        <div className="rounded-2xl bg-surface-subtle p-4 app-dark:bg-surface">
+          <p className="text-xs text-gray-500 app-dark:text-muted">Leads</p>
           <h4 className="mt-2 text-3xl font-black">
            {leadsCount}
          </h4>
         </div>
 
-        <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-          <p className="text-xs text-gray-500 dark:text-slate-400">Reply Time</p>
+        <div className="rounded-2xl bg-surface-subtle p-4 app-dark:bg-surface">
+          <p className="text-xs text-gray-500 app-dark:text-muted">Reply Time</p>
           <h4 className="mt-2 text-3xl font-black">
            {replyTime.toFixed(1)}s
          </h4>
         </div>
 
-        <div className="rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 p-4 text-white dark:from-emerald-700 dark:via-cyan-700 dark:to-indigo-700">
-            <p className="text-xs opacity-80 dark:opacity-100">
+        <div className="rounded-2xl bg-surface    p-4 text-brand-primary   ">
+            <p className="text-xs opacity-80 app-dark:opacity-100">
               Success
            </p>
 
@@ -247,7 +247,7 @@ return (
 
       {/* Workflow */}
 
-      <div className="rounded-3xl border border-gray-100 p-6 dark:border-slate-700">
+      <div className="rounded-3xl border border-border-subtle p-6 app-dark:border-border-subtle">
 
         <p className="font-semibold">
           Latest Automation
@@ -257,30 +257,30 @@ return (
 
           <div className="flex items-center justify-between">
             <span>New Lead</span>
-            <span className="font-medium text-gray-500 dark:text-slate-400">
+            <span className="font-medium text-gray-500 app-dark:text-muted">
               Acme Marketing
             </span>
           </div>
 
-          <div className="h-px bg-gray-100 dark:bg-slate-700" />
+          <div className="h-px bg-gray-100 app-dark:bg-surface" />
 
           <div className="flex items-center justify-between">
             <span>Reply Sent</span>
-            <span className="text-emerald-600">✓</span>
+            <span className="text-brand-primary">✓</span>
           </div>
 
-          <div className="h-px bg-gray-100 dark:bg-slate-700" />
+          <div className="h-px bg-gray-100 app-dark:bg-surface" />
 
           <div className="flex items-center justify-between">
             <span>CRM Updated</span>
-            <span className="text-emerald-600">✓</span>
+            <span className="text-brand-primary">✓</span>
           </div>
 
-          <div className="h-px bg-gray-100 dark:bg-slate-700" />
+          <div className="h-px bg-gray-100 app-dark:bg-surface" />
 
           <div className="flex items-center justify-between">
             <span>Team Notified</span>
-            <span className="text-emerald-600">✓</span>
+            <span className="text-brand-primary">✓</span>
           </div>
 
         </div>
@@ -299,9 +299,9 @@ return (
 
 <section
   id="pricing"
-  className="relative scroll-mt-[52px] overflow-hidden border-y border-gray-200/70 bg-gradient-to-br from-emerald-50/70 via-cyan-50/30 to-indigo-50/60 dark:border-slate-800 dark:from-emerald-950/30 dark:via-slate-950 dark:to-indigo-950/30 py-5"
+  className="relative scroll-mt-[52px] overflow-hidden border-y border-border-subtle/70 bg-surface    app-dark:border-border-subtle    py-5"
 >
-     <div className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[350px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-200/20 blur-[120px]" />
+     <div className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[350px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-subtle/20 blur-[120px]" />
 
     <div className="relative z-10 mx-auto max-w-6xl px-8">
 
@@ -309,9 +309,9 @@ return (
 
       {/* PLAN 1 */}
 
-      <div className="relative scale-[0.92] rounded-[24px] border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 opacity-50 blur-[1.5px]">
+      <div className="relative scale-[0.92] rounded-[24px] border border-border-subtle bg-white p-5 app-dark:border-border-subtle app-dark:bg-surface opacity-50 blur-[1.5px]">
 
-        <span className="absolute right-5 top-5 rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
+        <span className="absolute right-5 top-5 rounded-full bg-brand-primary px-3 py-1 text-xs font-semibold text-gray-100">
           Coming Soon
         </span>
 
@@ -319,7 +319,7 @@ return (
           Flowex Plus
         </h3>
 
-        <p className="mt-3 text-gray-500 dark:text-slate-400">
+        <p className="mt-3 text-gray-500 app-dark:text-muted">
           For growing teams needing multiple workflows.
         </p>
 
@@ -331,7 +331,7 @@ return (
 
         </div>
 
-        <div className="mt-8 space-y-4 text-gray-600 dark:text-slate-300">
+        <div className="mt-8 space-y-4 text-muted app-dark:text-muted">
 
           <p>✓ Multiple Automations</p>
 
@@ -347,9 +347,9 @@ return (
 
       {/* PLAN 2 */}
 
-      <div className="relative rounded-[28px] border-2 border-emerald-500 bg-white px-7 py-5 dark:bg-slate-900 shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
+      <div className="relative rounded-[28px] border-2 border-border-subtle bg-white px-7 py-5 app-dark:bg-surface shadow-md transition-all duration-500 hover:-translate-y-2 hover:shadow-md">
 
-        <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-lg">
+        <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-primary    px-5 py-2 text-sm font-bold text-gray-100 shadow-sm">
           MOST POPULAR
         </span>
 
@@ -357,13 +357,13 @@ return (
           Flowex Pro
         </h3>
 
-        <p className="mt-3 text-gray-500 dark:text-slate-400">
+        <p className="mt-3 text-gray-500 app-dark:text-muted">
           Everything you need to automate your lead capture.
         </p>
 
         <div className="mt-8 flex items-end gap-3">
 
-          <span className="text-2xl text-gray-400 dark:text-slate-500 line-through">
+          <span className="text-2xl text-muted app-dark:text-slate-500 line-through">
             $15
           </span>
 
@@ -371,18 +371,18 @@ return (
             $10
           </span>
 
-          <span className="pb-2 text-gray-500 dark:text-slate-400">
+          <span className="pb-2 text-gray-500 app-dark:text-muted">
             /month
           </span>
 
         </div>
-         <div className="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-           <span className="rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
+         <div className="mt-3 inline-flex rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
+           <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
              • 33% OFF
            </span>
          </div>
 
-        <div className="mt-5 space-y-2 text-gray-700 dark:text-slate-200">
+        <div className="mt-5 space-y-2 text-gray-700 app-dark:text-gray-100">
 
           <p>✓ Unlimited Leads</p>
 
@@ -398,12 +398,12 @@ return (
 
         <Link
   href="/checkout"
-  className="mt-10 block w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3.5 text-center font-semibold text-white transition hover:scale-[1.02]"
+  className="mt-10 block w-full rounded-2xl bg-brand-primary    py-3.5 text-center font-semibold text-gray-100 transition hover:scale-[1.02]"
 >
   Start 7-Day Free Trial
 </Link>
 
-        <p className="mt-4 text-center text-sm text-gray-500 dark:text-slate-400">
+        <p className="mt-4 text-center text-sm text-gray-500 app-dark:text-muted">
          7-day free trial • Cancel anytime
         </p>
 
@@ -411,9 +411,9 @@ return (
 
       {/* PLAN 3 */}
 
-      <div className="relative scale-[0.92] rounded-[24px] border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 opacity-50 blur-[1.5px]">
+      <div className="relative scale-[0.92] rounded-[24px] border border-border-subtle bg-white p-5 app-dark:border-border-subtle app-dark:bg-surface opacity-50 blur-[1.5px]">
 
-        <span className="absolute right-5 top-5 rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
+        <span className="absolute right-5 top-5 rounded-full bg-brand-primary px-3 py-1 text-xs font-semibold text-gray-100">
           Coming Soon
         </span>
 
@@ -424,7 +424,7 @@ return (
          Enterprise
         </h3>
 
-        <p className="mt-3 text-gray-500 dark:text-slate-400">
+        <p className="mt-3 text-gray-500 app-dark:text-muted">
           AI-powered automation and advanced business workflows.
         </p>
 
@@ -436,7 +436,7 @@ return (
 
         </div>
 
-        <div className="mt-8 space-y-4 text-gray-600 dark:text-slate-300">
+        <div className="mt-8 space-y-4 text-muted app-dark:text-muted">
 
           <p>✓ AI Agents</p>
 
@@ -468,7 +468,7 @@ return (
 
     <div className="mx-auto max-w-2xl text-center">
       <h2 className="mt-6 text-5xl font-black">
-        <span className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 bg-clip-text text-transparent">
+        <span className="bg-surface     ">
            {" "}PRODUCTS
          </span>
      </h2>
@@ -477,7 +477,7 @@ return (
         Automation that grows with you.
       </h2>
 
-      <p className="mt-3 text-gray-500 dark:text-slate-400">
+      <p className="mt-3 text-gray-500 app-dark:text-muted">
         Start with lead capture. More Flowex automations are on the way.
       </p>
     </div>
@@ -488,21 +488,21 @@ return (
 
       {/* LEAD CAPTURE */}
 
-      <div className="group relative overflow-hidden rounded-[26px] border border-emerald-200 bg-white p-6 dark:border-emerald-900/60 dark:bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="group relative overflow-hidden rounded-[26px] border border-border-subtle bg-white p-6 app-dark:border-border-subtle/60 app-dark:bg-surface shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-sm">
 
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-200/30 blur-3xl" />
+        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-surface-subtle/30 blur-3xl" />
 
         <div className="relative">
 
           <div className="flex items-start justify-between">
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg dark:from-[#00c297]/40 dark:to-[#4b52f7]/40">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface   text-lg  ">
              ⚡
            </div>
 
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-             <span className="flex items-center gap-1.5 rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
-               <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="flex items-center gap-1.5 rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
+             <span className="flex items-center gap-1.5 rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
+               <span className="h-2 w-2 rounded-full bg-surface-subtle" />
                  Available
                </span>
              </span>
@@ -513,15 +513,15 @@ return (
             Lead Capture
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
             Capture every lead, reply instantly, notify your team and follow up automatically.
           </p>
 
-          <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="mt-6 border-t border-border-subtle pt-5">
 
             <a
               href="/checkout"
-              className="inline-flex items-center text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+              className="inline-flex items-center text-sm font-semibold text-brand-primary transition hover:text-brand-primary"
             >
               Get started
               <span className="ml-2">→</span>
@@ -534,36 +534,36 @@ return (
 
       {/* AI ASSISTANT */}
 
-      <div className="relative overflow-hidden rounded-[26px] border border-gray-200 bg-white/70 p-6 dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="relative overflow-hidden rounded-[26px] border border-border-subtle bg-white/70 p-6 app-dark:border-border-subtle app-dark:bg-surface/80">
 
-        <div className="absolute inset-0 bg-gray-50/30 dark:bg-slate-800/20" />
+        <div className="absolute inset-0 bg-gray-50/30 app-dark:bg-surface/20" />
 
         <div className="relative">
 
           <div className="flex items-start justify-between">
 
-           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg dark:from-[#00c297]/40 dark:to-[#4b52f7]/40">
+           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface   text-lg  ">
              ✦
            </div>
-            <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-              <span className="rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
+            <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-surface   app-dark:p-[1px]">
+              <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
                Coming Soon
              </span>
            </span>
 
           </div>
 
-          <h3 className="mt-6 text-xl font-bold text-gray-700 dark:text-slate-200">
+          <h3 className="mt-6 text-xl font-bold text-gray-700 app-dark:text-gray-100">
             AI Assistant
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
             An AI assistant that handles customer questions and conversations automatically.
           </p>
 
-          <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="mt-6 border-t border-border-subtle pt-5">
 
-            <span className="text-sm font-semibold text-gray-400 dark:text-slate-500">
+            <span className="text-sm font-semibold text-muted app-dark:text-slate-500">
               In development
             </span>
 
@@ -574,36 +574,36 @@ return (
 
       {/* APPOINTMENT AUTOMATION */}
 
-      <div className="relative overflow-hidden rounded-[26px] border border-gray-200 bg-white/70 p-6 dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="relative overflow-hidden rounded-[26px] border border-border-subtle bg-white/70 p-6 app-dark:border-border-subtle app-dark:bg-surface/80">
 
-        <div className="absolute inset-0 bg-gray-50/30 dark:bg-slate-800/20" />
+        <div className="absolute inset-0 bg-gray-50/30 app-dark:bg-surface/20" />
 
         <div className="relative">
 
           <div className="flex items-start justify-between">
 
-           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg dark:from-[#00c297]/40 dark:to-[#4b52f7]/40">
+           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface   text-lg  ">
              ◷
            </div>
-            <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-              <span className="rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
+            <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-surface   app-dark:p-[1px]">
+              <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
                Coming Soon
              </span>
            </span>
 
           </div>
 
-          <h3 className="mt-6 text-xl font-bold text-gray-700 dark:text-slate-200">
+          <h3 className="mt-6 text-xl font-bold text-gray-700 app-dark:text-gray-100">
             Appointment Automation
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-gray-500 dark:text-slate-400">
+          <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
             Automate bookings, confirmations and reminders without the manual work.
           </p>
 
-          <div className="mt-6 border-t border-gray-100 pt-5">
+          <div className="mt-6 border-t border-border-subtle pt-5">
 
-            <span className="text-sm font-semibold text-gray-400 dark:text-slate-500">
+            <span className="text-sm font-semibold text-muted app-dark:text-slate-500">
               Coming soon
             </span>
 
@@ -621,7 +621,7 @@ return (
 
       <section
         id="solutions"
-       className="relative scroll-mt-[95px] border-y border-slate-100 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/60 py-10"
+       className="relative scroll-mt-[95px] border-y border-border-subtle bg-surface-subtle/70 app-dark:border-border-subtle app-dark:bg-surface/60 py-10"
       >    
         <div className="mx-auto max-w-7xl px-8">
 
@@ -631,7 +631,7 @@ return (
 
               Automation in
 
-              <span className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-surface     ">
 
                 {" "}4 simple steps
 
@@ -668,10 +668,10 @@ return (
 
               <div
                 key={step.number}
-                className="rounded-[30px] border border-gray-100 bg-white p-8 dark:border-slate-700 dark:bg-slate-900 shadow-lg transition duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                className="rounded-[30px] border border-border-subtle bg-white p-8 app-dark:border-border-subtle app-dark:bg-surface shadow-sm transition duration-300 hover:-translate-y-2 hover:shadow-md"
               >
 
-                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-xl font-bold text-white">
+                <div className="mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-primary    text-xl font-bold text-gray-100">
 
                   {step.number}
 
@@ -683,7 +683,7 @@ return (
 
                 </h3>
 
-                <p className="mt-4 leading-8 text-gray-600 dark:text-slate-300">
+                <p className="mt-4 leading-8 text-muted app-dark:text-muted">
 
                   {step.desc}
 
@@ -700,7 +700,7 @@ return (
       </section>
 {/* ================= SIMPLE PLAN ================= */}
 
-<section className="relative overflow-hidden bg-gradient-to-br from-white via-cyan-50/40 to-indigo-50/40 dark:from-slate-950 dark:via-cyan-950/20 dark:to-indigo-950/20 py-8">
+<section className="relative overflow-hidden bg-surface       py-8">
 
   <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-8">
 
@@ -708,18 +708,18 @@ return (
 
       <h2 className="text-3xl font-black">
         One plan.
-        <span className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 bg-clip-text text-transparent">
+        <span className="bg-surface     ">
           {" "}Everything included.
         </span>
       </h2>
 
-      <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
+      <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">
         No hidden fees. No contracts. Cancel anytime.
       </p>
 
     </div>
 
-    <div className="mx-auto mt-6 max-w-3xl rounded-[26px] border border-gray-200/80 bg-white/90 dark:border-slate-700 dark:bg-slate-900/90 px-8 py-6 shadow-xl backdrop-blur">
+    <div className="mx-auto mt-6 max-w-3xl rounded-[26px] border border-border-subtle/80 bg-white/90 app-dark:border-border-subtle app-dark:bg-surface/90 px-8 py-6 shadow-sm backdrop-blur">
 
       <div className="grid items-center gap-8 md:grid-cols-[0.8fr_1.2fr]">
 
@@ -733,7 +733,7 @@ return (
 
           <div className="mt-3 flex items-end justify-center gap-2 md:justify-start">
 
-            <span className="text-lg text-gray-400 dark:text-slate-500 line-through">
+            <span className="text-lg text-muted app-dark:text-slate-500 line-through">
               $15
             </span>
 
@@ -741,14 +741,14 @@ return (
               $10
             </span>
 
-            <span className="pb-1 text-sm text-gray-500 dark:text-slate-400">
+            <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">
               /month
             </span>
 
           </div>
 
-          <div className="mt-3 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-gradient-to-r dark:from-[#00c297] dark:to-[#4b52f7] dark:p-[1px]">
-            <span className="rounded-full dark:bg-[#0b0f14] dark:px-[11px] dark:py-[3px] dark:text-white">
+          <div className="mt-3 inline-flex rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
+            <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
              • Save 33%
            </span>
          </div>
@@ -759,7 +759,7 @@ return (
 
         <div>
 
-          <div className="grid grid-cols-2 gap-x-5 gap-y-2.5 text-sm text-gray-700 dark:text-slate-200">
+          <div className="grid grid-cols-2 gap-x-5 gap-y-2.5 text-sm text-gray-700 app-dark:text-gray-100">
 
             <span>✓ Unlimited Leads</span>
             <span>✓ Instant Replies</span>
@@ -772,12 +772,12 @@ return (
 
           <Link
   href="/checkout"
-  className="mt-5 block w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-center font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+  className="mt-5 block w-full rounded-xl bg-brand-primary    py-3 text-center font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5"
 >
   Start 7-Day Free Trial
 </Link>
 
-          <p className="mt-2 text-center text-xs text-gray-400 dark:text-slate-500">
+          <p className="mt-2 text-center text-xs text-muted app-dark:text-slate-500">
             7-day free trial • Cancel anytime
           </p>
 
@@ -800,12 +800,12 @@ return (
 
       <h2 className="mt-6 text-5xl font-black">
         Frequently Asked
-        <span className="bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 bg-clip-text text-transparent">
+        <span className="bg-surface     ">
           {" "}Questions
         </span>
       </h2>
 
-      <p className="mt-5 text-lg text-gray-600 dark:text-slate-300">
+      <p className="mt-5 text-lg text-muted app-dark:text-muted">
         Everything you need to know before getting started.
       </p>
 
@@ -834,7 +834,7 @@ return (
 
         <details
           key={faq.q}
-          className="group rounded-3xl border border-gray-100 bg-white p-7 dark:border-slate-700 dark:bg-slate-900 shadow-sm transition hover:shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
+          className="group rounded-3xl border border-border-subtle bg-white p-7 app-dark:border-border-subtle app-dark:bg-surface shadow-sm transition hover:shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-md"
         >
 
           <summary className="cursor-pointer list-none text-lg font-bold flex items-center justify-between">
@@ -847,7 +847,7 @@ return (
 
           </summary>
 
-          <p className="mt-5 leading-8 text-gray-600 dark:text-slate-300">
+          <p className="mt-5 leading-8 text-muted app-dark:text-muted">
             {faq.a}
           </p>
 
@@ -862,59 +862,59 @@ return (
 </section>
 {/* ================= FOOTER ================= */}
 
-<footer className="border-t border-gray-200/70 bg-white/85 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+<footer className="border-t border-border-subtle/70 bg-white/85 backdrop-blur-xl app-dark:border-border-subtle/80 app-dark:bg-surface">
   <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
 
     {/* LEFT */}
 
     <div className="flex items-center gap-4">
       <Image
-        src="/flowex-logo.png"
+        src="/flowex-logo-brand.png"
         alt="Flowex"
         width={110}
         height={30}
       />
 
-      <span className="hidden text-sm text-gray-400 dark:text-slate-200 lg:block">
+      <span className="hidden text-sm text-muted app-dark:text-gray-100 lg:block">
         Automate your business.
       </span>
     </div>
 
     {/* LINKS */}
 
-    <div className="flex items-center gap-6 text-sm font-medium text-gray-500 dark:text-slate-200">
+    <div className="flex items-center gap-6 text-sm font-medium text-gray-500 app-dark:text-gray-100">
 
       <a
         href="#pricing"
-        className="transition-colors hover:text-gray-900 dark:hover:text-white"
+        className="transition-colors hover:text-foreground app-dark:hover:text-gray-100"
       >
         Pricing
       </a>
 
       <a
         href="/resources"
-        className="transition-colors hover:text-gray-900 dark:hover:text-white"
+        className="transition-colors hover:text-foreground app-dark:hover:text-gray-100"
       >
         Resources
       </a>
 
       <a
         href="/contact"
-        className="transition-colors hover:text-gray-900 dark:hover:text-white"
+        className="transition-colors hover:text-foreground app-dark:hover:text-gray-100"
       >
         Contact
       </a>
 
       <a
         href="/privacy"
-        className="transition-colors hover:text-gray-900 dark:hover:text-white"
+        className="transition-colors hover:text-foreground app-dark:hover:text-gray-100"
       >
         Privacy
       </a>
 
       <a
         href="/terms"
-        className="transition-colors hover:text-gray-900 dark:hover:text-white"
+        className="transition-colors hover:text-foreground app-dark:hover:text-gray-100"
       >
         Terms
       </a>
@@ -923,7 +923,7 @@ return (
 
     {/* COPYRIGHT */}
 
-    <p className="text-xs text-gray-400 dark:text-slate-300">
+    <p className="text-xs text-muted app-dark:text-muted">
       © 2026 Flowex. All rights reserved.
     </p>
 

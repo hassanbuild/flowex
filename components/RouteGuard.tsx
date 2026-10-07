@@ -128,7 +128,7 @@ export default function RouteGuard({
 
   if (!authReady) {
     return (
-      <main className="min-h-screen bg-[#f8fafc] app-dark:bg-[#0b0f14]" />
+      <main className="min-h-screen bg-background app-dark:bg-surface" />
     );
   }
 
@@ -137,7 +137,7 @@ export default function RouteGuard({
   if (access === "guest") {
     if (isLoggedIn) {
       return (
-        <main className="min-h-screen bg-[#f8fafc] app-dark:bg-[#0b0f14]" />
+        <main className="min-h-screen bg-background app-dark:bg-surface" />
       );
     }
 
@@ -149,7 +149,7 @@ export default function RouteGuard({
   if (access === "signed-in") {
     if (!isLoggedIn) {
       return (
-        <main className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f14]" />
+        <main className="min-h-screen bg-background app-dark:bg-surface" />
       );
     }
 
@@ -164,7 +164,7 @@ export default function RouteGuard({
       hasPremiumAccess
     ) {
       return (
-        <main className="min-h-screen bg-[#f8fafc] app-dark:bg-[#0b0f14]" />
+        <main className="min-h-screen bg-background app-dark:bg-surface" />
       );
     }
 
@@ -179,7 +179,7 @@ export default function RouteGuard({
       !hasPremiumAccess
     ) {
       return (
-        <main className="min-h-screen bg-[#f8fafc] app-dark:bg-[#0b0f14]" />
+        <main className="min-h-screen bg-background app-dark:bg-surface" />
       );
     }
 

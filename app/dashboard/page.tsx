@@ -147,11 +147,11 @@ export default function DashboardPage() {
   return (
     <RouteGuard access="premium">
       
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= NAVBAR ================= */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
@@ -159,7 +159,7 @@ export default function DashboardPage() {
 
           <Link href="/dashboard">
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -173,21 +173,21 @@ export default function DashboardPage() {
 
             <Link
               href="/dashboard"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100 app-dark:text-white app-dark:hover:bg-white/10"
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-gray-100 app-dark:text-gray-100 app-dark:hover:bg-white/10"
             >
               Dashboard
             </Link>
 
             <a
               href="#automations"
-              className="rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 app-dark:text-slate-300 app-dark:hover:bg-white/10 app-dark:hover:text-white"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-100 hover:text-foreground app-dark:text-muted app-dark:hover:bg-white/10 app-dark:hover:text-gray-100"
             >
               Automations
             </a>
 
             <Link
               href="/lead-capture/leads"
-              className="rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 app-dark:text-slate-300 app-dark:hover:bg-white/10 app-dark:hover:text-white"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition hover:bg-gray-100 hover:text-foreground app-dark:text-muted app-dark:hover:bg-white/10 app-dark:hover:text-gray-100"
             >
               Leads
             </Link>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
            <button
   type="button"
   aria-label="Open account menu"
-  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 font-bold text-white shadow-md transition hover:scale-105"
+  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-primary    font-bold text-gray-100 shadow-md transition hover:scale-105"
 >
   {profileImage ? (
     <img
@@ -214,25 +214,25 @@ export default function DashboardPage() {
   )}
 </button>
 
-            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-gray-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-border-subtle bg-white p-2 opacity-0 shadow-sm transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-border-subtle app-dark:bg-surface ">
 
               <div className="px-3 py-2">
 
-                <p className="text-sm font-semibold app-dark:text-white">
+                <p className="text-sm font-semibold app-dark:text-gray-100">
                   {name}
                 </p>
 
-                <p className="truncate text-xs text-gray-400 app-dark:text-slate-400">
+                <p className="truncate text-xs text-muted app-dark:text-muted">
                   {email}
                 </p>
 
                 <span
                   className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                     plan === "trial"
-                      ? "bg-cyan-100 text-cyan-700 app-dark:bg-cyan-500/10 app-dark:text-cyan-400"
+                      ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
                       : plan === "pro"
-                        ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                        : "bg-gray-100 text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-300"
+                        ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                        : "bg-gray-100 text-gray-500 app-dark:bg-surface app-dark:text-muted"
                   }`}
                 >
                   {planName}
@@ -244,35 +244,35 @@ export default function DashboardPage() {
 
               <Link
                 href="/account"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Account
               </Link>
 
               <Link
                 href="/connections"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Connections
               </Link>
 
               <Link
                 href="/billing"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Plan & Billing
               </Link>
 
               <Link
                 href="/upgrade"
-                className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 app-dark:text-emerald-400 app-dark:hover:bg-emerald-500/10"
+                className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-brand-primary transition hover:bg-surface-subtle app-dark:text-brand-primary app-dark:hover:bg-surface-subtle/10"
               >
                 Upgrade Plan
               </Link>
 
               <Link
                 href="/settings"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Settings
               </Link>
@@ -283,11 +283,11 @@ export default function DashboardPage() {
                 type="button"
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 <span>Theme</span>
 
-                <span className="text-lg leading-none text-gray-500 app-dark:text-slate-200">
+                <span className="text-lg leading-none text-gray-500 app-dark:text-gray-100">
                   {theme === "dark" ? "☾" : "☀"}
                 </span>
               </button>
@@ -323,15 +323,15 @@ export default function DashboardPage() {
 
             <div>
 
-              <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+              <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                 DASHBOARD
               </p>
 
-              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
                 Welcome back.
               </h1>
 
-              <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+              <p className="mt-2 text-gray-500 app-dark:text-muted">
                 Manage your Flowex automations from one place.
               </p>
 
@@ -339,9 +339,9 @@ export default function DashboardPage() {
 
             {/* WORKSPACE STATUS */}
 
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-sm app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-muted shadow-sm app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
 
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="h-2 w-2 rounded-full bg-surface-subtle" />
 
               1 automation active
 
@@ -358,23 +358,23 @@ export default function DashboardPage() {
 
             {/* LEAD CAPTURE */}
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl app-dark:border-slate-800 app-dark:bg-[#11161d] app-dark:shadow-[0_15px_45px_rgba(0,0,0,0.20)] app-dark:hover:border-slate-700">
+            <div className="group relative overflow-hidden rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-sm app-dark:border-border-subtle app-dark:bg-surface  app-dark:hover:border-border-subtle">
 
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-emerald-200/30 blur-3xl app-dark:bg-emerald-500/10" />
+              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-surface-subtle/30 blur-3xl app-dark:bg-surface-subtle/10" />
 
               <div className="relative">
 
                 <div className="flex items-start justify-between">
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-xl app-dark:from-[#00c297]/40 app-dark:to-[#4b52f7]/40">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface   text-xl  ">
                     ⚡
                   </div>
 
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-gradient-to-r app-dark:from-[#00c297] app-dark:to-[#4b52f7] app-dark:p-[1px]">
+                  <span className="flex items-center gap-1.5 rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
 
-                    <span className="flex items-center gap-1.5 rounded-full app-dark:bg-[#0b0f14] app-dark:px-[11px] app-dark:py-[3px] app-dark:text-white">
+                    <span className="flex items-center gap-1.5 rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
 
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <span className="h-2 w-2 rounded-full bg-surface-subtle" />
 
                       Active
 
@@ -384,23 +384,23 @@ export default function DashboardPage() {
 
                 </div>
 
-                <h2 className="mt-6 text-xl font-bold app-dark:text-white">
+                <h2 className="mt-6 text-xl font-bold app-dark:text-gray-100">
                   Lead Capture
                 </h2>
 
-                <p className="mt-2 min-h-[48px] text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                <p className="mt-2 min-h-[48px] text-sm leading-6 text-gray-500 app-dark:text-muted">
                   Capture every lead, reply instantly and keep your team notified.
                 </p>
 
-                <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-5 app-dark:border-slate-700">
+                <div className="mt-6 flex items-center justify-between border-t border-border-subtle pt-5 app-dark:border-border-subtle">
 
                   <div>
 
-                    <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                    <p className="text-xs text-muted app-dark:text-slate-500">
                       Leads today
                     </p>
 
-                    <p className="mt-1 text-xl font-black app-dark:text-white">
+                    <p className="mt-1 text-xl font-black app-dark:text-gray-100">
                       {isLoadingLeadsToday
                         ? "—"
                         : leadsToday}
@@ -410,7 +410,7 @@ export default function DashboardPage() {
 
                   <Link
                     href="/lead-capture/dashboard"
-                    className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5"
+                    className="rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5"
                   >
                     Open
                   </Link>
@@ -423,21 +423,21 @@ export default function DashboardPage() {
 
             {/* AI ASSISTANT */}
 
-            <div className="relative overflow-hidden rounded-[28px] border border-gray-200 bg-white/70 p-6 transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]/80">
+            <div className="relative overflow-hidden rounded-[28px] border border-border-subtle bg-white/70 p-6 transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface/80">
 
-              <div className="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] app-dark:bg-slate-950/20" />
+              <div className="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] app-dark:bg-surface/20" />
 
               <div className="relative">
 
                 <div className="flex items-start justify-between">
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-xl app-dark:bg-indigo-500/15">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-subtle text-xl app-dark:bg-surface-subtle/15">
                     ✦
                   </div>
 
-                  <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-gradient-to-r app-dark:from-[#00c297] app-dark:to-[#4b52f7] app-dark:p-[1px]">
+                  <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-surface   app-dark:p-[1px]">
 
-                    <span className="rounded-full app-dark:bg-[#0b0f14] app-dark:px-[11px] app-dark:py-[3px] app-dark:text-white">
+                    <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
                       Coming Soon
                     </span>
 
@@ -445,19 +445,19 @@ export default function DashboardPage() {
 
                 </div>
 
-                <h2 className="mt-6 text-xl font-bold text-gray-600 app-dark:text-slate-300">
+                <h2 className="mt-6 text-xl font-bold text-muted app-dark:text-muted">
                   AI Assistant
                 </h2>
 
-                <p className="mt-2 min-h-[48px] text-sm leading-6 text-gray-400 app-dark:text-slate-500">
+                <p className="mt-2 min-h-[48px] text-sm leading-6 text-muted app-dark:text-slate-500">
                   An AI assistant that helps handle customer questions automatically.
                 </p>
 
-                <div className="mt-6 border-t border-gray-100 pt-5 app-dark:border-slate-700">
+                <div className="mt-6 border-t border-border-subtle pt-5 app-dark:border-border-subtle">
 
                   <button
                     disabled
-                    className="w-full cursor-not-allowed rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-400 app-dark:bg-slate-800 app-dark:text-slate-500"
+                    className="w-full cursor-not-allowed rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-muted app-dark:bg-surface app-dark:text-slate-500"
                   >
                     Coming Soon
                   </button>
@@ -470,21 +470,21 @@ export default function DashboardPage() {
 
             {/* APPOINTMENT AUTOMATION */}
 
-            <div className="relative overflow-hidden rounded-[28px] border border-gray-200 bg-white/70 p-6 transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]/80">
+            <div className="relative overflow-hidden rounded-[28px] border border-border-subtle bg-white/70 p-6 transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface/80">
 
-              <div className="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] app-dark:bg-slate-950/20" />
+              <div className="absolute inset-0 bg-gray-50/40 backdrop-blur-[1px] app-dark:bg-surface/20" />
 
               <div className="relative">
 
                 <div className="flex items-start justify-between">
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-xl app-dark:bg-cyan-500/15">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-subtle text-xl app-dark:bg-surface-subtle/15">
                     ◷
                   </div>
 
-                  <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-gradient-to-r app-dark:from-[#00c297] app-dark:to-[#4b52f7] app-dark:p-[1px]">
+                  <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500 app-dark:bg-surface   app-dark:p-[1px]">
 
-                    <span className="rounded-full app-dark:bg-[#0b0f14] app-dark:px-[11px] app-dark:py-[3px] app-dark:text-white">
+                    <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
                       Coming Soon
                     </span>
 
@@ -492,19 +492,19 @@ export default function DashboardPage() {
 
                 </div>
 
-                <h2 className="mt-6 text-xl font-bold text-gray-600 app-dark:text-slate-300">
+                <h2 className="mt-6 text-xl font-bold text-muted app-dark:text-muted">
                   Appointment Automation
                 </h2>
 
-                <p className="mt-2 min-h-[48px] text-sm leading-6 text-gray-400 app-dark:text-slate-500">
+                <p className="mt-2 min-h-[48px] text-sm leading-6 text-muted app-dark:text-slate-500">
                   Automate bookings, confirmations and customer reminders.
                 </p>
 
-                <div className="mt-6 border-t border-gray-100 pt-5 app-dark:border-slate-700">
+                <div className="mt-6 border-t border-border-subtle pt-5 app-dark:border-border-subtle">
 
                   <button
                     disabled
-                    className="w-full cursor-not-allowed rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-400 app-dark:bg-slate-800 app-dark:text-slate-500"
+                    className="w-full cursor-not-allowed rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-muted app-dark:bg-surface app-dark:text-slate-500"
                   >
                     Coming Soon
                   </button>
@@ -519,13 +519,13 @@ export default function DashboardPage() {
 
           {/* ================= MORE COMING ================= */}
 
-          <div className="mt-6 rounded-[26px] border border-dashed border-gray-300 bg-white/50 px-6 py-5 text-center transition-colors duration-300 app-dark:border-slate-700 app-dark:bg-[#11161d]/50">
+          <div className="mt-6 rounded-[26px] border border-dashed border-border-subtle bg-white/50 px-6 py-5 text-center transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface/50">
 
-            <p className="text-sm font-semibold text-gray-600 app-dark:text-slate-300">
+            <p className="text-sm font-semibold text-muted app-dark:text-muted">
               More Flowex automations are on the way.
             </p>
 
-            <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+            <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
               New workflows will appear here as they become available.
             </p>
 
@@ -533,15 +533,15 @@ export default function DashboardPage() {
 
           {/* ================= QUICK HELP ================= */}
 
-          <div className="mt-5 flex flex-col items-start justify-between gap-4 rounded-[22px] border border-gray-200 bg-white px-6 py-5 sm:flex-row sm:items-center app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-5 flex flex-col items-start justify-between gap-4 rounded-[22px] border border-border-subtle bg-white px-6 py-5 sm:flex-row sm:items-center app-dark:border-border-subtle app-dark:bg-surface">
 
             <div>
 
-              <p className="text-sm font-semibold text-gray-800 app-dark:text-slate-200">
+              <p className="text-sm font-semibold text-foreground app-dark:text-gray-100">
                 Need help setting up Flowex?
               </p>
 
-              <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+              <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                 Browse setup guides, integrations and automation resources.
               </p>
 
@@ -549,7 +549,7 @@ export default function DashboardPage() {
 
             <Link
               href="/resources"
-              className="text-sm font-semibold text-[#4b52f7] transition hover:opacity-70 app-dark:text-[#7c83ff]"
+              className="text-sm font-semibold text-brand-primary transition hover:opacity-70 app-dark:text-brand-primary"
             >
               Open Resources →
             </Link>
@@ -562,7 +562,7 @@ export default function DashboardPage() {
 
       {/* ================= FOOTER ================= */}
 
-      <footer className="mt-10 border-t border-gray-200/70 bg-white/90 transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <footer className="mt-10 border-t border-border-subtle/70 bg-white/90 transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto max-w-7xl px-6 py-6 lg:px-8">
 
@@ -573,13 +573,13 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4">
 
               <Image
-                src="/flowex-logo.png"
+                src="/flowex-logo-brand.png"
                 alt="Flowex"
                 width={105}
                 height={30}
               />
 
-              <span className="hidden text-sm text-gray-400 app-dark:text-slate-300 lg:block">
+              <span className="hidden text-sm text-muted app-dark:text-muted lg:block">
                 Automate your business.
               </span>
 
@@ -587,53 +587,53 @@ export default function DashboardPage() {
 
             {/* LINKS */}
 
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500 app-dark:text-slate-200">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500 app-dark:text-gray-100">
 
   <Link
     href="/dashboard"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Dashboard
   </Link>
 
   <Link
     href="/account"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Account
   </Link>
 
   <Link
     href="/settings"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Settings
   </Link>
 
   <Link
     href="/billing"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Billing
   </Link>
 
   <Link
     href="/resources"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Resources & Help
   </Link>
 
   <Link
     href="/privacy"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Privacy
   </Link>
 
   <Link
     href="/terms"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Terms
   </Link>
@@ -642,7 +642,7 @@ export default function DashboardPage() {
 
             {/* COPYRIGHT */}
 
-            <p className="text-xs text-gray-400 app-dark:text-slate-300">
+            <p className="text-xs text-muted app-dark:text-muted">
               © 2026 Flowex.
             </p>
 

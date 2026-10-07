@@ -349,16 +349,16 @@ export default function LeadsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= NAVBAR ================= */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
           <Link href="/dashboard">
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -368,7 +368,7 @@ export default function LeadsPage() {
 
           <Link
             href="/lead-capture/dashboard"
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+            className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
           >
             Back
           </Link>
@@ -384,15 +384,15 @@ export default function LeadsPage() {
 
           <div>
 
-            <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+            <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
               LEAD CAPTURE
             </p>
 
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
               Leads
             </h1>
 
-            <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-gray-500 app-dark:text-muted">
               Your last 7 days of Flowex lead activity.
             </p>
 
@@ -402,44 +402,44 @@ export default function LeadsPage() {
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Last 7 Days
               </p>
 
-              <p className="mt-2 text-3xl font-black app-dark:text-white">
+              <p className="mt-2 text-3xl font-black app-dark:text-gray-100">
                 {isLoading ? "—" : leads.length}
               </p>
 
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Today
               </p>
 
-              <p className="mt-2 text-3xl font-black app-dark:text-white">
+              <p className="mt-2 text-3xl font-black app-dark:text-gray-100">
                 {isLoading ? "—" : todayCount}
               </p>
 
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Contacted
               </p>
 
               <div className="mt-2 flex items-center gap-3">
 
-                <p className="text-3xl font-black app-dark:text-white">
+                <p className="text-3xl font-black app-dark:text-gray-100">
                   {isLoading ? "—" : contactedCount}
                 </p>
 
                 {!isLoading && leads.length > 0 && (
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                  <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                     {Math.round((contactedCount / leads.length) * 100)}%
                   </span>
                 )}
@@ -458,18 +458,18 @@ export default function LeadsPage() {
 
           {/* ================= LEADS ================= */}
 
-          <div className="mt-6 overflow-hidden rounded-[26px] border border-gray-200 bg-white shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-6 overflow-hidden rounded-[26px] border border-border-subtle bg-white shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
             {/* SEARCH + FILTER */}
 
-            <div className="flex flex-col gap-3 border-b border-gray-100 p-5 sm:flex-row sm:items-center sm:justify-between app-dark:border-slate-800">
+            <div className="flex flex-col gap-3 border-b border-border-subtle p-5 sm:flex-row sm:items-center sm:justify-between app-dark:border-border-subtle">
 
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search leads..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-4 focus:ring-cyan-100 sm:max-w-sm app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:bg-[#0b0f14] app-dark:focus:ring-cyan-500/10"
+                className="w-full rounded-xl border border-border-subtle bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-4 focus:ring-brand-primary/20 sm:max-w-sm app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:bg-surface app-dark:focus:ring-brand-primary/10"
               />
 
               <select
@@ -479,7 +479,7 @@ export default function LeadsPage() {
                     e.target.value as "all" | LeadStatus
                   )
                 }
-                className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300"
+                className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-medium text-muted outline-none app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted"
               >
                 <option value="all">
                   All Statuses
@@ -506,9 +506,9 @@ export default function LeadsPage() {
 
               <table className="w-full">
 
-                <thead className="bg-gray-50/80 app-dark:bg-[#0b0f14]">
+                <thead className="bg-gray-50/80 app-dark:bg-surface">
 
-                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-400 app-dark:text-slate-500">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted app-dark:text-slate-500">
 
                     <th className="px-6 py-4">
                       Lead
@@ -539,18 +539,18 @@ export default function LeadsPage() {
                   {filteredLeads.map((lead) => (
                     <tr
                       key={lead.id}
-                      className="transition hover:bg-gray-50/70 app-dark:hover:bg-slate-900/60"
+                      className="transition hover:bg-gray-50/70 app-dark:hover:bg-surface/60"
                     >
 
                       <td className="px-6 py-5">
 
                         <div className="flex items-center gap-3">
 
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-sm font-bold text-gray-700 app-dark:from-[#00c297]/30 app-dark:via-cyan-500/20 app-dark:to-[#4b52f7]/30 app-dark:text-white">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary    text-sm font-bold text-gray-700    app-dark:text-gray-100">
                             {lead.name.charAt(0).toUpperCase()}
                           </div>
 
-                          <p className="font-semibold app-dark:text-white">
+                          <p className="font-semibold app-dark:text-gray-100">
                             {lead.name}
                           </p>
 
@@ -560,19 +560,19 @@ export default function LeadsPage() {
 
                       <td className="px-6 py-5">
 
-                        <p className="text-sm font-medium app-dark:text-slate-200">
+                        <p className="text-sm font-medium app-dark:text-gray-100">
                           {lead.email || lead.phone || "No contact"}
                         </p>
 
                         {lead.email && lead.phone && (
-                          <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                          <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                             {lead.phone}
                           </p>
                         )}
 
                       </td>
 
-                      <td className="px-6 py-5 text-sm text-gray-500 app-dark:text-slate-400">
+                      <td className="px-6 py-5 text-sm text-gray-500 app-dark:text-muted">
                         {lead.source}
                       </td>
 
@@ -602,11 +602,11 @@ export default function LeadsPage() {
                               Follow-up sent
                             </span>
                           ) : lead.status === "new" && lead.followUpDueAt ? (
-                            <span className="text-[11px] font-semibold text-cyan-600 app-dark:text-cyan-400">
+                            <span className="text-[11px] font-semibold text-brand-primary app-dark:text-brand-primary">
                               {formatCountdown(lead.followUpDueAt, nowMs)}
                             </span>
                           ) : lead.status !== "new" ? (
-                            <span className="text-[11px] font-medium text-gray-400 app-dark:text-slate-500">
+                            <span className="text-[11px] font-medium text-muted app-dark:text-slate-500">
                               Follow-up cancelled
                             </span>
                           ) : null}
@@ -614,7 +614,7 @@ export default function LeadsPage() {
 
                       </td>
 
-                      <td className="px-6 py-5 text-sm text-gray-400 app-dark:text-slate-500">
+                      <td className="px-6 py-5 text-sm text-muted app-dark:text-slate-500">
                         {formatLeadTime(lead.receivedAt)}
                       </td>
 
@@ -641,17 +641,17 @@ export default function LeadsPage() {
 
                     <div className="flex min-w-0 items-center gap-3">
 
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-sm font-bold text-gray-700 app-dark:from-[#00c297]/30 app-dark:via-cyan-500/20 app-dark:to-[#4b52f7]/30 app-dark:text-white">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary    text-sm font-bold text-gray-700    app-dark:text-gray-100">
                         {lead.name.charAt(0).toUpperCase()}
                       </div>
 
                       <div className="min-w-0">
 
-                        <p className="truncate font-semibold app-dark:text-white">
+                        <p className="truncate font-semibold app-dark:text-gray-100">
                           {lead.name}
                         </p>
 
-                        <p className="mt-1 truncate text-sm text-gray-500 app-dark:text-slate-400">
+                        <p className="mt-1 truncate text-sm text-gray-500 app-dark:text-muted">
                           {lead.email || lead.phone || "No contact"}
                         </p>
 
@@ -684,24 +684,24 @@ export default function LeadsPage() {
                       Follow-up sent
                     </p>
                   ) : lead.status === "new" && lead.followUpDueAt ? (
-                    <p className="mt-3 text-xs font-semibold text-cyan-600 app-dark:text-cyan-400">
+                    <p className="mt-3 text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                       {formatCountdown(lead.followUpDueAt, nowMs)}
                     </p>
                   ) : lead.status !== "new" ? (
-                    <p className="mt-3 text-xs font-medium text-gray-400 app-dark:text-slate-500">
+                    <p className="mt-3 text-xs font-medium text-muted app-dark:text-slate-500">
                       Follow-up cancelled
                     </p>
                   ) : null}
 
-                  <div className="mt-4 grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 app-dark:border-slate-800">
+                  <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border-subtle pt-4 app-dark:border-border-subtle">
 
                     <div>
 
-                      <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                      <p className="text-xs text-muted app-dark:text-slate-500">
                         Source
                       </p>
 
-                      <p className="mt-1 text-sm font-medium text-gray-600 app-dark:text-slate-300">
+                      <p className="mt-1 text-sm font-medium text-muted app-dark:text-muted">
                         {lead.source}
                       </p>
 
@@ -709,11 +709,11 @@ export default function LeadsPage() {
 
                     <div className="text-right">
 
-                      <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                      <p className="text-xs text-muted app-dark:text-slate-500">
                         Received
                       </p>
 
-                      <p className="mt-1 text-sm font-medium text-gray-600 app-dark:text-slate-300">
+                      <p className="mt-1 text-sm font-medium text-muted app-dark:text-muted">
                         {formatLeadTime(lead.receivedAt)}
                       </p>
 
@@ -730,7 +730,7 @@ export default function LeadsPage() {
 
             {isLoading && (
               <div className="px-6 py-16 text-center">
-                <p className="font-semibold text-gray-700 app-dark:text-slate-200">
+                <p className="font-semibold text-gray-700 app-dark:text-gray-100">
                   Loading leads...
                 </p>
               </div>
@@ -739,11 +739,11 @@ export default function LeadsPage() {
             {!isLoading && filteredLeads.length === 0 && (
               <div className="px-6 py-16 text-center">
 
-                <p className="font-semibold text-gray-700 app-dark:text-slate-200">
+                <p className="font-semibold text-gray-700 app-dark:text-gray-100">
                   No leads found
                 </p>
 
-                <p className="mt-1 text-sm text-gray-400 app-dark:text-slate-500">
+                <p className="mt-1 text-sm text-muted app-dark:text-slate-500">
                   Flowex only keeps this lightweight lead view for the last 7 days.
                 </p>
 
@@ -762,12 +762,12 @@ export default function LeadsPage() {
 
 function statusClass(status: LeadStatus) {
   if (status === "contacted") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-600 app-dark:border-emerald-500/30 app-dark:bg-emerald-500/10 app-dark:text-emerald-400";
+    return "border-border-subtle bg-surface-subtle text-brand-primary app-dark:border-border-subtle/30 app-dark:bg-surface-subtle/10 app-dark:text-brand-primary";
   }
 
   if (status === "closed") {
-    return "border-gray-200 bg-gray-100 text-gray-600 app-dark:border-slate-700 app-dark:bg-slate-800 app-dark:text-slate-300";
+    return "border-border-subtle bg-gray-100 text-muted app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted";
   }
 
-  return "border-cyan-200 bg-cyan-50 text-cyan-600 app-dark:border-cyan-500/30 app-dark:bg-cyan-500/10 app-dark:text-cyan-400";
+  return "border-border-subtle bg-surface-subtle text-brand-primary app-dark:border-border-subtle/30 app-dark:bg-surface-subtle/10 app-dark:text-brand-primary";
 }

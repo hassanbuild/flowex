@@ -677,11 +677,11 @@ export default function LeadCaptureDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+    <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= NAVBAR ================= */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
@@ -689,7 +689,7 @@ export default function LeadCaptureDashboard() {
 
             <Link href="/dashboard">
               <Image
-                src="/flowex-logo.png"
+                src="/flowex-logo-brand.png"
                 alt="Flowex"
                 width={120}
                 height={34}
@@ -701,7 +701,7 @@ export default function LeadCaptureDashboard() {
 
             <Link
               href="/dashboard"
-              className="hidden text-sm font-medium text-gray-500 transition hover:text-gray-900 sm:block app-dark:text-slate-300 app-dark:hover:text-white"
+              className="hidden text-sm font-medium text-gray-500 transition hover:text-foreground sm:block app-dark:text-muted app-dark:hover:text-gray-100"
             >
               ← All Workflows
             </Link>
@@ -715,7 +715,7 @@ export default function LeadCaptureDashboard() {
            <button
   type="button"
   aria-label="Open account menu"
-  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 font-bold text-white shadow-md transition hover:scale-105"
+  className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-primary    font-bold text-gray-100 shadow-md transition hover:scale-105"
 >
   {profileImage ? (
     <img
@@ -727,19 +727,19 @@ export default function LeadCaptureDashboard() {
     name.charAt(0).toUpperCase() || "H"
   )}
 </button>
-            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-gray-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-border-subtle bg-white p-2 opacity-0 shadow-sm transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-border-subtle app-dark:bg-surface ">
 
               <div className="px-3 py-2">
 
-                <p className="text-sm font-semibold app-dark:text-white">
+                <p className="text-sm font-semibold app-dark:text-gray-100">
                   {name}
                 </p>
 
-                <p className="truncate text-xs text-gray-400 app-dark:text-slate-400">
+                <p className="truncate text-xs text-muted app-dark:text-muted">
                   {email}
                 </p>
 
-                <p className="mt-1 text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                <p className="mt-1 text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                   {plan === "trial" ? "Flowex Pro Trial" : "Flowex Pro"}
                 </p>
 
@@ -749,35 +749,35 @@ export default function LeadCaptureDashboard() {
 
               <Link
                 href="/account?from=lead-capture"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Account
               </Link>
 
               <Link
                 href="/connections"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Connections
               </Link>
 
               <Link
                 href="/billing?from=lead-capture"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Plan & Billing
               </Link>
 
               <Link
                 href="/upgrade?from=lead-capture"
-                className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-50 app-dark:text-emerald-400 app-dark:hover:bg-emerald-500/10"
+                className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-brand-primary transition hover:bg-surface-subtle app-dark:text-brand-primary app-dark:hover:bg-surface-subtle/10"
               >
                 Upgrade Plan
               </Link>
 
               <Link
                 href="/settings?from=lead-capture"
-                className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Settings
               </Link>
@@ -788,11 +788,11 @@ export default function LeadCaptureDashboard() {
                 type="button"
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 <span>Theme</span>
 
-                <span className="text-lg leading-none text-gray-500 app-dark:text-slate-200">
+                <span className="text-lg leading-none text-gray-500 app-dark:text-gray-100">
                   {theme === "dark" ? "☾" : "☀"}
                 </span>
               </button>
@@ -836,15 +836,15 @@ export default function LeadCaptureDashboard() {
 
             <div>
 
-              <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+              <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                 LEAD CAPTURE
               </p>
 
-              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
                 Lead Capture Dashboard
               </h1>
 
-              <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+              <p className="mt-2 text-gray-500 app-dark:text-muted">
                 Monitor every lead and your automation from one place.
               </p>
 
@@ -866,7 +866,7 @@ export default function LeadCaptureDashboard() {
                     isLoadingLeadFlows ||
                     leadFlows.length === 0
                   }
-                  className="flex min-w-[190px] items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                  className="flex min-w-[190px] items-center justify-between gap-3 rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
                 >
                   <span>
                     {isLoadingLeadFlows
@@ -875,7 +875,7 @@ export default function LeadCaptureDashboard() {
                         "Select Lead Flow"}
                   </span>
 
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-muted">
                     {isLeadFlowMenuOpen
                       ? "▲"
                       : "▼"}
@@ -883,7 +883,7 @@ export default function LeadCaptureDashboard() {
                 </button>
 
                 {isLeadFlowMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-full min-w-[220px] overflow-hidden rounded-2xl border border-gray-200 bg-white p-2 shadow-xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                  <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-full min-w-[220px] overflow-hidden rounded-2xl border border-border-subtle bg-white p-2 shadow-sm app-dark:border-border-subtle app-dark:bg-surface">
 
                     {leadFlows.map(
                       (flow) => (
@@ -898,8 +898,8 @@ export default function LeadCaptureDashboard() {
                           className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${
                             flow.id ===
                             selectedLeadFlowId
-                              ? "bg-emerald-50 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                              : "text-gray-600 hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                              ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                              : "text-muted hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
                           }`}
                         >
                           <span>
@@ -932,7 +932,7 @@ export default function LeadCaptureDashboard() {
                           disabled={
                             isCreatingLeadFlow
                           }
-                          className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#4b52f7] transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:text-[#7c83ff] app-dark:hover:bg-indigo-500/10"
+                          className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-brand-primary transition hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 app-dark:text-brand-primary app-dark:hover:bg-surface-subtle/10"
                         >
                           {isCreatingLeadFlow
                             ? "Creating..."
@@ -948,7 +948,7 @@ export default function LeadCaptureDashboard() {
 
               <Link
                 href={manageHref}
-                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+                className="rounded-xl bg-brand-primary    px-5 py-3 text-center text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
               >
                 Manage Automation
               </Link>
@@ -969,19 +969,19 @@ export default function LeadCaptureDashboard() {
 
             {/* LEADS TODAY */}
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Leads Today
               </p>
 
               <div className="mt-3 flex items-end justify-between">
 
-                <h2 className="text-3xl font-black app-dark:text-white">
+                <h2 className="text-3xl font-black app-dark:text-gray-100">
                   {isLoadingLeadData ? "—" : leadsToday}
                 </h2>
 
-                <span className="text-xs text-gray-400 app-dark:text-slate-500">
+                <span className="text-xs text-muted app-dark:text-slate-500">
                   Today
                 </span>
 
@@ -991,19 +991,19 @@ export default function LeadCaptureDashboard() {
 
             {/* TOTAL LEADS */}
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Total Leads
               </p>
 
               <div className="mt-3 flex items-end justify-between">
 
-                <h2 className="text-3xl font-black app-dark:text-white">
+                <h2 className="text-3xl font-black app-dark:text-gray-100">
                   {isLoadingLeadData ? "—" : totalLeads}
                 </h2>
 
-                <span className="text-xs text-gray-400 app-dark:text-slate-500">
+                <span className="text-xs text-muted app-dark:text-slate-500">
                   All time
                 </span>
 
@@ -1013,19 +1013,19 @@ export default function LeadCaptureDashboard() {
 
             {/* AVERAGE REPLY */}
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Average Reply Time
               </p>
 
               <div className="mt-3 flex items-end justify-between">
 
-                <h2 className="text-3xl font-black app-dark:text-white">
+                <h2 className="text-3xl font-black app-dark:text-gray-100">
                   —
                 </h2>
 
-                <span className="text-xs text-gray-400 app-dark:text-slate-500">
+                <span className="text-xs text-muted app-dark:text-slate-500">
                   Coming next
                 </span>
 
@@ -1035,15 +1035,15 @@ export default function LeadCaptureDashboard() {
 
             {/* AUTOMATION */}
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-2xl border border-border-subtle bg-white p-5 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <p className="text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="text-sm text-gray-500 app-dark:text-muted">
                 Automation
               </p>
 
               <div className="mt-3 flex items-end justify-between">
 
-                <h2 className="text-3xl font-black app-dark:text-white">
+                <h2 className="text-3xl font-black app-dark:text-gray-100">
                   {selectedLeadFlow?.active === false
                     ? "Inactive"
                     : "Active"}
@@ -1053,14 +1053,14 @@ export default function LeadCaptureDashboard() {
                   className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
                     selectedLeadFlow?.active === false
                       ? "bg-amber-50 text-amber-600 app-dark:bg-amber-500/10 app-dark:text-amber-400"
-                      : "bg-emerald-50 text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                      : "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
                   }`}
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${
                       selectedLeadFlow?.active === false
                         ? "bg-amber-500"
-                        : "bg-emerald-500"
+                        : "bg-surface-subtle"
                     }`}
                   />
 
@@ -1078,7 +1078,7 @@ export default function LeadCaptureDashboard() {
 
           {/* ================= AUTOMATION STATUS ================= */}
 
-          <div className="mt-6 rounded-[26px] border border-gray-200 bg-gradient-to-br from-white via-cyan-50/50 to-indigo-50/50 p-6 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:from-[#11161d] app-dark:via-[#101821] app-dark:to-[#14162a]">
+          <div className="mt-6 rounded-[26px] border border-border-subtle bg-surface    p-6 shadow-sm transition-colors duration-300 app-dark:border-border-subtle   ">
 
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
 
@@ -1090,17 +1090,17 @@ export default function LeadCaptureDashboard() {
                     className={`h-3 w-3 rounded-full ${
                       selectedLeadFlow?.active === false
                         ? "bg-amber-500"
-                        : "bg-emerald-500"
+                        : "bg-surface-subtle"
                     }`}
                   />
 
-                  <h2 className="text-xl font-bold app-dark:text-white">
+                  <h2 className="text-xl font-bold app-dark:text-gray-100">
                     {selectedLeadFlow?.name || "Lead Capture Automation"}
                   </h2>
 
                 </div>
 
-                <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">
                   Capture Lead → Instant Reply → Notify Team → Save Lead
                 </p>
 
@@ -1112,7 +1112,7 @@ export default function LeadCaptureDashboard() {
                   className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
                     selectedLeadFlow?.active === false
                       ? "bg-amber-100 text-amber-700 app-dark:bg-amber-500/10 app-dark:text-amber-400"
-                      : "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                      : "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
                   }`}
                 >
                   {selectedLeadFlow?.active === false
@@ -1122,7 +1122,7 @@ export default function LeadCaptureDashboard() {
 
                 <Link
                   href={manageHref}
-                  className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                  className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                 >
                   Manage
                 </Link>
@@ -1139,17 +1139,17 @@ export default function LeadCaptureDashboard() {
 
             {/* ================= LEADS ================= */}
 
-            <div className="rounded-[26px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-[26px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
               <div className="flex items-center justify-between">
 
                 <div>
 
-                  <h2 className="text-xl font-bold app-dark:text-white">
+                  <h2 className="text-xl font-bold app-dark:text-gray-100">
                     Recent Leads
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                  <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                     Latest leads captured by Flowex.
                   </p>
 
@@ -1157,7 +1157,7 @@ export default function LeadCaptureDashboard() {
 
                 <Link
                   href={leadsHref}
-                  className="text-sm font-semibold text-gray-500 transition hover:text-gray-900 app-dark:text-slate-400 app-dark:hover:text-white"
+                  className="text-sm font-semibold text-gray-500 transition hover:text-foreground app-dark:text-muted app-dark:hover:text-gray-100"
                 >
                   View All
                 </Link>
@@ -1167,7 +1167,7 @@ export default function LeadCaptureDashboard() {
               <div className="mt-5 divide-y divide-gray-100 app-dark:divide-slate-800">
 
                 {recentLeads.length === 0 ? (
-                  <p className="py-6 text-sm text-gray-400 app-dark:text-slate-500">
+                  <p className="py-6 text-sm text-muted app-dark:text-slate-500">
                     {isLoadingLeadData
                       ? "Loading leads..."
                       : "No leads captured in this Lead Flow yet."}
@@ -1181,11 +1181,11 @@ export default function LeadCaptureDashboard() {
 
                       <div className="min-w-0">
 
-                        <p className="font-semibold app-dark:text-white">
+                        <p className="font-semibold app-dark:text-gray-100">
                           {lead.name}
                         </p>
 
-                        <p className="truncate text-sm text-gray-500 app-dark:text-slate-400">
+                        <p className="truncate text-sm text-gray-500 app-dark:text-muted">
                           {lead.email}
                         </p>
 
@@ -1193,11 +1193,11 @@ export default function LeadCaptureDashboard() {
 
                       <div className="shrink-0 text-right">
 
-                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                           {lead.status}
                         </span>
 
-                        <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
+                        <p className="mt-2 text-xs text-muted app-dark:text-slate-500">
                           {lead.time}
                         </p>
 
@@ -1213,20 +1213,20 @@ export default function LeadCaptureDashboard() {
 
             {/* ================= ACTIVITY ================= */}
 
-            <div className="rounded-[26px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="rounded-[26px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
-              <h2 className="text-xl font-bold app-dark:text-white">
+              <h2 className="text-xl font-bold app-dark:text-gray-100">
                 Recent Activity
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                 Latest automation events.
               </p>
 
               <div className="mt-5 space-y-3">
 
                 {activity.length === 0 ? (
-                  <p className="text-sm text-gray-400 app-dark:text-slate-500">
+                  <p className="text-sm text-muted app-dark:text-slate-500">
                     {isLoadingLeadData
                       ? "Loading activity..."
                       : "No recent activity for this Lead Flow yet."}
@@ -1235,24 +1235,24 @@ export default function LeadCaptureDashboard() {
                   activity.map((item) => (
                     <div
                       key={`${item.title}-${item.detail}-${item.time}`}
-                      className="flex gap-3 rounded-2xl bg-gray-50 p-4 transition-colors duration-300 app-dark:bg-[#0b0f14]"
+                      className="flex gap-3 rounded-2xl bg-gray-50 p-4 transition-colors duration-300 app-dark:bg-surface"
                     >
 
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-sm font-bold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                         ✓
                       </div>
 
                       <div>
 
-                        <p className="font-semibold app-dark:text-white">
+                        <p className="font-semibold app-dark:text-gray-100">
                           {item.title}
                         </p>
 
-                        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                        <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                           {item.detail}
                         </p>
 
-                        <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                        <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                           {item.time}
                         </p>
 
@@ -1272,21 +1272,21 @@ export default function LeadCaptureDashboard() {
 
           {needsFirstLeadFlow && (
             <div className="absolute inset-0 z-30 flex items-center justify-center px-4">
-              <div className="w-full max-w-md rounded-[28px] border border-gray-200 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-xl app-dark:border-slate-700 app-dark:bg-[#11161d]/95">
+              <div className="w-full max-w-md rounded-[28px] border border-border-subtle bg-white/95 p-8 text-center shadow-md backdrop-blur-xl app-dark:border-border-subtle app-dark:bg-surface/95">
 
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 via-cyan-100 to-indigo-100 text-2xl app-dark:from-emerald-500/15 app-dark:via-cyan-500/15 app-dark:to-indigo-500/15">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-surface    text-2xl   ">
                   ⚡
                 </div>
 
-                <p className="mt-5 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+                <p className="mt-5 text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                   LEAD CAPTURE
                 </p>
 
-                <h2 className="mt-2 text-2xl font-black app-dark:text-white">
+                <h2 className="mt-2 text-2xl font-black app-dark:text-gray-100">
                   Create your first Lead Flow
                 </h2>
 
-                <p className="mt-3 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                <p className="mt-3 text-sm leading-6 text-gray-500 app-dark:text-muted">
                   Set up where leads come from, then configure how Flowex handles them.
                 </p>
 
@@ -1298,7 +1298,7 @@ export default function LeadCaptureDashboard() {
                   disabled={
                     isCreatingLeadFlow
                   }
-                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-6 w-full rounded-xl bg-brand-primary    px-5 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCreatingLeadFlow
                     ? "Creating Lead Flow..."
@@ -1315,12 +1315,12 @@ export default function LeadCaptureDashboard() {
 
       {isLeadFlowNameModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[28px] border border-gray-200 bg-white p-7 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
-            <h2 className="text-2xl font-black app-dark:text-white">
+          <div className="w-full max-w-md rounded-[28px] border border-border-subtle bg-white p-7 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+            <h2 className="text-2xl font-black app-dark:text-gray-100">
               Name your Lead Flow
             </h2>
 
-            <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">
               Give this Lead Flow a name you will recognize later.
             </p>
 
@@ -1342,7 +1342,7 @@ export default function LeadCaptureDashboard() {
               maxLength={80}
               autoFocus
               placeholder="e.g. Website Leads"
-              className="mt-5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-emerald-500 app-dark:focus:ring-emerald-500/10"
+              className="mt-5 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
             />
 
             <div className="mt-6 flex justify-end gap-3">
@@ -1355,7 +1355,7 @@ export default function LeadCaptureDashboard() {
                   }
                 }}
                 disabled={isCreatingLeadFlow}
-                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Cancel
               </button>
@@ -1367,7 +1367,7 @@ export default function LeadCaptureDashboard() {
                   isCreatingLeadFlow ||
                   !newLeadFlowName.trim()
                 }
-                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isCreatingLeadFlow
                   ? "Creating..."
@@ -1380,49 +1380,49 @@ export default function LeadCaptureDashboard() {
 
       {/* ================= FOOTER ================= */}
 
-      <footer className="mt-10 border-t border-gray-200/70 bg-white/90 transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <footer className="mt-10 border-t border-border-subtle/70 bg-white/90 transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex min-h-[68px] max-w-7xl flex-col items-center justify-between gap-4 px-6 py-3 md:flex-row lg:px-8">
 
           <Image
-            src="/flowex-logo.png"
+            src="/flowex-logo-brand.png"
             alt="Flowex"
             width={105}
             height={30}
           />
 
-          <div className="flex items-center gap-6 text-sm font-medium text-gray-500 app-dark:text-slate-200">
+          <div className="flex items-center gap-6 text-sm font-medium text-gray-500 app-dark:text-gray-100">
 
   <Link
     href="/dashboard"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Dashboard
   </Link>
 
   <Link
     href="/account?from=lead-capture"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Account
   </Link>
 
   <Link
     href="/settings?from=lead-capture"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Settings
   </Link>
 
   <Link
     href="/billing?from=lead-capture"
-    className="transition hover:text-gray-900 app-dark:hover:text-white"
+    className="transition hover:text-foreground app-dark:hover:text-gray-100"
   >
     Billing
   </Link>
 
 </div>
-          <p className="text-xs text-gray-400 app-dark:text-slate-300">
+          <p className="text-xs text-muted app-dark:text-muted">
             © 2026 Flowex.
           </p>
 

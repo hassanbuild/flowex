@@ -42,17 +42,17 @@ function UpgradePageContent() {
   return (
     <RouteGuard access="signed-in">
 
-      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+      <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
         {/* ================= HEADER ================= */}
 
-        <header className="border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+        <header className="border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
             <Link href={returnPath}>
               <Image
-                src="/flowex-logo.png"
+                src="/flowex-logo-brand.png"
                 alt="Flowex"
                 width={120}
                 height={34}
@@ -62,7 +62,7 @@ function UpgradePageContent() {
 
             <Link
               href={returnPath}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
             >
               Back
             </Link>
@@ -77,15 +77,15 @@ function UpgradePageContent() {
 
           <div className="mx-auto max-w-5xl">
 
-            <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+            <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
               UPGRADE
             </p>
 
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
               Upgrade Your Plan
             </h1>
 
-            <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-gray-500 app-dark:text-muted">
               More powerful Flowex plans are coming soon.
             </p>
 
@@ -93,13 +93,13 @@ function UpgradePageContent() {
 
               {/* ================= FLOWEX PLUS ================= */}
 
-              <div className="rounded-[26px] border border-gray-200 bg-white/60 p-6 opacity-55 transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]/70">
+              <div className="rounded-[26px] border border-border-subtle bg-white/60 p-6 opacity-55 transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface/70">
 
-                <p className="text-sm font-semibold text-gray-400 app-dark:text-slate-500">
+                <p className="text-sm font-semibold text-muted app-dark:text-slate-500">
                   COMING SOON
                 </p>
 
-                <h2 className="mt-3 text-xl font-bold app-dark:text-slate-300">
+                <h2 className="mt-3 text-xl font-bold app-dark:text-muted">
                   Flowex Plus
                 </h2>
 
@@ -111,33 +111,33 @@ function UpgradePageContent() {
 
               {/* ================= FLOWEX PRO ================= */}
 
-              <div className="rounded-[28px] border-2 border-emerald-400 bg-white p-7 shadow-xl transition-colors duration-300 app-dark:bg-[#11161d] app-dark:shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+              <div className="rounded-[28px] border-2 border-border-subtle bg-white p-7 shadow-sm transition-colors duration-300 app-dark:bg-surface ">
 
-                <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+                <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                   {planStatus}
                 </p>
 
-                <h2 className="mt-3 text-2xl font-bold app-dark:text-white">
+                <h2 className="mt-3 text-2xl font-bold app-dark:text-gray-100">
                   Flowex Pro
                 </h2>
 
                 <div className="mt-5 flex items-end gap-2">
 
-                  <span className="text-lg text-gray-400 line-through app-dark:text-slate-500">
+                  <span className="text-lg text-muted line-through app-dark:text-slate-500">
                     $15
                   </span>
 
-                  <span className="text-5xl font-black app-dark:text-white">
+                  <span className="text-5xl font-black app-dark:text-gray-100">
                     $10
                   </span>
 
-                  <span className="pb-1 text-sm text-gray-500 app-dark:text-slate-400">
+                  <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">
                     /month
                   </span>
 
                 </div>
 
-                <p className="mt-5 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-5 text-sm text-gray-500 app-dark:text-muted">
                   Your current launch plan.
                 </p>
 
@@ -147,7 +147,7 @@ function UpgradePageContent() {
 
                   <Link
                     href="/checkout"
-                    className="mt-6 block w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-center text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+                    className="mt-6 block w-full rounded-xl bg-brand-primary    py-3 text-center text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
                   >
                     {buttonLabel}
                   </Link>
@@ -157,7 +157,7 @@ function UpgradePageContent() {
                   <button
                     type="button"
                     disabled
-                    className="mt-6 w-full cursor-default rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400"
+                    className="mt-6 w-full cursor-default rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-500 app-dark:bg-surface app-dark:text-muted"
                   >
                     {buttonLabel}
                   </button>
@@ -168,13 +168,13 @@ function UpgradePageContent() {
 
               {/* ================= ENTERPRISE ================= */}
 
-              <div className="rounded-[26px] border border-gray-200 bg-white/60 p-6 opacity-55 transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]/70">
+              <div className="rounded-[26px] border border-border-subtle bg-white/60 p-6 opacity-55 transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface/70">
 
-                <p className="text-sm font-semibold text-gray-400 app-dark:text-slate-500">
+                <p className="text-sm font-semibold text-muted app-dark:text-slate-500">
                   COMING SOON
                 </p>
 
-                <h2 className="mt-3 text-xl font-bold app-dark:text-slate-300">
+                <h2 className="mt-3 text-xl font-bold app-dark:text-muted">
                   Flowex Enterprise
                 </h2>
 

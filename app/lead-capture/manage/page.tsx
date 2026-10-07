@@ -6217,12 +6217,12 @@ export default function ManageLeadCapturePage() {
     <main
       onClickCapture={handleManageInteraction}
       onChangeCapture={handleManageInteraction}
-      className="min-h-screen bg-[#f7f9fb] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100"
+      className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100"
     >
 
       {/* NAVBAR */}
 
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
@@ -6236,7 +6236,7 @@ export default function ManageLeadCapturePage() {
             className="cursor-pointer"
           >
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -6253,7 +6253,7 @@ export default function ManageLeadCapturePage() {
                   "/lead-capture/dashboard"
                 )
               }
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 app-dark:text-slate-300 app-dark:hover:bg-white/10 app-dark:hover:text-white"
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-foreground app-dark:text-muted app-dark:hover:bg-white/10 app-dark:hover:text-gray-100"
             >
               Back
             </button>
@@ -6278,7 +6278,7 @@ export default function ManageLeadCapturePage() {
 
             <div>
 
-              <p className="text-xs font-semibold tracking-wide text-emerald-600 app-dark:text-emerald-400">
+              <p className="text-xs font-semibold tracking-wide text-brand-primary app-dark:text-brand-primary">
                 LEAD CAPTURE
               </p>
 
@@ -6298,21 +6298,21 @@ export default function ManageLeadCapturePage() {
                       }}
                       autoFocus
                       maxLength={80}
-                      className="h-9 min-w-0 w-full max-w-sm rounded-lg border border-gray-200 bg-white px-3 text-lg font-bold text-gray-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                      className="h-9 min-w-0 w-full max-w-sm rounded-lg border border-border-subtle bg-white px-3 text-lg font-bold text-foreground outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/10 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                       aria-label="Lead Flow name"
                     />
                     <button
                       type="button"
                       onClick={() => void saveLeadFlowName()}
                       disabled={isSavingLeadFlowName}
-                      className="h-9 shrink-0 rounded-lg bg-gray-900 px-3 text-xs font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 app-dark:bg-white app-dark:text-gray-900 app-dark:hover:bg-slate-200"
+                      className="h-9 shrink-0 rounded-lg bg-surface px-3 text-xs font-semibold text-brand-primary transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60 app-dark:bg-white app-dark:text-foreground app-dark:hover:bg-surface-subtle"
                     >
                       {isSavingLeadFlowName ? "Saving..." : "Save"}
                     </button>
                   </>
                 ) : (
                   <>
-                    <h1 className="truncate text-2xl font-black sm:text-3xl app-dark:text-white">
+                    <h1 className="truncate text-2xl font-black sm:text-3xl app-dark:text-gray-100">
                       {leadFlowName || "Automation Flow"}
                     </h1>
                     <button
@@ -6321,7 +6321,7 @@ export default function ManageLeadCapturePage() {
                         setLeadFlowNameDraft(leadFlowName);
                         setIsEditingLeadFlowName(true);
                       }}
-                      className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:bg-white/10 app-dark:hover:text-slate-200"
+                      className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-muted transition hover:bg-gray-100 hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:bg-white/10 app-dark:hover:text-gray-100"
                     >
                       Rename
                     </button>
@@ -6329,7 +6329,7 @@ export default function ManageLeadCapturePage() {
                 )}
               </div>
 
-              <p className="mt-1.5 max-w-xl text-sm text-gray-500 app-dark:text-slate-400">
+              <p className="mt-1.5 max-w-xl text-sm text-gray-500 app-dark:text-muted">
                 Build your lead workflow from capture to follow-up.
               </p>
 
@@ -6342,8 +6342,8 @@ export default function ManageLeadCapturePage() {
                 onClick={toggleAutomationActive}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 ${
                   active
-                    ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
-                    : "bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-white shadow-md"
+                    ? "border border-red-200 bg-white text-red-600 hover:bg-red-50 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                    : "bg-brand-primary text-gray-100 shadow-md"
                 }`}
               >
                 {active ? "Pause Automation" : "Resume Automation"}
@@ -6355,7 +6355,7 @@ export default function ManageLeadCapturePage() {
                   data-step-save
                   onClick={() => void saveStep("status")}
                   disabled={isSavingAutomation}
-                  className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl bg-brand-primary    px-5 py-3 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSavingAutomation ? "Saving..." : "Save status"}
                 </button>
@@ -6365,7 +6365,7 @@ export default function ManageLeadCapturePage() {
                 type="button"
                 onClick={deleteLeadFlow}
                 disabled={isDeletingLeadFlow}
-                className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                className="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
               >
                 {isDeletingLeadFlow
                   ? "Deleting..."
@@ -6390,7 +6390,7 @@ export default function ManageLeadCapturePage() {
 
             {/* vertical connector */}
 
-            <div className="absolute bottom-20 left-[31px] top-20 w-px bg-gradient-to-b from-emerald-300 via-cyan-300 to-indigo-300 sm:left-[39px]" />
+            <div className="absolute bottom-20 left-[31px] top-20 w-px bg-surface    sm:left-[39px]" />
 
             {/* ================= STEP 1 ================= */}
 
@@ -6405,15 +6405,15 @@ export default function ManageLeadCapturePage() {
 
               {flowexFormSourceId || externalSourceId ? (
                 <>
-                  <div className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                  <div className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between app-dark:border-border-subtle app-dark:bg-surface">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">✓</span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-subtle text-sm font-bold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">✓</span>
                         <div className="min-w-0">
-                          <p className="font-semibold app-dark:text-white">
+                          <p className="font-semibold app-dark:text-gray-100">
                             {flowexFormSourceId ? "Flowex Form" : "Lovable Form"}
                           </p>
-                          <p className="truncate text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="truncate text-xs text-gray-500 app-dark:text-muted">
                             {flowexFormSourceId
                               ? flowexFormTitle || "Flowex Lead Form"
                               : externalUrl || "Connected Lovable form"}
@@ -6432,7 +6432,7 @@ export default function ManageLeadCapturePage() {
                             void copyLovableSetupInstruction();
                           }
                         }}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                       >
                         {flowexFormSourceId
                           ? copiedFormLink ? "Copied" : "Copy"
@@ -6444,7 +6444,7 @@ export default function ManageLeadCapturePage() {
                         onClick={() =>
                           setIsEditingSourceSetup((current) => !current)
                         }
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                        className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                       >
                         {isEditingSourceSetup ? "Done" : "Edit"}
                       </button>
@@ -6452,11 +6452,11 @@ export default function ManageLeadCapturePage() {
                   </div>
 
                   {isEditingSourceSetup && flowexFormSourceId && (
-                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                    <div className="mt-4 rounded-2xl border border-border-subtle bg-gray-50 p-4 app-dark:border-border-subtle app-dark:bg-surface">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="font-semibold app-dark:text-white">Flowex Lead Form</p>
-                          <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                          <p className="font-semibold app-dark:text-gray-100">Flowex Lead Form</p>
+                          <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                             {flowexFormFields.length > 0
                               ? `${flowexFormFields.length} custom field${flowexFormFields.length === 1 ? "" : "s"} configured.`
                               : "Build a simple form with up to 5 fields."}
@@ -6469,44 +6469,44 @@ export default function ManageLeadCapturePage() {
                             setFormCustomizerError("");
                             setShowFormCustomizer(true);
                           }}
-                          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                          className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                         >
                           Customize
                         </button>
                       </div>
 
-                      <div className="mt-4 flex justify-end border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                      <div className="mt-4 flex justify-end border-t border-border-subtle pt-4 app-dark:border-border-subtle">
                         <button
                           type="button"
                           onClick={() => void removeFlowexForm()}
                           disabled={isRemovingFlowexForm}
-                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                         >
                           {isRemovingFlowexForm ? "Removing..." : "Remove Form"}
                         </button>
                       </div>
 
                       {flowexFormSlug && (
-                        <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
-                          <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Form Link</p>
+                        <div className="mt-4 border-t border-border-subtle pt-4 app-dark:border-border-subtle">
+                          <p className="text-xs font-semibold text-gray-500 app-dark:text-muted">Form Link</p>
                           <div className="mt-2 flex gap-2">
                             <input
                               type="text"
                               readOnly
                               value={`/form/${flowexFormSlug}`}
-                              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                              className="min-w-0 flex-1 rounded-xl border border-border-subtle bg-white px-3 py-2 text-sm text-muted outline-none app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted"
                             />
                             <button
                               type="button"
                               onClick={copyFlowexFormLink}
-                              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                              className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                             >
                               {copiedFormLink ? "Copied" : "Copy"}
                             </button>
                             <Link
                               href={`/form/${flowexFormSlug}`}
                               target="_blank"
-                              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                              className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                             >
                               Open
                             </Link>
@@ -6517,29 +6517,29 @@ export default function ManageLeadCapturePage() {
                   )}
 
                   {isEditingSourceSetup && externalSourceId && !flowexFormSourceId && (
-                    <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-                      <p className="font-semibold app-dark:text-white">Lovable Form</p>
-                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">Connected published Lovable form.</p>
+                    <div className="mt-4 rounded-2xl border border-border-subtle bg-gray-50 p-4 app-dark:border-border-subtle app-dark:bg-surface">
+                      <p className="font-semibold app-dark:text-gray-100">Lovable Form</p>
+                      <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">Connected published Lovable form.</p>
 
                       <input
                         type="url"
                         value={externalUrl}
                         readOnly
-                        className="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 outline-none app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                        className="mt-4 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm text-muted outline-none app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted"
                       />
 
-                      <div className="mt-4 border-t border-gray-200 pt-4 app-dark:border-slate-700">
-                        <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Form Verified</p>
+                      <div className="mt-4 border-t border-border-subtle pt-4 app-dark:border-border-subtle">
+                        <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">✓ Form Verified</p>
                         {externalCaptureConnected ? (
-                          <p className="mt-2 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Flowex Capture Connected</p>
+                          <p className="mt-2 text-sm font-semibold text-brand-primary app-dark:text-brand-primary">✓ Flowex Capture Connected</p>
                         ) : (
                           <>
-                            <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">One last step: connect this form to Flowex.</p>
+                            <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">One last step: connect this form to Flowex.</p>
                             <div className="mt-3 flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={copyLovableSetupInstruction}
-                                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                                className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                               >
                                 {copiedLovableSetup ? "Copied" : "Copy Lovable Setup"}
                               </button>
@@ -6547,22 +6547,22 @@ export default function ManageLeadCapturePage() {
                                 type="button"
                                 onClick={checkExternalConnection}
                                 disabled={isCheckingExternalConnection}
-                                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="rounded-xl bg-brand-primary    px-4 py-2 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {isCheckingExternalConnection ? "Checking..." : "Check Connection"}
                               </button>
                             </div>
-                            <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">Paste the copied instruction into Lovable, let it apply the change, then click Check Connection.</p>
+                            <p className="mt-2 text-xs text-muted app-dark:text-slate-500">Paste the copied instruction into Lovable, let it apply the change, then click Check Connection.</p>
                           </>
                         )}
                       </div>
 
-                      <div className="mt-4 flex justify-end border-t border-gray-200 pt-4 app-dark:border-slate-700">
+                      <div className="mt-4 flex justify-end border-t border-border-subtle pt-4 app-dark:border-border-subtle">
                         <button
                           type="button"
                           onClick={() => void unlinkExternalForm()}
                           disabled={isConnectingExternal}
-                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                          className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                         >
                           {isConnectingExternal ? "Removing..." : "Remove Form"}
                         </button>
@@ -6584,7 +6584,7 @@ export default function ManageLeadCapturePage() {
                         setHasUnsavedChanges(true);
                       }}
                       title="Flowex Form"
-                      description="Create a ready-to-use form."
+                      description="Create a ready- form."
                     />
 
                     <Option
@@ -6597,18 +6597,18 @@ export default function ManageLeadCapturePage() {
                       description="Connect a form built with Lovable."
                     />
 
-                    <div className="relative rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-                      <div className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400">Coming Soon</div>
-                      <p className="font-semibold app-dark:text-white">Web Hooks</p>
+                    <div className="relative rounded-2xl border border-border-subtle bg-gray-50 p-4 opacity-60 app-dark:border-border-subtle app-dark:bg-surface">
+                      <div className="absolute right-3 top-3 rounded-full bg-gray-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 app-dark:bg-surface app-dark:text-muted">Coming Soon</div>
+                      <p className="font-semibold app-dark:text-gray-100">Web Hooks</p>
                     </div>
                   </div>
 
                   {sourceType === "flowex" && (
-                    <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                    <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50 p-4 app-dark:border-border-subtle app-dark:bg-surface">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="font-semibold app-dark:text-white">Flowex Lead Form</p>
-                          <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                          <p className="font-semibold app-dark:text-gray-100">Flowex Lead Form</p>
+                          <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                             {flowexFormFields.length > 0
                               ? `${flowexFormFields.length} custom field${flowexFormFields.length === 1 ? "" : "s"} configured.`
                               : "Build a simple form with up to 5 fields."}
@@ -6620,7 +6620,7 @@ export default function ManageLeadCapturePage() {
                             setFormCustomizerError("");
                             setShowFormCustomizer(true);
                           }}
-                          className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                          className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                         >
                           Customize
                         </button>
@@ -6629,9 +6629,9 @@ export default function ManageLeadCapturePage() {
                   )}
 
                   {sourceType === "external" && (
-                    <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
-                      <p className="font-semibold app-dark:text-white">Lovable Form</p>
-                      <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">Paste the direct URL of your published Lovable form.</p>
+                    <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50 p-4 app-dark:border-border-subtle app-dark:bg-surface">
+                      <p className="font-semibold app-dark:text-gray-100">Lovable Form</p>
+                      <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">Paste the direct URL of your published Lovable form.</p>
                       <div className="mt-4 flex gap-3">
                         <input
                           type="url"
@@ -6641,13 +6641,13 @@ export default function ManageLeadCapturePage() {
                             setExternalSourceError("");
                           }}
                           placeholder="https://yourproject.lovable.app/contact"
-                          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                          className="min-w-0 flex-1 rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                         />
                         <button
                           type="button"
                           onClick={connectExternalForm}
                           disabled={isConnectingExternal}
-                          className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="shrink-0 rounded-xl bg-brand-primary    px-5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingExternal ? "Verifying..." : "Connect"}
                         </button>
@@ -6679,27 +6679,27 @@ export default function ManageLeadCapturePage() {
 
                 <button
                   type="button"
-                  className="rounded-2xl border border-emerald-400 bg-emerald-50/60 p-4 text-left ring-4 ring-emerald-100 transition app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10"
+                  className="rounded-2xl border border-border-subtle bg-surface-subtle/60 p-4 text-left ring-4 ring-brand-primary transition app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:ring-brand-primary/10"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold app-dark:text-white">
+                      <p className="font-semibold app-dark:text-gray-100">
                         {storageType === "airtable" ? "Airtable" : storageType === "excel" ? "Microsoft Excel" : storageType === "notion" ? "Notion" : storageType === "hubspot" ? "HubSpot" : "Google Sheets"}
                       </p>
-                      <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                      <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
                         {storageType === "airtable" ? "Store leads in an Airtable base." : storageType === "excel" ? "Store leads in an Excel workbook." : storageType === "notion" ? "Store leads in a Notion database." : storageType === "hubspot" ? "Create or update contacts in HubSpot CRM." : "A structured lead table with mapped columns."}
                       </p>
                     </div>
                     {storageType === "airtable" ? (
-                      airtableAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      airtableAccountConnected && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">CONNECTED</span>
                     ) : storageType === "excel" ? (
-                      microsoftAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      microsoftAccountConnected && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">CONNECTED</span>
                     ) : storageType === "notion" ? (
-                      notionAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      notionAccountConnected && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">CONNECTED</span>
                     ) : storageType === "hubspot" ? (
-                      hubSpotAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      hubSpotAccountConnected && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">CONNECTED</span>
                     ) : (
-                      googleAccountConnected && <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10 app-dark:text-emerald-400">CONNECTED</span>
+                      googleAccountConnected && <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:ring-brand-primary/10 app-dark:text-brand-primary">CONNECTED</span>
                     )}
                   </div>
                 </button>
@@ -6711,13 +6711,13 @@ export default function ManageLeadCapturePage() {
                         true
                       )
                     }
-                    className="rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-left transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
+                    className="rounded-2xl border border-dashed border-border-subtle bg-white p-4 text-left transition hover:border-border-subtle hover:bg-surface-subtle/40 app-dark:border-border-subtle app-dark:bg-surface app-dark:hover:border-border-subtle/50 app-dark:hover:bg-surface-subtle/5"
                   >
-                    <p className="font-semibold app-dark:text-white">
+                    <p className="font-semibold app-dark:text-gray-100">
                       + More destinations
                     </p>
 
-                    <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                    <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
                       Use another destination or see more integrations.
                     </p>
                   </button>
@@ -6726,16 +6726,16 @@ export default function ManageLeadCapturePage() {
 
               {storageType ===
                 "sheets" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50/70 p-5 app-dark:border-border-subtle app-dark:bg-surface">
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
-                      <p className="text-sm font-semibold app-dark:text-white">
+                      <p className="text-sm font-semibold app-dark:text-gray-100">
                         Google Sheets
                       </p>
 
-                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                         {googleAccountConnected
                           ? googleAccountEmail
                             ? `Connected as ${googleAccountEmail}`
@@ -6746,7 +6746,7 @@ export default function ManageLeadCapturePage() {
 
                     {googleAccountConnected ? (
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        <span className="w-fit rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                           Google connected
                         </span>
 
@@ -6774,7 +6774,7 @@ export default function ManageLeadCapturePage() {
                         disabled={
                           isConnectingStorage
                         }
-                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-fit rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isConnectingStorage
                           ? "Connecting..."
@@ -6798,8 +6798,8 @@ export default function ManageLeadCapturePage() {
                           className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                             storageMode ===
                             "create_new"
-                              ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                              ? "border-border-subtle bg-surface-subtle text-brand-primary app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                              : "border-border-subtle bg-white text-muted hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted"
                           }`}
                         >
                           Create new sheet
@@ -6815,8 +6815,8 @@ export default function ManageLeadCapturePage() {
                           className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                             storageMode ===
                             "existing"
-                              ? "border-emerald-400 bg-emerald-50 text-emerald-700 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300"
+                              ? "border-border-subtle bg-surface-subtle text-brand-primary app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                              : "border-border-subtle bg-white text-muted hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted"
                           }`}
                         >
                           Use existing sheet
@@ -6830,7 +6830,7 @@ export default function ManageLeadCapturePage() {
 
                           {!createdSheetId ? (
                             <>
-                              <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                              <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                                 New sheet name
                               </label>
 
@@ -6853,7 +6853,7 @@ export default function ManageLeadCapturePage() {
                                   80
                                 }
                                 placeholder="e.g. Website Leads"
-                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                                className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                               />
 
                               <button
@@ -6864,7 +6864,7 @@ export default function ManageLeadCapturePage() {
                                 disabled={
                                   isPreparingStorage
                                 }
-                                className="mt-4 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                                className="mt-4 rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
                               >
                                 {isPreparingStorage
                                   ? "Creating..."
@@ -6900,21 +6900,21 @@ export default function ManageLeadCapturePage() {
 
                             </div>
                           ) : (
-                            <div className="rounded-xl border border-emerald-200 bg-white p-4 app-dark:border-emerald-500/30 app-dark:bg-[#11161d]">
+                            <div className="rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle/30 app-dark:bg-surface">
 
                               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
                                 <div>
-                                  <p className="text-sm font-semibold app-dark:text-white">
+                                  <p className="text-sm font-semibold app-dark:text-gray-100">
                                     Sheet prepared
                                   </p>
 
-                                  <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                                  <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                                     Flowex created a real Google Sheets table from this Lead Flow&apos;s fields.
                                   </p>
                                 </div>
 
-                                <span className="w-fit rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                                <span className="w-fit rounded-full bg-surface-subtle px-2.5 py-1 text-[10px] font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                                   READY
                                 </span>
 
@@ -6923,7 +6923,7 @@ export default function ManageLeadCapturePage() {
                               {isEditingCreatedSheet ? (
                                 <div className="mt-4">
 
-                                  <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                  <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                                     Sheet name only
                                   </label>
 
@@ -6945,10 +6945,10 @@ export default function ManageLeadCapturePage() {
                                     maxLength={
                                       80
                                     }
-                                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                                    className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                                   />
 
-                                  <p className="mt-2 text-xs text-gray-400 app-dark:text-slate-500">
+                                  <p className="mt-2 text-xs text-muted app-dark:text-slate-500">
                                     The Google Sheet will be renamed when you save the automation.
                                   </p>
 
@@ -6964,7 +6964,7 @@ export default function ManageLeadCapturePage() {
                                     }
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                                    className="rounded-lg border border-border-subtle px-3 py-2 text-xs font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-muted app-dark:hover:bg-surface"
                                   >
                                     Open Sheet ↗
                                   </a>
@@ -6980,7 +6980,7 @@ export default function ManageLeadCapturePage() {
                                         !current
                                     )
                                   }
-                                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                                  className="rounded-lg border border-border-subtle px-3 py-2 text-xs font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-muted app-dark:hover:bg-surface"
                                 >
                                   {isEditingCreatedSheet
                                     ? "Done"
@@ -7033,7 +7033,7 @@ export default function ManageLeadCapturePage() {
                             </div>
                           ) : (
                             <>
-                              <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                              <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                                 Google Sheet URL
                               </label>
 
@@ -7065,7 +7065,7 @@ export default function ManageLeadCapturePage() {
                                   );
                                 }}
                                 placeholder="https://docs.google.com/spreadsheets/d/..."
-                                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                                className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                               />
 
                               <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -7078,7 +7078,7 @@ export default function ManageLeadCapturePage() {
                                   disabled={
                                     isPreparingStorage
                                   }
-                                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200 app-dark:hover:bg-slate-800"
+                                  className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
                                 >
                                   {isPreparingStorage
                                     ? "Verifying..."
@@ -7088,7 +7088,7 @@ export default function ManageLeadCapturePage() {
                                 </button>
 
                                 {existingSheetVerified && (
-                                  <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                                  <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                     ✓ Verified
                                   </span>
                                 )}
@@ -7100,7 +7100,7 @@ export default function ManageLeadCapturePage() {
                                     }
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                    className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                                   >
                                     Open Sheet ↗
                                   </a>
@@ -7122,7 +7122,7 @@ export default function ManageLeadCapturePage() {
 
                               </div>
 
-                              <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                              <p className="mt-3 text-xs leading-5 text-muted app-dark:text-slate-500">
                                 Verification only checks access and maps the columns. When you save this step, Flowex preserves a clean existing structure; if the sheet is unstructured or missing required lead columns, Flowex organizes it into the same lead-table style used for new sheets without deleting unrelated columns.
                               </p>
                             </>
@@ -7134,15 +7134,15 @@ export default function ManageLeadCapturePage() {
                       {storageError && (
                         <p className={`mt-4 text-xs font-medium ${
                           storageConnected
-                            ? "text-emerald-600 app-dark:text-emerald-400"
+                            ? "text-brand-primary app-dark:text-brand-primary"
                             : "text-amber-600 app-dark:text-amber-400"
                         }`}>
                           {storageError}
                         </p>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-gray-100">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -7151,14 +7151,14 @@ export default function ManageLeadCapturePage() {
               )}
 
               {storageType === "excel" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50/70 p-5 app-dark:border-border-subtle app-dark:bg-surface">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold app-dark:text-white">
+                      <p className="text-sm font-semibold app-dark:text-gray-100">
                         Microsoft Excel
                       </p>
 
-                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                         {microsoftAccountConnected
                           ? microsoftAccountEmail
                             ? `Connected as ${microsoftAccountEmail}`
@@ -7170,7 +7170,7 @@ export default function ManageLeadCapturePage() {
                     <div className="flex items-center gap-2">
                       {microsoftAccountConnected ? (
                         <>
-                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          <span className="w-fit rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                             Microsoft connected
                           </span>
 
@@ -7194,7 +7194,7 @@ export default function ManageLeadCapturePage() {
                           type="button"
                           onClick={connectStorageProvider}
                           disabled={isConnectingStorage}
-                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-fit rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingStorage ? "Connecting..." : "Connect Microsoft"}
                         </button>
@@ -7215,14 +7215,14 @@ export default function ManageLeadCapturePage() {
                           }}
                           className={`rounded-xl border p-4 text-left transition ${
                             storageMode === "create_new"
-                              ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10"
-                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                              ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10"
+                              : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"
                           }`}
                         >
-                          <p className="text-sm font-semibold app-dark:text-white">
+                          <p className="text-sm font-semibold app-dark:text-gray-100">
                             Create New Workbook
                           </p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Flowex creates a structured Excel table in OneDrive.
                           </p>
                         </button>
@@ -7238,22 +7238,22 @@ export default function ManageLeadCapturePage() {
                           }}
                           className={`rounded-xl border p-4 text-left transition ${
                             storageMode === "existing"
-                              ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10"
-                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                              ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10"
+                              : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"
                           }`}
                         >
-                          <p className="text-sm font-semibold app-dark:text-white">
+                          <p className="text-sm font-semibold app-dark:text-gray-100">
                             Use Existing Workbook
                           </p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Flowex maps the table and adds missing lead columns when you save this step.
                           </p>
                         </button>
                       </div>
 
                       {storageMode === "create_new" ? (
-                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
-                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                        <div className="mt-5 rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                             Workbook name
                           </label>
 
@@ -7264,7 +7264,7 @@ export default function ManageLeadCapturePage() {
                               setHasUnsavedChanges(true);
                             }}
                             placeholder="Flowex Leads"
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           />
 
                           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -7272,7 +7272,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={prepareMicrosoftExcel}
                               disabled={isPreparingStorage}
-                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+                              className="rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md disabled:opacity-60"
                             >
                               {isPreparingStorage
                                 ? "Creating..."
@@ -7282,7 +7282,7 @@ export default function ManageLeadCapturePage() {
                             </button>
 
                             {excelWorkbookId && (
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                 ✓ Workbook ready
                               </span>
                             )}
@@ -7292,7 +7292,7 @@ export default function ManageLeadCapturePage() {
                                 href={excelWorkbookUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                               >
                                 Open Workbook ↗
                               </a>
@@ -7312,9 +7312,9 @@ export default function ManageLeadCapturePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                        <div className="mt-5 rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
                           <div className="flex items-center justify-between gap-3">
-                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                               Excel workbook
                             </label>
 
@@ -7322,7 +7322,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={loadMicrosoftWorkbooks}
                               disabled={isLoadingMicrosoft}
-                              className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                              className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                             >
                               {isLoadingMicrosoft ? "Refreshing..." : "Refresh"}
                             </button>
@@ -7345,7 +7345,7 @@ export default function ManageLeadCapturePage() {
                               setExcelExistingVerified(false);
                               setHasUnsavedChanges(true);
                             }}
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             <option value="">
                               {isLoadingMicrosoft
@@ -7371,7 +7371,7 @@ export default function ManageLeadCapturePage() {
                                 !excelWorkbookId ||
                                 isPreparingStorage
                               }
-                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                              className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                             >
                               {isPreparingStorage
                                 ? "Verifying..."
@@ -7381,7 +7381,7 @@ export default function ManageLeadCapturePage() {
                             </button>
 
                             {excelExistingVerified && (
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                 ✓ Verified
                               </span>
                             )}
@@ -7391,7 +7391,7 @@ export default function ManageLeadCapturePage() {
                                 href={excelWorkbookUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                               >
                                 Open Workbook ↗
                               </a>
@@ -7412,7 +7412,7 @@ export default function ManageLeadCapturePage() {
                             )}
                           </div>
 
-                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                          <p className="mt-3 text-xs leading-5 text-muted app-dark:text-slate-500">
                             Verification checks access and maps the workbook. Missing Flowex lead columns are added only when this step is saved.
                           </p>
                         </div>
@@ -7424,8 +7424,8 @@ export default function ManageLeadCapturePage() {
                         </p>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-gray-100">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -7433,14 +7433,14 @@ export default function ManageLeadCapturePage() {
               )}
 
               {storageType === "notion" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50/70 p-5 app-dark:border-border-subtle app-dark:bg-surface">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold app-dark:text-white">
+                      <p className="text-sm font-semibold app-dark:text-gray-100">
                         Notion
                       </p>
 
-                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                         {notionAccountConnected
                           ? notionWorkspaceName
                             ? `Connected to ${notionWorkspaceName}`
@@ -7454,7 +7454,7 @@ export default function ManageLeadCapturePage() {
                     <div className="flex items-center gap-2">
                       {notionAccountConnected ? (
                         <>
-                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          <span className="w-fit rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                             Notion connected
                           </span>
 
@@ -7478,7 +7478,7 @@ export default function ManageLeadCapturePage() {
                           type="button"
                           onClick={connectStorageProvider}
                           disabled={isConnectingStorage}
-                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-fit rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingStorage ? "Connecting..." : "Connect Notion"}
                         </button>
@@ -7488,7 +7488,7 @@ export default function ManageLeadCapturePage() {
 
                   {notionAccountConnected && (
                     <>
-                      <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/70 px-4 py-3 text-xs leading-5 text-indigo-700 app-dark:border-indigo-500/20 app-dark:bg-indigo-500/10 app-dark:text-indigo-300">
+                      <div className="mt-4 rounded-xl border border-border-subtle bg-surface-subtle/70 px-4 py-3 text-xs leading-5 text-brand-primary app-dark:border-border-subtle/20 app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                         Notion only gives Flowex access to pages you approve. Choose a shared page below for a new lead database, or use an existing database already shared with Flowex.
                       </div>
 
@@ -7504,14 +7504,14 @@ export default function ManageLeadCapturePage() {
                           }}
                           className={`rounded-xl border p-4 text-left transition ${
                             storageMode === "create_new"
-                              ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10"
-                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                              ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10"
+                              : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"
                           }`}
                         >
-                          <p className="text-sm font-semibold app-dark:text-white">
+                          <p className="text-sm font-semibold app-dark:text-gray-100">
                             Create New Database
                           </p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Flowex creates a lead database inside an approved Notion page.
                           </p>
                         </button>
@@ -7527,23 +7527,23 @@ export default function ManageLeadCapturePage() {
                           }}
                           className={`rounded-xl border p-4 text-left transition ${
                             storageMode === "existing"
-                              ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10"
-                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                              ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10"
+                              : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"
                           }`}
                         >
-                          <p className="text-sm font-semibold app-dark:text-white">
+                          <p className="text-sm font-semibold app-dark:text-gray-100">
                             Use Existing Database
                           </p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Flowex maps it and adds missing form properties when you save this step.
                           </p>
                         </button>
                       </div>
 
                       {storageMode === "create_new" ? (
-                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                        <div className="mt-5 rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
                           <div className="flex items-center justify-between gap-3">
-                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                               Parent page
                             </label>
 
@@ -7551,7 +7551,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={loadNotionPages}
                               disabled={isLoadingNotion}
-                              className="text-xs font-semibold text-[#4b52f7] hover:underline disabled:opacity-60 app-dark:text-[#7c83ff]"
+                              className="text-xs font-semibold text-brand-primary hover:underline disabled:opacity-60 app-dark:text-brand-primary"
                             >
                               {isLoadingNotion ? "Refreshing..." : "Refresh pages"}
                             </button>
@@ -7563,7 +7563,7 @@ export default function ManageLeadCapturePage() {
                               setNotionParentPageId(event.target.value);
                               setHasUnsavedChanges(true);
                             }}
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             <option value="">
                               {isLoadingNotion ? "Loading pages..." : "Choose an approved page"}
@@ -7575,7 +7575,7 @@ export default function ManageLeadCapturePage() {
                             ))}
                           </select>
 
-                          <label className="mt-4 block text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                          <label className="mt-4 block text-xs font-semibold text-gray-500 app-dark:text-muted">
                             Database name
                           </label>
 
@@ -7586,7 +7586,7 @@ export default function ManageLeadCapturePage() {
                               setHasUnsavedChanges(true);
                             }}
                             placeholder="Flowex Leads"
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           />
 
                           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -7598,7 +7598,7 @@ export default function ManageLeadCapturePage() {
                                 !storageName.trim() ||
                                 isPreparingStorage
                               }
-                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+                              className="rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md disabled:opacity-60"
                             >
                               {isPreparingStorage
                                 ? "Creating..."
@@ -7608,7 +7608,7 @@ export default function ManageLeadCapturePage() {
                             </button>
 
                             {notionDatabaseId && (
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                 ✓ Database ready
                               </span>
                             )}
@@ -7618,7 +7618,7 @@ export default function ManageLeadCapturePage() {
                                 href={notionDatabaseUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                               >
                                 Open Database ↗
                               </a>
@@ -7636,9 +7636,9 @@ export default function ManageLeadCapturePage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                        <div className="mt-5 rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
                           <div className="flex items-center justify-between gap-3">
-                            <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                            <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                               Notion database
                             </label>
 
@@ -7646,7 +7646,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={loadNotionDatabases}
                               disabled={isLoadingNotion}
-                              className="text-xs font-semibold text-[#4b52f7] hover:underline disabled:opacity-60 app-dark:text-[#7c83ff]"
+                              className="text-xs font-semibold text-brand-primary hover:underline disabled:opacity-60 app-dark:text-brand-primary"
                             >
                               {isLoadingNotion ? "Refreshing..." : "Refresh"}
                             </button>
@@ -7668,7 +7668,7 @@ export default function ManageLeadCapturePage() {
                               setNotionMissingCount(0);
                               setHasUnsavedChanges(true);
                             }}
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             <option value="">
                               {isLoadingNotion ? "Loading databases..." : "Choose a shared database"}
@@ -7685,7 +7685,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={prepareNotionDestination}
                               disabled={!notionDataSourceId || isPreparingStorage}
-                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                              className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                             >
                               {isPreparingStorage
                                 ? "Verifying..."
@@ -7695,7 +7695,7 @@ export default function ManageLeadCapturePage() {
                             </button>
 
                             {notionExistingVerified && (
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                 ✓ Verified
                               </span>
                             )}
@@ -7711,7 +7711,7 @@ export default function ManageLeadCapturePage() {
                                 href={notionDatabaseUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                               >
                                 Open Database ↗
                               </a>
@@ -7732,7 +7732,7 @@ export default function ManageLeadCapturePage() {
                             )}
                           </div>
 
-                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                          <p className="mt-3 text-xs leading-5 text-muted app-dark:text-slate-500">
                             If a database is missing, add Flowex from that page/database&apos;s Connections menu in Notion, then click Refresh.
                           </p>
                         </div>
@@ -7744,8 +7744,8 @@ export default function ManageLeadCapturePage() {
                         </p>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-gray-100">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -7753,14 +7753,14 @@ export default function ManageLeadCapturePage() {
               )}
 
               {storageType === "hubspot" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50/70 p-5 app-dark:border-border-subtle app-dark:bg-surface">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold app-dark:text-white">
+                      <p className="text-sm font-semibold app-dark:text-gray-100">
                         HubSpot
                       </p>
 
-                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                         {hubSpotAccountConnected
                           ? hubSpotHubId
                             ? `Connected to HubSpot account ${hubSpotHubId}`
@@ -7771,7 +7771,7 @@ export default function ManageLeadCapturePage() {
 
                     {hubSpotAccountConnected ? (
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        <span className="w-fit rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                           HubSpot connected
                         </span>
 
@@ -7795,7 +7795,7 @@ export default function ManageLeadCapturePage() {
                         type="button"
                         onClick={connectStorageProvider}
                         disabled={isConnectingStorage}
-                        className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="w-fit rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isConnectingStorage ? "Connecting..." : "Connect HubSpot"}
                       </button>
@@ -7804,13 +7804,13 @@ export default function ManageLeadCapturePage() {
 
                   {hubSpotAccountConnected && (
                     <>
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <p className="text-sm font-semibold app-dark:text-white">
+                            <p className="text-sm font-semibold app-dark:text-gray-100">
                               HubSpot Contacts
                             </p>
-                            <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                            <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
                               Standard fields map automatically. Flowex creates any missing custom contact properties from your form when you save this step.
                             </p>
                           </div>
@@ -7819,7 +7819,7 @@ export default function ManageLeadCapturePage() {
                             type="button"
                             onClick={inspectHubSpotDestination}
                             disabled={isPreparingStorage}
-                            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                            className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             {isPreparingStorage ? "Checking..." : "Check Mapping"}
                           </button>
@@ -7828,7 +7828,7 @@ export default function ManageLeadCapturePage() {
                         {(hubSpotMappedFieldCount > 0 || hubSpotDestinationReady) && (
                           <div className="mt-4 flex flex-wrap items-center gap-2">
                             {hubSpotMappedFieldCount > 0 && (
-                              <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                              <span className="rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                                 {hubSpotMappedFieldCount} mapped {hubSpotMappedFieldCount === 1 ? "field" : "fields"}
                               </span>
                             )}
@@ -7878,15 +7878,15 @@ export default function ManageLeadCapturePage() {
                       {storageError && (
                         <p className={`mt-4 text-xs font-medium ${
                           storageError.includes("ready") || storageError.includes("will be created")
-                            ? "text-emerald-600 app-dark:text-emerald-400"
+                            ? "text-brand-primary app-dark:text-brand-primary"
                             : "text-amber-600 app-dark:text-amber-400"
                         }`}>
                           {storageError}
                         </p>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        HubSpot becomes this Lead Flow&apos;s active destination only when you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
+                        HubSpot becomes this Lead Flow&apos;s active destination only when you click <span className="font-semibold text-gray-700 app-dark:text-gray-100">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -7894,11 +7894,11 @@ export default function ManageLeadCapturePage() {
               )}
 
               {storageType === "airtable" && (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-5 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50/70 p-5 app-dark:border-border-subtle app-dark:bg-surface">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm font-semibold app-dark:text-white">Airtable</p>
-                      <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                      <p className="text-sm font-semibold app-dark:text-gray-100">Airtable</p>
+                      <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                         {airtableAccountConnected
                           ? airtableAccountEmail
                             ? `Connected as ${airtableAccountEmail}`
@@ -7910,7 +7910,7 @@ export default function ManageLeadCapturePage() {
                     <div className="flex items-center gap-2">
                       {airtableAccountConnected ? (
                         <>
-                          <span className="w-fit rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                          <span className="w-fit rounded-full bg-surface-subtle px-3 py-1.5 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                             Airtable connected
                           </span>
 
@@ -7934,7 +7934,7 @@ export default function ManageLeadCapturePage() {
                           type="button"
                           onClick={connectStorageProvider}
                           disabled={isConnectingStorage}
-                          className="w-fit rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-fit rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isConnectingStorage ? "Connecting..." : "Connect Airtable"}
                         </button>
@@ -7971,10 +7971,10 @@ export default function ManageLeadCapturePage() {
                             setStorageError("");
                             setHasUnsavedChanges(true);
                           }}
-                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "create_new" ? "border-emerald-400 bg-emerald-50 ring-4 ring-emerald-100 app-dark:border-emerald-500 app-dark:bg-emerald-500/10 app-dark:ring-emerald-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "create_new" ? "border-border-subtle bg-surface-subtle ring-4 ring-brand-primary app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:ring-brand-primary/10" : "border-border-subtle bg-white hover:border-border-subtle app-dark:border-border-subtle app-dark:bg-surface"}`}
                         >
-                          <p className="font-semibold app-dark:text-white">Create New</p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="font-semibold app-dark:text-gray-100">Create New</p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Create a new table in an existing base or create a new base.
                           </p>
                         </button>
@@ -7991,10 +7991,10 @@ export default function ManageLeadCapturePage() {
                             setStorageError("");
                             setHasUnsavedChanges(true);
                           }}
-                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "existing" ? "border-cyan-400 bg-cyan-50 ring-4 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10" : "border-gray-200 bg-white hover:border-gray-300 app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                          className={`rounded-2xl border p-4 text-left transition ${storageMode === "existing" ? "border-border-subtle bg-surface-subtle ring-4 ring-brand-primary app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:ring-brand-primary/10" : "border-border-subtle bg-white hover:border-border-subtle app-dark:border-border-subtle app-dark:bg-surface"}`}
                         >
-                          <p className="font-semibold app-dark:text-white">Use Existing</p>
-                          <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                          <p className="font-semibold app-dark:text-gray-100">Use Existing</p>
+                          <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                             Use an existing Airtable base and table.
                           </p>
                         </button>
@@ -8012,9 +8012,9 @@ export default function ManageLeadCapturePage() {
                               setStorageError("");
                               setHasUnsavedChanges(true);
                             }}
-                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "existing_base" ? "border-emerald-400 bg-emerald-50 app-dark:border-emerald-500 app-dark:bg-emerald-500/10" : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "existing_base" ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10" : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"}`}
                           >
-                            <span className="font-semibold app-dark:text-white">Use Existing Base</span>
+                            <span className="font-semibold app-dark:text-gray-100">Use Existing Base</span>
                           </button>
 
                           <button
@@ -8027,16 +8027,16 @@ export default function ManageLeadCapturePage() {
                               setStorageError("");
                               setHasUnsavedChanges(true);
                             }}
-                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "create_base" ? "border-cyan-400 bg-cyan-50 app-dark:border-cyan-500 app-dark:bg-cyan-500/10" : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#11161d]"}`}
+                            className={`rounded-xl border p-3 text-left text-sm transition ${airtableBaseMode === "create_base" ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle app-dark:bg-surface-subtle/10" : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"}`}
                           >
-                            <span className="font-semibold app-dark:text-white">Create New Base</span>
+                            <span className="font-semibold app-dark:text-gray-100">Create New Base</span>
                           </button>
                         </div>
                       )}
 
                       {(storageMode === "existing" || storageMode === "create_new") && (
                         <div className="mt-5">
-                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Base</label>
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">Base</label>
                           <select
                             value={airtableBaseId}
                             onChange={(event) => {
@@ -8055,7 +8055,7 @@ export default function ManageLeadCapturePage() {
                               setHasUnsavedChanges(true);
                               void loadAirtableTables(value);
                             }}
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             <option value="">{isLoadingAirtable ? "Loading bases..." : "Choose a base"}</option>
                             {airtableBases.map((base) => (
@@ -8066,11 +8066,11 @@ export default function ManageLeadCapturePage() {
                       )}
 
                       {storageMode === "create_new" && airtableBaseMode === "create_base" && (
-                        <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4 app-dark:border-cyan-500/30 app-dark:bg-cyan-500/10">
-                          <p className="text-sm font-semibold text-cyan-900 app-dark:text-cyan-200">
+                        <div className="mt-4 rounded-xl border border-border-subtle bg-surface-subtle/70 p-4 app-dark:border-border-subtle/30 app-dark:bg-surface-subtle/10">
+                          <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                             Create the base in Airtable
                           </p>
-                          <p className="mt-1 text-xs leading-5 text-cyan-800/80 app-dark:text-cyan-300/80">
+                          <p className="mt-1 text-xs leading-5 text-brand-primary/80 app-dark:text-brand-primary/80">
                             Airtable does not expose a standard workspace list to OAuth apps. Create the base in Airtable, then refresh and select it here. Flowex will create and structure the lead table automatically.
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2">
@@ -8078,7 +8078,7 @@ export default function ManageLeadCapturePage() {
                               href="https://airtable.com/"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-cyan-800 shadow-sm transition hover:bg-cyan-50 app-dark:bg-[#11161d] app-dark:text-cyan-300"
+                              className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-brand-primary shadow-sm transition hover:bg-surface-subtle app-dark:bg-surface app-dark:text-brand-primary"
                             >
                               Open Airtable ↗
                             </a>
@@ -8086,7 +8086,7 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={() => void loadAirtableBases()}
                               disabled={isLoadingAirtable}
-                              className="rounded-lg border border-cyan-200 bg-white px-3 py-2 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-cyan-500/30 app-dark:bg-[#11161d] app-dark:text-cyan-300"
+                              className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-semibold text-brand-primary transition hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle/30 app-dark:bg-surface app-dark:text-brand-primary"
                             >
                               {isLoadingAirtable ? "Refreshing..." : "Refresh Bases"}
                             </button>
@@ -8096,7 +8096,7 @@ export default function ManageLeadCapturePage() {
 
                       {storageMode === "create_new" ? (
                         <div className="mt-5">
-                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Table name</label>
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">Table name</label>
                           <div className="mt-2 flex flex-col gap-3 sm:flex-row">
                             <input
                               value={storageName}
@@ -8105,7 +8105,7 @@ export default function ManageLeadCapturePage() {
                                 setHasUnsavedChanges(true);
                               }}
                               placeholder="Flowex Leads"
-                              className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                              className="min-w-0 flex-1 rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                             />
                             <button
                               type="button"
@@ -8116,7 +8116,7 @@ export default function ManageLeadCapturePage() {
                                 !storageName.trim() ||
                                 !airtableBaseId
                               }
-                              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-xl bg-brand-primary    px-5 py-3 text-sm font-semibold text-gray-100 shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isPreparingStorage
                                 ? "Creating..."
@@ -8128,7 +8128,7 @@ export default function ManageLeadCapturePage() {
 
                           {airtableTableId && (
                             <div className="mt-3 flex flex-wrap items-center gap-3">
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                                 ✓ {airtableTableName || storageName} is ready. Save this step to use it.
                               </span>
                               {airtableBaseUrl && (
@@ -8136,7 +8136,7 @@ export default function ManageLeadCapturePage() {
                                   href={airtableBaseUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                  className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                                 >
                                   Open Airtable ↗
                                 </a>
@@ -8163,7 +8163,7 @@ export default function ManageLeadCapturePage() {
                         </div>
                       ) : (
                         <div className="mt-5">
-                          <label className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">Table</label>
+                          <label className="text-xs font-semibold text-gray-500 app-dark:text-muted">Table</label>
                           <select
                             value={airtableTableId}
                             disabled={!airtableBaseId || isLoadingAirtable}
@@ -8174,7 +8174,7 @@ export default function ManageLeadCapturePage() {
                               setAirtableExistingVerified(false);
                               setHasUnsavedChanges(true);
                             }}
-                            className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                            className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                           >
                             <option value="">{!airtableBaseId ? "Choose a base first" : isLoadingAirtable ? "Loading tables..." : "Choose a table"}</option>
                             {airtableTables.map((table) => (
@@ -8187,13 +8187,13 @@ export default function ManageLeadCapturePage() {
                               type="button"
                               onClick={prepareAirtableDestination}
                               disabled={!airtableBaseId || !airtableTableId || isPreparingStorage}
-                              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-200"
+                              className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                             >
                               {isPreparingStorage ? "Verifying..." : airtableExistingVerified ? "Verify Again" : "Verify Table"}
                             </button>
 
                             {airtableExistingVerified && (
-                              <span className="text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">✓ Verified</span>
+                              <span className="text-xs font-semibold text-brand-primary app-dark:text-brand-primary">✓ Verified</span>
                             )}
 
                             {airtableBaseUrl && (
@@ -8201,7 +8201,7 @@ export default function ManageLeadCapturePage() {
                                 href={airtableBaseUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs font-semibold text-[#4b52f7] hover:underline app-dark:text-[#7c83ff]"
+                                className="text-xs font-semibold text-brand-primary hover:underline app-dark:text-brand-primary"
                               >
                                 Open Airtable ↗
                               </a>
@@ -8222,7 +8222,7 @@ export default function ManageLeadCapturePage() {
                             )}
                           </div>
 
-                          <p className="mt-3 text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                          <p className="mt-3 text-xs leading-5 text-muted app-dark:text-slate-500">
                             Flowex keeps existing Airtable fields and adds any missing fields from this Lead Flow when this step is saved.
                           </p>
                         </div>
@@ -8248,8 +8248,8 @@ export default function ManageLeadCapturePage() {
                         </div>
                       )}
 
-                      <div className="mt-5 rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
-                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-slate-200">Save changes</span> in this step.
+                      <div className="mt-5 rounded-xl border border-border-subtle bg-white/80 px-4 py-3 text-xs leading-5 text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
+                        Nothing in this Lead Flow&apos;s Step 02 becomes the active destination until you click <span className="font-semibold text-gray-700 app-dark:text-gray-100">Save changes</span> in this step.
                       </div>
                     </>
                   )}
@@ -8262,12 +8262,12 @@ export default function ManageLeadCapturePage() {
 
               {showNotionRemoveDialog && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
-                  <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
-                    <h3 className="text-lg font-bold app-dark:text-white">
+                  <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+                    <h3 className="text-lg font-bold app-dark:text-gray-100">
                       Remove Notion destination?
                     </h3>
 
-                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
                       Choose whether Flowex should only stop using this database or also move the Flowex-created Notion database to trash.
                     </p>
 
@@ -8281,7 +8281,7 @@ export default function ManageLeadCapturePage() {
                           setIsEditingStorage(false);
                           setHasUnsavedChanges(true);
                         }}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-200"
+                        className="w-full rounded-xl border border-border-subtle px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-gray-100"
                       >
                         Remove from this automation
                       </button>
@@ -8304,7 +8304,7 @@ export default function ManageLeadCapturePage() {
                       <button
                         type="button"
                         onClick={() => setShowNotionRemoveDialog(false)}
-                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-slate-400"
+                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-muted"
                       >
                         Cancel
                       </button>
@@ -8315,12 +8315,12 @@ export default function ManageLeadCapturePage() {
 
               {showExcelRemoveDialog && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
-                  <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
-                    <h3 className="text-lg font-bold app-dark:text-white">
+                  <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+                    <h3 className="text-lg font-bold app-dark:text-gray-100">
                       Remove Excel destination?
                     </h3>
 
-                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
                       Choose whether Flowex should only stop using this workbook or also delete the Flowex-created workbook from OneDrive.
                     </p>
 
@@ -8334,7 +8334,7 @@ export default function ManageLeadCapturePage() {
                           setIsEditingStorage(false);
                           setHasUnsavedChanges(true);
                         }}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-200"
+                        className="w-full rounded-xl border border-border-subtle px-4 py-3 text-left text-sm font-semibold text-gray-700 hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-gray-100"
                       >
                         Remove from this automation
                       </button>
@@ -8355,7 +8355,7 @@ export default function ManageLeadCapturePage() {
                       <button
                         type="button"
                         onClick={() => setShowExcelRemoveDialog(false)}
-                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-slate-400"
+                        className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 hover:bg-gray-50 app-dark:text-muted"
                       >
                         Cancel
                       </button>
@@ -8370,11 +8370,11 @@ export default function ManageLeadCapturePage() {
                   onClick={() => setShowAirtableRemoveDialog(false)}
                 >
                   <div
-                    className="w-full max-w-md rounded-[24px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    className="w-full max-w-md rounded-[24px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <h3 className="text-lg font-bold app-dark:text-white">Remove Airtable destination?</h3>
-                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                    <h3 className="text-lg font-bold app-dark:text-gray-100">Remove Airtable destination?</h3>
+                    <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
                       Choose what you want to do with this Flowex-created Airtable base.
                     </p>
 
@@ -8387,7 +8387,7 @@ export default function ManageLeadCapturePage() {
                           setIsEditingStorage(false);
                           setHasUnsavedChanges(true);
                         }}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                        className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-left text-sm font-semibold text-gray-700 transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                       >
                         Remove from this automation
                       </button>
@@ -8411,7 +8411,7 @@ export default function ManageLeadCapturePage() {
                       <button
                         type="button"
                         onClick={() => setShowAirtableRemoveDialog(false)}
-                        className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 app-dark:text-slate-400 app-dark:hover:bg-slate-800"
+                        className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 app-dark:text-muted app-dark:hover:bg-surface"
                       >
                         Cancel
                       </button>
@@ -8430,7 +8430,7 @@ export default function ManageLeadCapturePage() {
                   }
                 >
                   <div
-                    className="w-full max-w-xl rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                    className="w-full max-w-xl rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface"
                     onClick={(
                       event
                     ) =>
@@ -8440,11 +8440,11 @@ export default function ManageLeadCapturePage() {
                     <div className="flex items-start justify-between gap-4">
 
                       <div>
-                        <h3 className="text-xl font-bold app-dark:text-white">
+                        <h3 className="text-xl font-bold app-dark:text-gray-100">
                           More destinations
                         </h3>
 
-                        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                        <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                           Only one destination can be active for a Lead Flow. Unlink the current destination before choosing another one.
                         </p>
                       </div>
@@ -8456,7 +8456,7 @@ export default function ManageLeadCapturePage() {
                             false
                           )
                         }
-                        className="rounded-lg px-2 py-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
+                        className="rounded-lg px-2 py-1 text-muted transition hover:bg-gray-100 hover:text-gray-700 app-dark:hover:bg-brand-primary app-dark:hover:text-gray-100"
                       >
                         ✕
                       </button>
@@ -8523,28 +8523,28 @@ export default function ManageLeadCapturePage() {
                               disabled={
                                 !provider.available || hasConfiguredStorage
                               }
-                              className={`rounded-2xl border border-gray-200 bg-gray-50 p-4 text-left app-dark:border-slate-700 app-dark:bg-[#0b0f14] ${
+                              className={`rounded-2xl border border-border-subtle bg-gray-50 p-4 text-left app-dark:border-border-subtle app-dark:bg-surface ${
                                 provider.available && !hasConfiguredStorage
-                                  ? "transition hover:border-indigo-300 hover:bg-indigo-50/40 app-dark:hover:border-indigo-500/50 app-dark:hover:bg-indigo-500/5"
+                                  ? "transition hover:border-border-subtle hover:bg-surface-subtle/40 app-dark:hover:border-border-subtle/50 app-dark:hover:bg-surface-subtle/5"
                                   : "cursor-default"
                               }`}
                             >
                               <div className="flex items-start justify-between gap-3">
 
                                 <div>
-                                  <p className="font-semibold app-dark:text-white">
+                                  <p className="font-semibold app-dark:text-gray-100">
                                     {provider.title}
                                   </p>
 
-                                  <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                                  <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
                                     {provider.description}
                                   </p>
                                 </div>
 
                                 <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${
                                   provider.available
-                                    ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
-                                    : "bg-gray-200 text-gray-500 app-dark:bg-slate-800 app-dark:text-slate-400"
+                                    ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                                    : "bg-gray-200 text-gray-500 app-dark:bg-surface app-dark:text-muted"
                                 }`}>
                                   {provider.available
                                     ? "AVAILABLE"
@@ -8575,7 +8575,7 @@ export default function ManageLeadCapturePage() {
               title="Reply Automatically"
               description="Choose where the lead receives an immediate reply."
             >
-              <p className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+              <p className="text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                 Where do you want to reply?
               </p>
 
@@ -8604,17 +8604,17 @@ export default function ManageLeadCapturePage() {
 
               {replyChannel === "email" ? (
                 <div className="mt-5 space-y-5">
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+                  <div className="rounded-2xl border border-border-subtle bg-white p-4 app-dark:border-border-subtle app-dark:bg-surface">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold app-dark:text-white">
+                        <p className="text-sm font-semibold app-dark:text-gray-100">
                           Email account
                         </p>
-                        <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                        <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                           Connect the email you want automatic replies sent from.
                         </p>
                         {emailSenderConnected && emailSenderAddress && (
-                          <p className="mt-2 text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+                          <p className="mt-2 text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                             ✓ {emailSenderAddress}
                           </p>
                         )}
@@ -8623,7 +8623,7 @@ export default function ManageLeadCapturePage() {
                         type="button"
                         onClick={() => void connectReplyEmail()}
                         disabled={isConnectingReplyEmail}
-                        className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200"
+                        className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                       >
                         {isConnectingReplyEmail
                           ? "Connecting..."
@@ -8635,7 +8635,7 @@ export default function ManageLeadCapturePage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                    <label className="text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                       Subject
                     </label>
                     <input
@@ -8645,12 +8645,12 @@ export default function ManageLeadCapturePage() {
                         setHasUnsavedChanges(true);
                       }}
                       placeholder="Thanks for reaching out"
-                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                      className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                     />
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                    <p className="text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                       Message
                     </p>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -8689,16 +8689,16 @@ export default function ManageLeadCapturePage() {
                         setCustomReply(e.target.value);
                         setHasUnsavedChanges(true);
                       }}
-                      className="mt-4 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                      className="mt-4 w-full resize-y rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                     />
                   </div>
                 </div>
               ) : (
-                <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 p-5 app-dark:border-slate-700 app-dark:bg-[#11161d]">
-                  <p className="text-sm font-semibold app-dark:text-white">
+                <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50 p-5 app-dark:border-border-subtle app-dark:bg-surface">
+                  <p className="text-sm font-semibold app-dark:text-gray-100">
                     WhatsApp
                   </p>
-                  <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                  <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                     WhatsApp account connection is the next channel. Email is fully available first.
                   </p>
                 </div>
@@ -8723,18 +8723,18 @@ export default function ManageLeadCapturePage() {
               title="Notify Your Team"
               description="Send a notification whenever a new lead arrives."
             >
-              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+              <div className="rounded-2xl border border-border-subtle bg-gray-50 p-5 app-dark:border-border-subtle app-dark:bg-surface">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 app-dark:text-white">
+                    <p className="text-sm font-semibold text-foreground app-dark:text-gray-100">
                       Notification emails
                     </p>
-                    <p className="mt-1 text-xs text-gray-500 app-dark:text-slate-400">
+                    <p className="mt-1 text-xs text-gray-500 app-dark:text-muted">
                       Save up to 5 emails to your Flowex account. This Lead Flow will notify only one.
                     </p>
                   </div>
 
-                  <span className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                  <span className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                     {notificationEmails.length}/5 saved
                   </span>
                 </div>
@@ -8750,8 +8750,8 @@ export default function ManageLeadCapturePage() {
                           key={item.id}
                           className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
                             selected
-                              ? "border-cyan-300 bg-cyan-50 app-dark:border-cyan-500/50 app-dark:bg-cyan-500/10"
-                              : "border-gray-200 bg-white app-dark:border-slate-700 app-dark:bg-[#0b0f14]"
+                              ? "border-border-subtle bg-surface-subtle app-dark:border-border-subtle/50 app-dark:bg-surface-subtle/10"
+                              : "border-border-subtle bg-white app-dark:border-border-subtle app-dark:bg-surface"
                           }`}
                         >
                           <button
@@ -8766,10 +8766,10 @@ export default function ManageLeadCapturePage() {
                             }}
                             className="min-w-0 flex-1 text-left"
                           >
-                            <span className="block truncate text-sm font-semibold text-gray-800 app-dark:text-slate-100">
+                            <span className="block truncate text-sm font-semibold text-foreground app-dark:text-gray-100">
                               {item.email}
                             </span>
-                            <span className="mt-0.5 block text-xs text-gray-500 app-dark:text-slate-400">
+                            <span className="mt-0.5 block text-xs text-gray-500 app-dark:text-muted">
                               {selected
                                 ? "Selected for this Lead Flow"
                                 : "Use for this Lead Flow"}
@@ -8808,7 +8808,7 @@ export default function ManageLeadCapturePage() {
                         }
                       }}
                       placeholder="team@company.com"
-                      className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                      className="min-w-0 flex-1 rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                     />
 
                     <button
@@ -8818,7 +8818,7 @@ export default function ManageLeadCapturePage() {
                         isSavingNotificationSettings ||
                         !newNotificationEmail.trim()
                       }
-                      className="rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50 app-dark:bg-white app-dark:text-gray-900 app-dark:hover:bg-slate-100"
+                      className="rounded-xl bg-brand-primary px-4 py-3 text-sm font-semibold text-gray-100 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       + Add email
                     </button>
@@ -8826,7 +8826,7 @@ export default function ManageLeadCapturePage() {
                 )}
 
                 {notificationEmails.length === 0 && (
-                  <p className="mt-3 text-xs text-gray-500 app-dark:text-slate-400">
+                  <p className="mt-3 text-xs text-gray-500 app-dark:text-muted">
                     Add the first email that should be available for team notifications.
                   </p>
                 )}
@@ -8852,15 +8852,15 @@ export default function ManageLeadCapturePage() {
               description="Automatically follow up only when a lead has not been marked Contacted."
             >
 
-              <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 p-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+              <div className="flex items-center justify-between rounded-2xl border border-border-subtle bg-gray-50 p-4 app-dark:border-border-subtle app-dark:bg-surface">
 
                 <div>
 
-                  <p className="font-semibold app-dark:text-white">
+                  <p className="font-semibold app-dark:text-gray-100">
                     Automated Follow-up
                   </p>
 
-                  <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                  <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                     Send one follow-up if the lead is still New when the timer ends.
                   </p>
 
@@ -8879,7 +8879,7 @@ export default function ManageLeadCapturePage() {
                   }}
                   className={`relative h-7 w-12 rounded-full transition ${
                     followUpEnabled
-                      ? "bg-emerald-500"
+                      ? "bg-surface-subtle"
                       : "bg-gray-300 app-dark:bg-slate-600"
                   }`}
                 >
@@ -8899,7 +8899,7 @@ export default function ManageLeadCapturePage() {
 
                   <div>
 
-                    <label className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                    <label className="text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                       Send after
                     </label>
 
@@ -8914,7 +8914,7 @@ export default function ManageLeadCapturePage() {
                           true
                         );
                       }}
-                      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                      className="mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                     >
                       <option value="1">
                         1 hour
@@ -8948,10 +8948,10 @@ export default function ManageLeadCapturePage() {
                         true
                       );
                     }}
-                    className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                    className="w-full resize-none rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                   />
 
-                  <p className="text-xs leading-5 text-gray-400 app-dark:text-slate-500">
+                  <p className="text-xs leading-5 text-muted app-dark:text-slate-500">
                     Uses the Gmail account connected in Step 03. Marking a lead Contacted or Closed before the timer ends cancels the follow-up.
                   </p>
 
@@ -8977,16 +8977,16 @@ export default function ManageLeadCapturePage() {
       {showFormCustomizer && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-sm">
 
-          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-gray-200 bg-[#f7f9fb] shadow-2xl app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[24px] border border-border-subtle bg-background shadow-md app-dark:border-border-subtle app-dark:bg-surface">
 
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border-subtle bg-white px-5 py-4 app-dark:border-border-subtle app-dark:bg-surface">
 
               <div>
-                <h2 className="text-lg font-bold app-dark:text-white">
+                <h2 className="text-lg font-bold app-dark:text-gray-100">
                   Customize Form
                 </h2>
 
-                <p className="mt-0.5 text-xs text-gray-400 app-dark:text-slate-500">
+                <p className="mt-0.5 text-xs text-muted app-dark:text-slate-500">
                   Maximum 5 fields.
                 </p>
               </div>
@@ -8998,7 +8998,7 @@ export default function ManageLeadCapturePage() {
                   setShowFormCustomizer(false);
                   setFormCustomizerError("");
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 app-dark:hover:bg-slate-800 app-dark:hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-xl text-muted transition hover:bg-gray-100 hover:text-gray-700 app-dark:hover:bg-brand-primary app-dark:hover:text-gray-100"
               >
                 ×
               </button>
@@ -9011,7 +9011,7 @@ export default function ManageLeadCapturePage() {
 
               <div>
 
-                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Form Title
                 </label>
 
@@ -9025,12 +9025,12 @@ export default function ManageLeadCapturePage() {
                   }
                   placeholder="Contact Us"
                   maxLength={60}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                  className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                 />
 
                 <div className="mt-5">
 
-                  <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                  <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                     Fields
                   </label>
 
@@ -9044,7 +9044,7 @@ export default function ManageLeadCapturePage() {
                         event.target.value
                       )
                     }
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-white"
+                    className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                   >
                     <option value="">
                       {flowexFormFields.length >= 5
@@ -9075,7 +9075,7 @@ export default function ManageLeadCapturePage() {
                 <div className="mt-5 max-h-[48vh] space-y-3 overflow-y-auto pr-1">
 
                   {flowexFormFields.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-7 text-center text-sm text-gray-400 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-500">
+                    <div className="rounded-xl border border-dashed border-border-subtle bg-white px-4 py-7 text-center text-sm text-muted app-dark:border-border-subtle app-dark:bg-surface app-dark:text-slate-500">
                       Select at least 3 fields. Maximum 5.
                     </div>
                   ) : (
@@ -9083,7 +9083,7 @@ export default function ManageLeadCapturePage() {
                       (field) => (
                         <div
                           key={field.id}
-                          className="rounded-xl border border-gray-200 bg-white p-3 app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                          className="rounded-xl border border-border-subtle bg-white p-3 app-dark:border-border-subtle app-dark:bg-surface"
                         >
 
                           <div className="flex items-center gap-3">
@@ -9104,15 +9104,15 @@ export default function ManageLeadCapturePage() {
                                     }
                                   )
                                 }
-                                className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                                className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                               />
                             ) : (
-                              <div className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-200">
+                              <div className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100">
                                 {field.label}
                               </div>
                             )}
 
-                            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500 app-dark:text-slate-300">
+                            <label className="flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500 app-dark:text-muted">
                               <input
                                 type="checkbox"
                                 checked={field.required}
@@ -9138,14 +9138,14 @@ export default function ManageLeadCapturePage() {
                                   field.id
                                 )
                               }
-                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500 app-dark:hover:bg-red-500/10 app-dark:hover:text-red-400"
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg text-muted transition hover:bg-red-50 hover:text-red-500 app-dark:hover:bg-red-500/10 app-dark:hover:text-red-400"
                             >
                               ×
                             </button>
 
                           </div>
 
-                          <p className="mt-2 text-xs capitalize text-gray-400 app-dark:text-slate-500">
+                          <p className="mt-2 text-xs capitalize text-muted app-dark:text-slate-500">
                             {field.type.replaceAll(
                               "_",
                               " "
@@ -9156,7 +9156,7 @@ export default function ManageLeadCapturePage() {
                             <div className="mt-3 space-y-3">
 
                               <div>
-                                <label className="mb-1.5 block text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                <label className="mb-1.5 block text-xs font-semibold text-gray-500 app-dark:text-muted">
                                   Default country
                                 </label>
 
@@ -9171,7 +9171,7 @@ export default function ManageLeadCapturePage() {
                                       }
                                     )
                                   }
-                                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                                  className="w-full rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                                 >
                                   {phoneCountryCodes.map(
                                     (country, index) => (
@@ -9186,7 +9186,7 @@ export default function ManageLeadCapturePage() {
                                 </select>
                               </div>
 
-                              <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500 app-dark:text-slate-300">
+                              <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-gray-500 app-dark:text-muted">
                                 <input
                                   type="checkbox"
                                   checked={
@@ -9202,7 +9202,7 @@ export default function ManageLeadCapturePage() {
                                       }
                                     )
                                   }
-                                  className="h-4 w-4 accent-cyan-500"
+                                  className="h-4 w-4 accent-brand-primary"
                                 />
                                 Let submitter choose country code
                               </label>
@@ -9211,7 +9211,7 @@ export default function ManageLeadCapturePage() {
                                 field.allowCountryCodeSelection ??
                                 true
                               ) && (
-                                <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                                <p className="text-xs text-muted app-dark:text-slate-500">
                                   Fixed code: {field.countryCode || "+92"}
                                 </p>
                               )}
@@ -9223,7 +9223,7 @@ export default function ManageLeadCapturePage() {
                             <div className="mt-3">
 
                               <div className="flex items-center justify-between gap-3">
-                                <p className="text-xs font-semibold text-gray-500 app-dark:text-slate-400">
+                                <p className="text-xs font-semibold text-gray-500 app-dark:text-muted">
                                   Dropdown options
                                 </p>
 
@@ -9234,7 +9234,7 @@ export default function ManageLeadCapturePage() {
                                       field.id
                                     )
                                   }
-                                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-900"
+                                  className="rounded-lg border border-border-subtle bg-white px-3 py-1.5 text-xs font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
                                 >
                                   + Add option
                                 </button>
@@ -9260,7 +9260,7 @@ export default function ManageLeadCapturePage() {
                                             event.target.value
                                           )
                                         }
-                                        className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-400 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
+                                        className="min-w-0 flex-1 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm outline-none transition focus:border-brand-primary app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                                       />
 
                                       <button
@@ -9283,7 +9283,7 @@ export default function ManageLeadCapturePage() {
                                 )}
                               </div>
 
-                              <p className="mt-1.5 text-xs text-gray-400 app-dark:text-slate-500">
+                              <p className="mt-1.5 text-xs text-muted app-dark:text-slate-500">
                                 Minimum 2 options.
                               </p>
 
@@ -9303,13 +9303,13 @@ export default function ManageLeadCapturePage() {
 
               <div>
 
-                <p className="mb-2 text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <p className="mb-2 text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Live Preview
                 </p>
 
-                <div className="rounded-xl border border-gray-200 bg-white p-6 text-gray-900 shadow-sm app-dark:border-slate-700">
+                <div className="rounded-xl border border-border-subtle bg-white p-6 text-foreground shadow-sm app-dark:border-border-subtle">
 
-                  <h3 className="text-center text-2xl font-semibold text-gray-900">
+                  <h3 className="text-center text-2xl font-semibold text-foreground">
                     {flowexFormTitle.trim() ||
                       "Form Title"}
                   </h3>
@@ -9322,7 +9322,7 @@ export default function ManageLeadCapturePage() {
                   >
 
                     {flowexFormFields.length === 0 ? (
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-muted">
                         Your selected fields will appear here.
                       </p>
                     ) : (
@@ -9341,7 +9341,7 @@ export default function ManageLeadCapturePage() {
                       disabled={
                         flowexFormFields.length === 0
                       }
-                      className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
+                      className="w-full rounded-lg bg-brand-primary px-4 py-3 text-sm font-semibold text-gray-100 transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-300"
                     >
                       Submit
                     </button>
@@ -9354,7 +9354,7 @@ export default function ManageLeadCapturePage() {
 
             </div>
 
-            <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-end gap-3 border-t border-gray-200 bg-white px-5 py-4 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] app-dark:border-slate-800 app-dark:bg-[#11161d]">
+            <div className="sticky bottom-0 z-20 flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-white px-5 py-4  app-dark:border-border-subtle app-dark:bg-surface">
 
               <button
                 type="button"
@@ -9362,7 +9362,7 @@ export default function ManageLeadCapturePage() {
                   setShowFormCustomizer(false);
                   setFormCustomizerError("");
                 }}
-                className="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-900"
+                className="rounded-xl border border-border-subtle bg-white px-5 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Cancel
               </button>
@@ -9371,7 +9371,7 @@ export default function ManageLeadCapturePage() {
                 type="button"
                 onClick={saveFormCustomization}
                 disabled={isSavingFlowexForm}
-                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                className="rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {isSavingFlowexForm
                   ? "Saving..."
@@ -9390,13 +9390,13 @@ export default function ManageLeadCapturePage() {
       {showCreatedSheetDeleteDialog && (
         <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
 
-          <div className="w-full max-w-md rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+          <div className="w-full max-w-md rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
 
-            <h3 className="text-xl font-bold app-dark:text-white">
+            <h3 className="text-xl font-bold app-dark:text-gray-100">
               Remove this sheet?
             </h3>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
               Choose what should happen to the Flowex-created Google Sheet.
             </p>
 
@@ -9409,13 +9409,13 @@ export default function ManageLeadCapturePage() {
                     "unlink"
                   )
                 }
-                className="w-full rounded-xl border border-gray-200 p-4 text-left transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:hover:bg-slate-800"
+                className="w-full rounded-xl border border-border-subtle p-4 text-left transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:hover:bg-surface"
               >
-                <p className="text-sm font-semibold app-dark:text-white">
+                <p className="text-sm font-semibold app-dark:text-gray-100">
                   Remove from this automation
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+                <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
                   Flowex stops sending this Lead Flow to the sheet. The Google Sheet stays in your Drive.
                 </p>
               </button>
@@ -9447,7 +9447,7 @@ export default function ManageLeadCapturePage() {
                   false
                 )
               }
-              className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+              className="mt-4 w-full rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-muted app-dark:hover:bg-surface"
             >
               Cancel
             </button>
@@ -9460,13 +9460,13 @@ export default function ManageLeadCapturePage() {
       {showUnsavedDialog && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
 
-          <div className="w-full max-w-md rounded-[26px] border border-gray-200 bg-white p-6 shadow-2xl app-dark:border-slate-700 app-dark:bg-[#11161d]">
+          <div className="w-full max-w-md rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
 
-            <h3 className="text-xl font-bold app-dark:text-white">
+            <h3 className="text-xl font-bold app-dark:text-gray-100">
               Save your changes?
             </h3>
 
-            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
               You have changes in this Lead Flow that have not been saved yet.
             </p>
 
@@ -9483,7 +9483,7 @@ export default function ManageLeadCapturePage() {
                     ""
                   );
                 }}
-                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="rounded-xl border border-border-subtle px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:text-muted app-dark:hover:bg-surface"
               >
                 Cancel
               </button>
@@ -9547,7 +9547,7 @@ export default function ManageLeadCapturePage() {
                     );
                   }
                 }}
-                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-brand-primary    px-4 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSavingAutomation
                   ? "Saving..."
@@ -9562,16 +9562,16 @@ export default function ManageLeadCapturePage() {
       )}
 
       {(hasUnsavedChanges || universalSaveError) && (
-        <div className="fixed bottom-6 left-1/2 z-[120] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-2xl backdrop-blur app-dark:border-slate-700 app-dark:bg-[#11161d]/95">
+        <div className="fixed bottom-6 left-1/2 z-[120] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-border-subtle bg-white/95 p-3 shadow-md backdrop-blur app-dark:border-border-subtle app-dark:bg-surface/95">
           <div className="flex items-center justify-between gap-3">
-            <p className={`text-sm font-semibold ${universalSaveError ? "text-red-600 app-dark:text-red-400" : "text-gray-700 app-dark:text-slate-200"}`}>
+            <p className={`text-sm font-semibold ${universalSaveError ? "text-red-600 app-dark:text-red-400" : "text-gray-700 app-dark:text-gray-100"}`}>
               {universalSaveError || "You have unsaved changes to this Lead Flow."}
             </p>
             <button
               type="button"
               onClick={() => void saveEntireFlow()}
               disabled={isSavingAutomation || isSavingNotificationSettings}
-              className="shrink-0 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSavingAutomation || isSavingNotificationSettings
                 ? "Saving..."
@@ -9594,12 +9594,12 @@ function PreviewFlowexField({
   field: FlowexFormField;
 }) {
   const commonClass =
-    "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400";
+    "w-full rounded-lg border border-border-subtle bg-white px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted";
 
   if (field.type === "long_text") {
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-800">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
           {field.label}
           {field.required && (
             <span className="ml-1 text-red-500">
@@ -9622,7 +9622,7 @@ function PreviewFlowexField({
   if (field.type === "dropdown") {
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-800">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
           {field.label}
           {field.required && (
             <span className="ml-1 text-red-500">
@@ -9666,7 +9666,7 @@ function PreviewFlowexField({
 
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-gray-800">
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
           {field.label}
           {field.required && (
             <span className="ml-1 text-red-500">*</span>
@@ -9677,7 +9677,7 @@ function PreviewFlowexField({
           {allowCodeSelection ? (
             <select
               defaultValue={field.countryCode || "+92"}
-              className="w-[92px] rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-sm text-gray-900 outline-none"
+              className="w-[92px] rounded-lg border border-border-subtle bg-white px-2 py-2.5 text-sm text-foreground outline-none"
             >{phoneCountryCodes.map(
                 (country, index) => (
                   <option
@@ -9690,7 +9690,7 @@ function PreviewFlowexField({
               )}
             </select>
           ) : (
-            <div className="flex w-[92px] items-center justify-center rounded-lg border border-gray-300 bg-gray-50 px-2 text-sm font-medium text-gray-700">
+            <div className="flex w-[92px] items-center justify-center rounded-lg border border-border-subtle bg-gray-50 px-2 text-sm font-medium text-gray-700">
               {field.countryCode || "+92"}
             </div>
           )}
@@ -9730,7 +9730,7 @@ function PreviewFlowexField({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-gray-800">
+      <label className="mb-1.5 block text-sm font-medium text-foreground">
         {field.label}
       </label>
 
@@ -9784,17 +9784,17 @@ function FlowStep({
   return (
     <div data-flow-step={number} className="relative flex gap-3 sm:gap-4">
 
-      <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 via-cyan-400 to-indigo-600 text-xs font-black text-white shadow-sm sm:h-12 sm:w-12">
+      <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-primary    text-xs font-black text-gray-100 shadow-sm sm:h-12 sm:w-12">
         {number}
       </div>
 
-      <div className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-colors duration-300 sm:p-5 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+      <div className="min-w-0 flex-1 rounded-2xl border border-border-subtle bg-white p-4 shadow-sm transition-colors duration-300 sm:p-5 app-dark:border-border-subtle app-dark:bg-surface">
 
-        <h2 className="text-lg font-bold app-dark:text-white">
+        <h2 className="text-lg font-bold app-dark:text-gray-100">
           {title}
         </h2>
 
-        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+        <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
           {description}
         </p>
 
@@ -9830,16 +9830,16 @@ function Option({
       disabled={disabled}
       className={`rounded-xl border p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-45 ${
         active
-          ? "border-cyan-400 bg-cyan-50/60 shadow-sm ring-2 ring-cyan-100 app-dark:border-cyan-500 app-dark:bg-cyan-500/10 app-dark:ring-cyan-500/10"
-          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 disabled:hover:border-gray-200 disabled:hover:bg-white app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:hover:border-slate-600 app-dark:hover:bg-slate-900 app-dark:disabled:hover:border-slate-700 app-dark:disabled:hover:bg-[#0b0f14]"
+          ? "border-border-subtle bg-surface-subtle/60 shadow-sm ring-2 ring-brand-primary app-dark:border-border-subtle app-dark:bg-surface-subtle/10 app-dark:ring-brand-primary/10"
+          : "border-border-subtle bg-white hover:border-border-subtle hover:bg-gray-50 disabled:hover:border-border-subtle disabled:hover:bg-white app-dark:border-border-subtle app-dark:bg-surface app-dark:hover:border-border-subtle app-dark:hover:bg-surface app-dark:disabled:hover:border-border-subtle app-dark:disabled:hover:bg-surface"
       }`}
     >
 
-      <p className="text-sm font-bold app-dark:text-white">
+      <p className="text-sm font-bold app-dark:text-gray-100">
         {title}
       </p>
 
-      <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-slate-400">
+      <p className="mt-1 text-xs leading-5 text-gray-500 app-dark:text-muted">
         {description}
       </p>
 
@@ -9851,7 +9851,7 @@ function Arrow() {
   return (
     <div className="relative flex h-12 items-center pl-[24px] sm:pl-[32px]">
 
-       <div className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-sm text-gray-400 shadow-sm app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+       <div className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle bg-white text-sm text-muted shadow-sm app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
         ↓
       </div>
 

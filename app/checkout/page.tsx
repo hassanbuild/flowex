@@ -268,39 +268,39 @@ export default function CheckoutPage() {
     !draftLoaded
   ) {
     return (
-      <main className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f14] app-dark:bg-[#0b0f14]" />
+      <main className="min-h-screen bg-background app-dark:bg-surface" />
     );
   }
 
   const darkMain =
     isLoggedIn
-      ? "app-dark:bg-[#0b0f14] app-dark:text-slate-100"
-      : "dark:bg-[#0b0f14] dark:text-slate-100";
+      ? "app-dark:bg-surface app-dark:text-gray-100"
+      : "app-dark:bg-surface app-dark:text-gray-100";
 
   const darkHeader =
     isLoggedIn
-      ? "app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-      : "dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]";
+      ? "app-dark:border-border-subtle/80 app-dark:bg-surface"
+      : "app-dark:border-border-subtle/80 app-dark:bg-surface";
 
   const darkCard =
     isLoggedIn
-      ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-      : "dark:border-slate-800 dark:bg-[#11161d]";
+      ? "app-dark:border-border-subtle app-dark:bg-surface"
+      : "app-dark:border-border-subtle app-dark:bg-surface";
 
   const darkInput =
     isLoggedIn
-      ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500"
-      : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white dark:placeholder:text-slate-500";
+      ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted"
+      : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted";
 
   const darkMuted =
     isLoggedIn
-      ? "app-dark:text-slate-400"
-      : "dark:text-slate-400";
+      ? "app-dark:text-muted"
+      : "app-dark:text-muted";
 
   const darkTitle =
     isLoggedIn
-      ? "app-dark:text-white"
-      : "dark:text-white";
+      ? "app-dark:text-gray-100"
+      : "app-dark:text-gray-100";
 
   const backPath =
     !isLoggedIn
@@ -311,13 +311,13 @@ export default function CheckoutPage() {
 
   return (
     <main
-      className={`min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 lg:h-screen lg:overflow-hidden ${darkMain}`}
+      className={`min-h-screen bg-background text-foreground transition-colors duration-300 lg:h-screen lg:overflow-hidden ${darkMain}`}
     >
 
       {/* ================= HEADER ================= */}
 
       <header
-        className={`border-b border-gray-200/70 bg-white/90 backdrop-blur-xl ${darkHeader}`}
+        className={`border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl ${darkHeader}`}
       >
 
         <div className="mx-auto flex h-[58px] max-w-7xl items-center justify-between px-5 lg:px-7">
@@ -325,7 +325,7 @@ export default function CheckoutPage() {
           <Link href={backPath}>
 
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -348,10 +348,10 @@ export default function CheckoutPage() {
 
             <Link
               href={backPath}
-              className={`rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 ${
+              className={`rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
-                  : "dark:border-slate-700 dark:bg-[#11161d] dark:text-slate-300 dark:hover:bg-slate-800"
+                  ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
+                  : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
               }`}
             >
               Back
@@ -368,8 +368,8 @@ export default function CheckoutPage() {
       <section className="relative px-4 py-4 sm:px-6 lg:h-[calc(100vh-58px)] lg:overflow-hidden lg:px-7 lg:py-4">
 
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-emerald-300/10 blur-3xl" />
-          <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-indigo-400/10 blur-3xl" />
+          <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-transparent blur-3xl" />
+          <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-transparent blur-3xl" />
         </div>
 
         <div className="relative mx-auto flex h-full max-w-7xl flex-col">
@@ -377,8 +377,8 @@ export default function CheckoutPage() {
           <div className="mb-3 flex shrink-0 items-end justify-between gap-6">
             <div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-surface-subtle" />
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-brand-primary">
                   Flowex Pro Checkout
                 </p>
               </div>
@@ -397,13 +397,13 @@ export default function CheckoutPage() {
             <div className="grid min-h-0 gap-4 lg:grid-rows-[auto_1fr]">
 
               {/* PLAN */}
-              <div className={`rounded-[22px] border border-gray-200 bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
+              <div className={`rounded-[22px] border border-border-subtle bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Step 1</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Step 1</p>
                     <h2 className={`mt-0.5 text-base font-bold ${darkTitle}`}>Choose your plan</h2>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                  <span className="rounded-full bg-surface-subtle px-3 py-1 text-[10px] font-bold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                     7 DAYS FREE
                   </span>
                 </div>
@@ -414,18 +414,18 @@ export default function CheckoutPage() {
                     onClick={() => setBillingInterval("monthly")}
                     className={`group relative rounded-2xl border-2 p-3.5 text-left transition-all ${
                       billingInterval === "monthly"
-                        ? "border-emerald-400 bg-gradient-to-br from-emerald-50 to-cyan-50/50 shadow-[0_8px_30px_rgba(16,185,129,0.10)] dark:bg-none dark:bg-emerald-500/5 app-dark:bg-none app-dark:bg-emerald-500/5"
-                        : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                        ? "border-border-subtle bg-surface   shadow-sm app-dark:bg-none app-dark:bg-surface-subtle/5 app-dark:bg-none app-dark:bg-surface-subtle/5"
+                        : "border-border-subtle bg-white hover:border-border-subtle app-dark:border-border-subtle app-dark:bg-surface app-dark:border-border-subtle app-dark:bg-surface"
                     }`}
                   >
-                    {billingInterval === "monthly" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-black text-white">✓</span>}
+                    {billingInterval === "monthly" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-surface-subtle text-[11px] font-black text-brand-primary">✓</span>}
                     <div className="flex items-end justify-between gap-4 pr-6">
                       <div>
                         <h3 className={`text-base font-bold ${darkTitle}`}>Monthly</h3>
                         <p className={`mt-0.5 text-[11px] text-gray-500 ${darkMuted}`}>Flexible monthly billing</p>
                       </div>
                       <div className="text-right">
-                        <span className="mr-1 text-xs text-gray-400 line-through">$25</span>
+                        <span className="mr-1 text-xs text-muted line-through">$25</span>
                         <span className={`text-2xl font-black ${darkTitle}`}>$15</span>
                         <span className={`text-[11px] text-gray-500 ${darkMuted}`}>/mo</span>
                       </div>
@@ -437,19 +437,19 @@ export default function CheckoutPage() {
                     onClick={() => setBillingInterval("annual")}
                     className={`group relative rounded-2xl border-2 p-3.5 text-left transition-all ${
                       billingInterval === "annual"
-                        ? "border-indigo-400 bg-gradient-to-br from-cyan-50/60 to-indigo-50 shadow-[0_8px_30px_rgba(79,70,229,0.10)] dark:bg-none dark:bg-indigo-500/5 app-dark:bg-none app-dark:bg-indigo-500/5"
-                        : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-700 dark:bg-[#11161d] app-dark:border-slate-700 app-dark:bg-[#11161d]"
+                        ? "border-border-subtle bg-surface   shadow-sm app-dark:bg-none app-dark:bg-surface-subtle/5 app-dark:bg-none app-dark:bg-surface-subtle/5"
+                        : "border-border-subtle bg-white hover:border-border-subtle app-dark:border-border-subtle app-dark:bg-surface app-dark:border-border-subtle app-dark:bg-surface"
                     }`}
                   >
-                    <span className="absolute -top-2.5 left-3 rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 px-2.5 py-0.5 text-[9px] font-black text-white">BEST VALUE</span>
-                    {billingInterval === "annual" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[11px] font-black text-white">✓</span>}
+                    <span className="absolute -top-2.5 left-3 rounded-full bg-brand-primary   px-2.5 py-0.5 text-[9px] font-black text-gray-100">BEST VALUE</span>
+                    {billingInterval === "annual" && <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-surface-subtle text-[11px] font-black text-brand-primary">✓</span>}
                     <div className="flex items-end justify-between gap-4 pr-6">
                       <div>
                         <h3 className={`text-base font-bold ${darkTitle}`}>Annual</h3>
                         <p className={`mt-0.5 text-[11px] text-gray-500 ${darkMuted}`}>$120 billed yearly</p>
                       </div>
                       <div className="text-right">
-                        <span className="mr-1 text-xs text-gray-400 line-through">$25</span>
+                        <span className="mr-1 text-xs text-muted line-through">$25</span>
                         <span className={`text-2xl font-black ${darkTitle}`}>$10</span>
                         <span className={`text-[11px] text-gray-500 ${darkMuted}`}>/mo</span>
                       </div>
@@ -459,9 +459,9 @@ export default function CheckoutPage() {
               </div>
 
               {/* INFORMATION */}
-              <div className={`flex min-h-0 flex-col rounded-[22px] border border-gray-200 bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
+              <div className={`flex min-h-0 flex-col rounded-[22px] border border-border-subtle bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Step 2</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Step 2</p>
                   <h2 className={`mt-0.5 text-base font-bold ${darkTitle}`}>Your account details</h2>
                 </div>
 
@@ -477,7 +477,7 @@ export default function CheckoutPage() {
                       onChange={(event) => setFullName(event.target.value)}
                       placeholder="Your name"
                       required
-                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 ${darkInput}`}
+                      className={`mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 ${darkInput}`}
                     />
                   </div>
 
@@ -492,13 +492,13 @@ export default function CheckoutPage() {
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@company.com"
                       required
-                      className={`mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 ${darkInput}`}
+                      className={`mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 ${darkInput}`}
                     />
                   </div>
                 </div>
 
-                <div className={`mt-3 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 via-cyan-50/50 to-indigo-50/60 p-3 dark:border-emerald-500/15 dark:bg-none dark:bg-[#0b0f14] app-dark:border-emerald-500/15 app-dark:bg-none app-dark:bg-[#0b0f14]`}>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-sm shadow-sm dark:bg-slate-800 app-dark:bg-slate-800">🛡️</div>
+                <div className={`mt-3 flex items-start gap-3 rounded-2xl border border-border-subtle bg-surface    p-3 app-dark:border-border-subtle/15 app-dark:bg-none app-dark:bg-surface app-dark:border-border-subtle/15 app-dark:bg-none app-dark:bg-surface`}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-sm shadow-sm app-dark:bg-surface">🛡️</div>
                   <div>
                     <p className={`text-xs font-bold ${darkTitle}`}>Built for privacy. Your data stays yours.</p>
                     <p className={`mt-0.5 text-[11px] leading-4 text-gray-500 ${darkMuted}`}>
@@ -507,7 +507,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className={`mt-auto hidden items-center gap-5 pt-3 text-[11px] font-medium text-gray-400 sm:flex ${darkMuted}`}>
+                <div className={`mt-auto hidden items-center gap-5 pt-3 text-[11px] font-medium text-muted sm:flex ${darkMuted}`}>
                   <span>✓ No card data stored</span>
                   <span>✓ Cancel anytime</span>
                   <span>✓ Secure billing</span>
@@ -517,39 +517,39 @@ export default function CheckoutPage() {
 
             {/* ================= SUMMARY ================= */}
             <aside className="min-h-0">
-              <div className={`flex h-full flex-col rounded-[24px] border border-gray-200 bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-5 ${darkCard}`}>
+              <div className={`flex h-full flex-col rounded-[24px] border border-border-subtle bg-white p-4 shadow-sm sm:p-5 ${darkCard}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400">Order Summary</p>
-                  <span className="rounded-lg bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-500 dark:bg-[#0b0f14] app-dark:bg-[#0b0f14]">🔒 Secure</span>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Order Summary</p>
+                  <span className="rounded-lg bg-gray-50 px-2 py-1 text-[10px] font-semibold text-gray-500 app-dark:bg-surface">🔒 Secure</span>
                 </div>
 
-                <div className="mt-3 rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#172554] to-[#064e3b] p-4 text-white shadow-lg">
+                <div className="mt-3 rounded-2xl bg-surface    p-4 text-brand-primary shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-300">Flowex Pro</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-primary">Flowex Pro</p>
                       <h2 className="mt-1 text-xl font-black">Every lead. Automated.</h2>
-                      <p className="mt-1 text-[11px] text-slate-300">7-day free trial included</p>
+                      <p className="mt-1 text-[11px] text-muted">7-day free trial included</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-400 line-through">$25</p>
+                      <p className="text-xs text-muted line-through">$25</p>
                       <p className="text-3xl font-black">{billingInterval === "monthly" ? "$15" : "$10"}</p>
-                      <p className="text-[10px] text-slate-300">/month</p>
+                      <p className="text-[10px] text-muted">/month</p>
                     </div>
                   </div>
                 </div>
 
                 <div className={`mt-3 space-y-2 text-xs ${darkMuted}`}>
                   <div className="flex items-center justify-between">
-                    <span>Due today</span><span className="font-bold text-emerald-600">$0.00</span>
+                    <span>Due today</span><span className="font-bold text-brand-primary">$0.00</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>After trial</span><span className={`font-bold ${darkTitle}`}>{billingInterval === "monthly" ? "$15/month" : "$120/year"}</span>
                   </div>
                 </div>
 
-                <div className={`my-3 h-px bg-gray-100 ${isLoggedIn ? "app-dark:bg-slate-800" : "dark:bg-slate-800"}`} />
+                <div className={`my-3 h-px bg-gray-100 ${isLoggedIn ? "app-dark:bg-surface" : "app-dark:bg-surface"}`} />
 
-                <div className={`grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-gray-600 ${darkMuted}`}>
+                <div className={`grid grid-cols-2 gap-x-3 gap-y-2 text-[11px] text-muted ${darkMuted}`}>
                   <p>✓ Lead capture</p>
                   <p>✓ Instant replies</p>
                   <p>✓ Integrations</p>
@@ -566,37 +566,37 @@ export default function CheckoutPage() {
                       type="checkbox"
                       checked={acceptedTerms}
                       onChange={(event) => setAcceptedTerms(event.target.checked)}
-                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#4b52f7]"
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand-primary"
                     />
                     <span className={`text-[10.5px] leading-4 text-gray-500 ${darkMuted}`}>
                       I agree to the{" "}
-                      <Link href="/terms" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">Terms of Service</Link>
+                      <Link href="/terms" target="_blank" className="font-semibold text-brand-primary hover:underline">Terms of Service</Link>
                       {" "}and{" "}
-                      <Link href="/privacy" target="_blank" className="font-semibold text-[#4b52f7] hover:underline">Privacy Policy</Link>, and authorize {billingInterval === "monthly" ? "$15/month" : "$120/year"} after my 7-day free trial unless cancelled beforehand.
+                      <Link href="/privacy" target="_blank" className="font-semibold text-brand-primary hover:underline">Privacy Policy</Link>, and authorize {billingInterval === "monthly" ? "$15/month" : "$120/year"} after my 7-day free trial unless cancelled beforehand.
                     </span>
                   </label>
 
                   {checkoutError && (
-                    <div className="mb-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
+                    <div className="mb-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
                       {checkoutError}
                     </div>
                   )}
 
                   {isTrial ? (
-                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300">Trial Already Active</button>
+                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 app-dark:bg-surface app-dark:text-muted app-dark:bg-surface app-dark:text-muted">Trial Already Active</button>
                   ) : isPro ? (
-                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-300 app-dark:bg-slate-800 app-dark:text-slate-300">Manage Current Plan</button>
+                    <button type="submit" className="w-full rounded-xl bg-gray-100 py-2.5 text-sm font-bold text-gray-500 app-dark:bg-surface app-dark:text-muted app-dark:bg-surface app-dark:text-muted">Manage Current Plan</button>
                   ) : (
                     <button
                       type="submit"
                       disabled={isRedirecting}
-                      className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-xl bg-brand-primary    py-2.5 text-sm font-bold text-gray-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isRedirecting ? "Opening Secure Checkout..." : isLoggedIn ? "Start 7-Day Free Trial" : "Proceed"}
                     </button>
                   )}
 
-                  <p className={`mt-2 text-center text-[10px] leading-4 text-gray-400 ${darkMuted}`}>
+                  <p className={`mt-2 text-center text-[10px] leading-4 text-muted ${darkMuted}`}>
                     No charge today · Cancel before your trial ends
                   </p>
                 </div>
@@ -613,10 +613,10 @@ export default function CheckoutPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
 
           <div
-            className={`w-full max-w-md rounded-[24px] border border-gray-200 bg-white p-6 text-center shadow-2xl ${darkCard}`}
+            className={`w-full max-w-md rounded-[24px] border border-border-subtle bg-white p-6 text-center shadow-md ${darkCard}`}
           >
 
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-xl text-white">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary    text-xl text-gray-100">
               🔒
             </div>
 
@@ -639,7 +639,7 @@ export default function CheckoutPage() {
                 onClick={() =>
                   continueToAuth("login")
                 }
-                className="w-full rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 py-3 text-sm font-bold text-white shadow-md"
+                className="w-full rounded-xl bg-brand-primary    py-3 text-sm font-bold text-gray-100 shadow-md"
               >
                 Log In
               </button>
@@ -649,10 +649,10 @@ export default function CheckoutPage() {
                 onClick={() =>
                   continueToAuth("signup")
                 }
-                className={`w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 ${
+                className={`w-full rounded-xl border border-border-subtle bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 ${
                   isLoggedIn
-                    ? "app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white"
-                    : "dark:border-slate-700 dark:bg-[#0b0f14] dark:text-white"
+                    ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
+                    : "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
                 }`}
               >
                 Create Account
@@ -665,7 +665,7 @@ export default function CheckoutPage() {
               onClick={() =>
                 setShowAuthChoice(false)
               }
-              className={`mt-5 text-sm font-semibold text-gray-400 transition hover:text-gray-700 ${darkMuted}`}
+              className={`mt-5 text-sm font-semibold text-muted transition hover:text-gray-700 ${darkMuted}`}
             >
               Continue editing checkout
             </button>

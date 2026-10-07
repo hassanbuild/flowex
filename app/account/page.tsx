@@ -124,17 +124,17 @@ function AccountPageContent() {
 
   return (
     <RouteGuard access="signed-in">
-      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+      <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= NAVBAR ================= */}
 
-      <header className="border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
           <Link href={returnPath}>
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -144,7 +144,7 @@ function AccountPageContent() {
 
           <Link
             href={returnPath}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+            className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
           >
             Back
           </Link>
@@ -163,15 +163,15 @@ function AccountPageContent() {
 
           <div>
 
-            <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+            <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
               ACCOUNT
             </p>
 
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
               Your Account
             </h1>
 
-            <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-gray-500 app-dark:text-muted">
               Manage your personal information and profile.
             </p>
 
@@ -179,13 +179,13 @@ function AccountPageContent() {
 
           {/* ================= MAIN CARD ================= */}
 
-          <div className="mt-8 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-8 rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle app-dark:bg-surface">
 
             {/* ================= PROFILE PICTURE ================= */}
 
-            <div className="flex flex-col gap-6 border-b border-gray-100 pb-8 sm:flex-row sm:items-center app-dark:border-slate-800">
+            <div className="flex flex-col gap-6 border-b border-border-subtle pb-8 sm:flex-row sm:items-center app-dark:border-border-subtle">
 
-              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 shadow-lg">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-surface    shadow-sm">
 
                 {profileImage ? (
                   <img
@@ -194,7 +194,7 @@ function AccountPageContent() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-3xl font-black text-white">
+                  <div className="flex h-full w-full items-center justify-center text-3xl font-black text-gray-100">
                     {name.charAt(0).toUpperCase() || "H"}
                   </div>
                 )}
@@ -203,11 +203,11 @@ function AccountPageContent() {
 
               <div>
 
-                <h2 className="text-lg font-bold app-dark:text-white">
+                <h2 className="text-lg font-bold app-dark:text-gray-100">
                   Profile Picture
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                   Upload your own photo or choose a Flowex avatar.
                 </p>
 
@@ -215,7 +215,7 @@ function AccountPageContent() {
 
                   {/* UPLOAD PHOTO */}
 
-                  <label className="cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-800">
+                  <label className="cursor-pointer rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface">
 
                     Upload Photo
 
@@ -246,7 +246,7 @@ function AccountPageContent() {
 
                   <button
                     type="button"
-                    className="rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-200 app-dark:bg-slate-800 app-dark:text-slate-300 app-dark:hover:bg-slate-700"
+                    className="rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-200 app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-slate-700"
                     onClick={() =>
                       setShowAvatars(!showAvatars)
                     }
@@ -263,13 +263,13 @@ function AccountPageContent() {
             {/* ================= AVATARS ================= */}
 
             {showAvatars && (
-              <div className="border-b border-gray-100 py-7 app-dark:border-slate-800">
+              <div className="border-b border-border-subtle py-7 app-dark:border-border-subtle">
 
-                <p className="text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <p className="text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Flowex Avatars
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                   Choose a prebuilt avatar for your profile.
                 </p>
 
@@ -283,7 +283,7 @@ function AccountPageContent() {
                         setProfileImage(avatar);
                         setShowAvatars(false);
                       }}
-                      className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent transition hover:scale-105 hover:border-cyan-400"
+                      className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent transition hover:scale-105 hover:border-border-subtle"
                     >
                       <Image
                         src={avatar}
@@ -307,7 +307,7 @@ function AccountPageContent() {
 
               <div>
 
-                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Name
                 </label>
 
@@ -317,7 +317,7 @@ function AccountPageContent() {
                   onChange={(e) =>
                     setName(e.target.value)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                  className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                 />
 
               </div>
@@ -326,7 +326,7 @@ function AccountPageContent() {
 
               <div>
 
-                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Email
                 </label>
 
@@ -336,7 +336,7 @@ function AccountPageContent() {
                   onChange={(e) =>
                     setEmail(e.target.value)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                  className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                 />
 
               </div>
@@ -345,7 +345,7 @@ function AccountPageContent() {
 
               <div>
 
-                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Phone Number
                 </label>
 
@@ -356,7 +356,7 @@ function AccountPageContent() {
                     setPhone(e.target.value)
                   }
                   placeholder="+1 234 567 8900"
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-white app-dark:placeholder:text-slate-500 app-dark:focus:border-cyan-500 app-dark:focus:ring-cyan-500/10"
+                  className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 outline-none transition focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
                 />
 
               </div>
@@ -365,23 +365,23 @@ function AccountPageContent() {
 
               <div>
 
-                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-slate-200">
+                <label className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">
                   Current Plan
                 </label>
 
-                <div className="flex h-[50px] items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+                <div className="flex h-[50px] items-center justify-between rounded-xl border border-border-subtle bg-gray-50 px-4 app-dark:border-border-subtle app-dark:bg-surface">
 
-                  <span className="font-semibold app-dark:text-white">
+                  <span className="font-semibold app-dark:text-gray-100">
                     {planName}
                   </span>
 
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       plan === "pro"
-                        ? "bg-emerald-100 text-emerald-700 app-dark:bg-emerald-500/10 app-dark:text-emerald-400"
+                        ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
                         : plan === "trial"
-                          ? "bg-cyan-100 text-cyan-700 app-dark:bg-cyan-500/10 app-dark:text-cyan-400"
-                          : "bg-gray-200 text-gray-600 app-dark:bg-slate-800 app-dark:text-slate-300"
+                          ? "bg-surface-subtle text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary"
+                          : "bg-gray-200 text-muted app-dark:bg-surface app-dark:text-muted"
                     }`}
                   >
                     {planLabel}
@@ -395,7 +395,7 @@ function AccountPageContent() {
 
             {/* ================= ACTIONS ================= */}
 
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between app-dark:border-slate-800">
+            <div className="flex flex-col-reverse gap-3 border-t border-border-subtle pt-6 sm:flex-row sm:items-center sm:justify-between app-dark:border-border-subtle">
 
               {/* DELETE */}
 
@@ -403,7 +403,7 @@ function AccountPageContent() {
                 type="button"
                 onClick={deleteAccount}
                 disabled={isDeleting}
-                className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-semibold text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
               >
                 Delete Account
               </button>
@@ -413,7 +413,7 @@ function AccountPageContent() {
               <button
                 type="button"
                 onClick={saveChanges}
-                className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+                className="rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
               >
                 Save Changes
               </button>

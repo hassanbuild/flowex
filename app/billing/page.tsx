@@ -55,17 +55,17 @@ function BillingPageContent() {
 
   return (
     <RouteGuard access="signed-in">
-      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+      <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* NAVBAR */}
 
-      <header className="border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
           <Link href={returnPath}>
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -75,7 +75,7 @@ function BillingPageContent() {
 
           <Link
             href={returnPath}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+            className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
           >
             Back
           </Link>
@@ -92,15 +92,15 @@ function BillingPageContent() {
 
           <div>
 
-            <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+            <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
               BILLING
             </p>
 
-            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
               Plan & Billing
             </h1>
 
-            <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+            <p className="mt-2 text-gray-500 app-dark:text-muted">
               Manage your Flowex subscription and payment details.
             </p>
 
@@ -108,21 +108,21 @@ function BillingPageContent() {
 
           {/* CURRENT PLAN */}
 
-          <div className="mt-8 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-8 rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle app-dark:bg-surface">
 
             <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
 
               <div>
 
-                <p className="text-sm font-semibold text-gray-500 app-dark:text-slate-400">
+                <p className="text-sm font-semibold text-gray-500 app-dark:text-muted">
                   CURRENT PLAN
                 </p>
 
-                <h2 className="mt-2 text-2xl font-bold app-dark:text-white">
+                <h2 className="mt-2 text-2xl font-bold app-dark:text-gray-100">
                   {planName}
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">
                   Everything you need to automate your lead capture.
                 </p>
 
@@ -133,15 +133,15 @@ function BillingPageContent() {
                 {hasPremiumAccess ? (
                   <div className="flex items-end gap-2 sm:justify-end">
 
-                    <span className="text-xl text-gray-400 line-through app-dark:text-slate-500">
+                    <span className="text-xl text-muted line-through app-dark:text-slate-500">
                       $15
                     </span>
 
-                    <span className="text-4xl font-black app-dark:text-white">
+                    <span className="text-4xl font-black app-dark:text-gray-100">
                       $10
                     </span>
 
-                    <span className="pb-1 text-sm text-gray-500 app-dark:text-slate-400">
+                    <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">
                       /month
                     </span>
 
@@ -149,11 +149,11 @@ function BillingPageContent() {
                 ) : (
                   <div className="flex items-end gap-2 sm:justify-end">
 
-                    <span className="text-4xl font-black app-dark:text-white">
+                    <span className="text-4xl font-black app-dark:text-gray-100">
                       $0
                     </span>
 
-                    <span className="pb-1 text-sm text-gray-500 app-dark:text-slate-400">
+                    <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">
                       /month
                     </span>
 
@@ -166,17 +166,17 @@ function BillingPageContent() {
 
             <div className="mt-7 grid gap-4 sm:grid-cols-3">
 
-              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-[#0b0f14]">
+              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-surface">
 
-                <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                <p className="text-xs text-muted app-dark:text-slate-500">
                   Status
                 </p>
 
                 <p
                   className={`mt-2 font-semibold ${
                     plan === "free"
-                      ? "text-gray-500 app-dark:text-slate-400"
-                      : "text-emerald-600 app-dark:text-emerald-400"
+                      ? "text-gray-500 app-dark:text-muted"
+                      : "text-brand-primary app-dark:text-brand-primary"
                   }`}
                 >
                   {status}
@@ -184,25 +184,25 @@ function BillingPageContent() {
 
               </div>
 
-              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-[#0b0f14]">
+              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-surface">
 
-                <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                <p className="text-xs text-muted app-dark:text-slate-500">
                   Next Billing Date
                 </p>
 
-                <p className="mt-2 font-semibold app-dark:text-white">
+                <p className="mt-2 font-semibold app-dark:text-gray-100">
                   {nextBillingDate}
                 </p>
 
               </div>
 
-              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-[#0b0f14]">
+              <div className="rounded-2xl bg-gray-50 p-4 app-dark:bg-surface">
 
-                <p className="text-xs text-gray-400 app-dark:text-slate-500">
+                <p className="text-xs text-muted app-dark:text-slate-500">
                   Billing Cycle
                 </p>
 
-                <p className="mt-2 font-semibold app-dark:text-white">
+                <p className="mt-2 font-semibold app-dark:text-gray-100">
                   {billingCycle}
                 </p>
 
@@ -213,12 +213,12 @@ function BillingPageContent() {
             {plan === "free" ? (
               <Link
                 href={fromLeadCapture ? "/upgrade?from=lead-capture" : "/upgrade"}
-                className="mt-7 inline-flex rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+                className="mt-7 inline-flex rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
               >
                 Manage Subscription
               </Link>
             ) : (
-              <button className="mt-7 rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5">
+              <button className="mt-7 rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5">
                 Manage Subscription
               </button>
             )}
@@ -227,42 +227,42 @@ function BillingPageContent() {
 
           {/* PAYMENT METHOD */}
 
-          <div className="mt-6 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-6 rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle app-dark:bg-surface">
 
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
 
               <div>
 
-                <h2 className="text-xl font-bold app-dark:text-white">
+                <h2 className="text-xl font-bold app-dark:text-gray-100">
                   Payment Method
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                   Card used for your Flowex subscription.
                 </p>
 
               </div>
 
-              <button className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#0b0f14] app-dark:text-slate-300 app-dark:hover:bg-slate-800">
+              <button className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface">
                 Update Card
               </button>
 
             </div>
 
             {hasPremiumAccess ? (
-              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-gray-50 p-4 app-dark:bg-[#0b0f14]">
+              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-gray-50 p-4 app-dark:bg-surface">
 
-                <div className="flex h-11 w-16 items-center justify-center rounded-lg bg-white text-sm font-bold shadow-sm app-dark:bg-[#11161d] app-dark:text-white">
+                <div className="flex h-11 w-16 items-center justify-center rounded-lg bg-white text-sm font-bold shadow-sm app-dark:bg-surface app-dark:text-gray-100">
                   VISA
                 </div>
 
                 <div>
 
-                  <p className="font-semibold app-dark:text-white">
+                  <p className="font-semibold app-dark:text-gray-100">
                     •••• •••• •••• 4242
                   </p>
 
-                  <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                  <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                     Expires 08/29
                   </p>
 
@@ -270,19 +270,19 @@ function BillingPageContent() {
 
               </div>
             ) : (
-              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-gray-50 p-4 app-dark:bg-[#0b0f14]">
+              <div className="mt-6 flex items-center gap-4 rounded-2xl bg-gray-50 p-4 app-dark:bg-surface">
 
-                <div className="flex h-11 w-16 items-center justify-center rounded-lg bg-white text-sm font-bold shadow-sm app-dark:bg-[#11161d] app-dark:text-white">
+                <div className="flex h-11 w-16 items-center justify-center rounded-lg bg-white text-sm font-bold shadow-sm app-dark:bg-surface app-dark:text-gray-100">
                   —
                 </div>
 
                 <div>
 
-                  <p className="font-semibold app-dark:text-white">
+                  <p className="font-semibold app-dark:text-gray-100">
                     No payment method
                   </p>
 
-                  <p className="mt-1 text-xs text-gray-400 app-dark:text-slate-500">
+                  <p className="mt-1 text-xs text-muted app-dark:text-slate-500">
                     Add a card when starting your Flowex trial.
                   </p>
 
@@ -295,23 +295,23 @@ function BillingPageContent() {
 
           {/* FUTURE PLANS */}
 
-          <div className="mt-6 rounded-[28px] border border-gray-200 bg-gradient-to-br from-white via-cyan-50/40 to-indigo-50/40 p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-slate-800 app-dark:from-[#11161d] app-dark:via-[#101821] app-dark:to-[#14162a]">
+          <div className="mt-6 rounded-[28px] border border-border-subtle bg-surface    p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle   ">
 
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
 
               <div>
 
-                <h2 className="text-xl font-bold app-dark:text-white">
+                <h2 className="text-xl font-bold app-dark:text-gray-100">
                   More plans are coming.
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-2 text-sm text-gray-500 app-dark:text-muted">
                   Advanced automation and team features are on the way.
                 </p>
 
               </div>
 
-              <span className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white app-dark:bg-white app-dark:text-[#0b0f14]">
+              <span className="rounded-full bg-brand-primary px-4 py-2 text-xs font-semibold text-gray-100 app-dark:bg-white app-dark:text-foreground">
                 Coming Soon
               </span>
 

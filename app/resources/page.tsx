@@ -60,10 +60,10 @@ export default function ResourcesPage() {
 
   return (
     <main
-      className={`min-h-screen text-gray-900 transition-colors duration-300 ${
+      className={`min-h-screen text-foreground transition-colors duration-300 ${
         isLoggedIn
-          ? "bg-[#fbfcfd] app-dark:bg-[#0b0f14] app-dark:text-slate-100"
-          : "bg-[#fbfcfd] dark:bg-[#0b0f14] dark:text-slate-100"
+          ? "bg-background app-dark:bg-surface app-dark:text-gray-100"
+          : "bg-background app-dark:bg-surface app-dark:text-gray-100"
       }`}
     >
 
@@ -72,15 +72,15 @@ export default function ResourcesPage() {
       <nav
         className={`border-b backdrop-blur-xl ${
           isLoggedIn
-            ? "border-gray-200/70 bg-white/85 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "border-gray-200/70 bg-white/85 dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "border-border-subtle/70 bg-white/85 app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "border-border-subtle/70 bg-white/85 app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
         <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
 
           <Link href={backPath}>
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={115}
               height={32}
@@ -92,8 +92,8 @@ export default function ResourcesPage() {
             href={backPath}
             className={`text-sm font-semibold transition-colors ${
               isLoggedIn
-                ? "text-gray-500 hover:text-gray-900 app-dark:text-slate-200 app-dark:hover:text-white"
-                : "text-gray-500 hover:text-gray-900 dark:text-slate-200 dark:hover:text-white"
+                ? "text-gray-500 hover:text-foreground app-dark:text-gray-100 app-dark:hover:text-gray-100"
+                : "text-gray-500 hover:text-foreground app-dark:text-gray-100 app-dark:hover:text-gray-100"
             }`}
           >
             ← Back to Flowex
@@ -106,13 +106,13 @@ export default function ResourcesPage() {
 
       <section className="mx-auto max-w-7xl px-6 pb-14 pt-24 text-center">
 
-        <div className="mx-auto mb-5 inline-flex rounded-full bg-gradient-to-r from-[#00c297] to-[#4b52f7] p-[1px]">
+        <div className="mx-auto mb-5 inline-flex rounded-full bg-surface   p-[1px]">
 
           <div
             className={`rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 ${
               isLoggedIn
-                ? "app-dark:bg-[#0b0f14] app-dark:text-white"
-                : "dark:bg-[#0b0f14] dark:text-white"
+                ? "app-dark:bg-surface app-dark:text-gray-100"
+                : "app-dark:bg-surface app-dark:text-gray-100"
             }`}
           >
             Flowex Resources
@@ -122,7 +122,7 @@ export default function ResourcesPage() {
 
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
           Everything you need to{" "}
-          <span className="bg-gradient-to-r from-[#00c297] to-[#4b52f7] bg-clip-text text-transparent">
+          <span className="bg-surface    ">
             get started.
           </span>
         </h1>
@@ -130,8 +130,8 @@ export default function ResourcesPage() {
         <p
           className={`mx-auto mt-5 max-w-2xl text-base leading-7 text-gray-500 ${
             isLoggedIn
-              ? "app-dark:text-slate-400"
-              : "dark:text-slate-400"
+              ? "app-dark:text-muted"
+              : "app-dark:text-muted"
           }`}
         >
           Simple guides and resources to help you set up Flowex,
@@ -150,28 +150,28 @@ export default function ResourcesPage() {
             <Link
               key={resource.title}
               href={resource.href}
-              className={`group rounded-3xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-gray-300 hover:shadow-lg ${
+              className={`group rounded-3xl border border-border-subtle bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:border-border-subtle hover:shadow-sm ${
                 isLoggedIn
-                  ? "app-dark:border-slate-800 app-dark:bg-[#11161d] app-dark:hover:border-slate-700"
-                  : "dark:border-slate-800 dark:bg-[#11161d] dark:hover:border-slate-700"
+                  ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:hover:border-border-subtle"
+                  : "app-dark:border-border-subtle app-dark:bg-surface app-dark:hover:border-border-subtle"
               }`}
             >
 
               <div
-                className={`mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg ${
+                className={`mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-surface   text-lg ${
                   isLoggedIn
-                    ? "app-dark:from-[#00c297]/40 app-dark:to-[#4b52f7]/40"
-                    : "dark:from-[#00c297]/40 dark:to-[#4b52f7]/40"
+                    ? " "
+                    : " "
                 }`}
               >
                 {resource.icon}
               </div>
 
               <h2
-                className={`text-lg font-bold text-gray-900 ${
+                className={`text-lg font-bold text-foreground ${
                   isLoggedIn
-                    ? "app-dark:text-white"
-                    : "dark:text-white"
+                    ? "app-dark:text-gray-100"
+                    : "app-dark:text-gray-100"
                 }`}
               >
                 {resource.title}
@@ -180,18 +180,18 @@ export default function ResourcesPage() {
               <p
                 className={`mt-2 text-sm leading-6 text-gray-500 ${
                   isLoggedIn
-                    ? "app-dark:text-slate-400"
-                    : "dark:text-slate-400"
+                    ? "app-dark:text-muted"
+                    : "app-dark:text-muted"
                 }`}
               >
                 {resource.description}
               </p>
 
               <div
-                className={`mt-5 text-sm font-semibold text-[#4b52f7] transition-transform group-hover:translate-x-1 ${
+                className={`mt-5 text-sm font-semibold text-brand-primary transition-transform group-hover:translate-x-1 ${
                   isLoggedIn
-                    ? "app-dark:text-[#7c83ff]"
-                    : "dark:text-[#7c83ff]"
+                    ? "app-dark:text-brand-primary"
+                    : "app-dark:text-brand-primary"
                 }`}
               >
                 Explore →
@@ -209,10 +209,10 @@ export default function ResourcesPage() {
       <section className="mx-auto max-w-5xl px-6 pb-24">
 
         <div
-          className={`rounded-3xl border border-gray-200 bg-white px-8 py-10 text-center ${
+          className={`rounded-3xl border border-border-subtle bg-white px-8 py-10 text-center ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -223,8 +223,8 @@ export default function ResourcesPage() {
           <p
             className={`mx-auto mt-3 max-w-lg text-sm leading-6 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             If you can't find what you're looking for, reach out and we'll help
@@ -233,7 +233,7 @@ export default function ResourcesPage() {
 
           <Link
             href="/contact"
-            className="mt-6 inline-flex rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] px-5 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            className="mt-6 inline-flex rounded-xl bg-brand-primary   px-5 py-2.5 text-sm font-bold text-gray-100 transition-opacity hover:opacity-90"
           >
             Contact Support
           </Link>
@@ -247,8 +247,8 @@ export default function ResourcesPage() {
       <footer
         className={`border-t backdrop-blur-xl ${
           isLoggedIn
-            ? "border-gray-200/70 bg-white/85 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "border-gray-200/70 bg-white/85 dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "border-border-subtle/70 bg-white/85 app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "border-border-subtle/70 bg-white/85 app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
 
@@ -257,17 +257,17 @@ export default function ResourcesPage() {
           <div className="flex items-center gap-4">
 
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={110}
               height={30}
             />
 
             <span
-              className={`hidden text-sm text-gray-400 lg:block ${
+              className={`hidden text-sm text-muted lg:block ${
                 isLoggedIn
-                  ? "app-dark:text-slate-200"
-                  : "dark:text-slate-200"
+                  ? "app-dark:text-gray-100"
+                  : "app-dark:text-gray-100"
               }`}
             >
               Automate your business.
@@ -276,10 +276,10 @@ export default function ResourcesPage() {
           </div>
 
           <p
-            className={`text-xs text-gray-400 ${
+            className={`text-xs text-muted ${
               isLoggedIn
-                ? "app-dark:text-slate-300"
-                : "dark:text-slate-300"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             © 2026 Flowex. All rights reserved.

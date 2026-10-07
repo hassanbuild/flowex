@@ -201,8 +201,8 @@ export default function PublicFlowexForm({
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f5] px-4 py-10 text-gray-900">
-      <div className="mx-auto w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+    <main className="min-h-screen bg-background px-4 py-10 text-foreground">
+      <div className="mx-auto w-full max-w-lg rounded-xl border border-border-subtle bg-white p-6 shadow-sm sm:p-8">
 
         <h1 className="text-center text-2xl font-semibold">
           {title}
@@ -224,7 +224,7 @@ export default function PublicFlowexForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg bg-brand-primary px-4 py-3 text-sm font-semibold text-gray-100 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting
               ? "Submitting..."
@@ -236,7 +236,7 @@ export default function PublicFlowexForm({
           <p
             className={`mt-4 text-center text-sm ${
               submitSucceeded
-                ? "text-emerald-600"
+                ? "text-brand-primary"
                 : "text-red-600"
             }`}
           >
@@ -257,7 +257,7 @@ function PublicField({
   const label = (
     <label
       htmlFor={field.id}
-      className="mb-1.5 block text-sm font-medium text-gray-800"
+      className="mb-1.5 block text-sm font-medium text-foreground"
     >
       {field.label}
 
@@ -270,7 +270,7 @@ function PublicField({
   );
 
   const commonClass =
-    "w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-100";
+    "w-full rounded-lg border border-border-subtle bg-white px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-brand-primary focus:ring-2 focus:ring-gray-100";
 
   if (
     field.type === "long_text"
@@ -353,7 +353,7 @@ function PublicField({
             <select
               name={`${field.id}_country_code`}
               defaultValue={defaultCode}
-              className="w-[92px] rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-500"
+              className="w-[92px] rounded-lg border border-border-subtle bg-white px-2 py-2.5 text-sm text-foreground outline-none focus:border-brand-primary"
             >
               {phoneCountryCodes.map(
                 (code) => (
@@ -368,7 +368,7 @@ function PublicField({
             </select>
           ) : (
             <>
-              <div className="flex w-[92px] items-center justify-center rounded-lg border border-gray-300 bg-gray-50 px-2 text-sm font-medium text-gray-700">
+              <div className="flex w-[92px] items-center justify-center rounded-lg border border-border-subtle bg-gray-50 px-2 text-sm font-medium text-gray-700">
                 {defaultCode}
               </div>
 

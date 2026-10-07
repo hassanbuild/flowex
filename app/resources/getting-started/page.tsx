@@ -9,20 +9,20 @@ export default function GettingStartedPage() {
 
   return (
     <main
-      className={`min-h-screen bg-[#fbfcfd] text-gray-900 transition-colors duration-300 ${
+      className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${
         isLoggedIn
-          ? "app-dark:bg-[#0b0f14] app-dark:text-slate-100"
-          : "dark:bg-[#0b0f14] dark:text-slate-100"
+          ? "app-dark:bg-surface app-dark:text-gray-100"
+          : "app-dark:bg-surface app-dark:text-gray-100"
       }`}
     >
 
       {/* NAVBAR */}
 
       <nav
-        className={`border-b border-gray-200/70 bg-white/85 backdrop-blur-xl ${
+        className={`border-b border-border-subtle/70 bg-white/85 backdrop-blur-xl ${
           isLoggedIn
-            ? "app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
 
@@ -30,7 +30,7 @@ export default function GettingStartedPage() {
 
           <Link href="/">
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={115}
               height={32}
@@ -40,10 +40,10 @@ export default function GettingStartedPage() {
 
           <Link
             href="/resources"
-            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-gray-900 ${
+            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-foreground ${
               isLoggedIn
-                ? "app-dark:text-slate-200 app-dark:hover:text-white"
-                : "dark:text-slate-200 dark:hover:text-white"
+                ? "app-dark:text-gray-100 app-dark:hover:text-gray-100"
+                : "app-dark:text-gray-100 app-dark:hover:text-gray-100"
             }`}
           >
             ← Resources
@@ -57,13 +57,13 @@ export default function GettingStartedPage() {
 
       <section className="mx-auto max-w-4xl px-6 py-20">
 
-        <div className="mb-6 inline-flex rounded-full bg-gradient-to-r from-[#00c297] to-[#4b52f7] p-[1px]">
+        <div className="mb-6 inline-flex rounded-full bg-surface   p-[1px]">
 
           <div
             className={`rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 ${
               isLoggedIn
-                ? "app-dark:bg-[#0b0f14] app-dark:text-white"
-                : "dark:bg-[#0b0f14] dark:text-white"
+                ? "app-dark:bg-surface app-dark:text-gray-100"
+                : "app-dark:bg-surface app-dark:text-gray-100"
             }`}
           >
             Getting Started
@@ -78,8 +78,8 @@ export default function GettingStartedPage() {
         <p
           className={`mt-5 max-w-2xl text-base leading-7 text-gray-500 ${
             isLoggedIn
-              ? "app-dark:text-slate-400"
-              : "dark:text-slate-400"
+              ? "app-dark:text-muted"
+              : "app-dark:text-muted"
           }`}
         >
           This guide walks you through the basic setup so you can start capturing
@@ -91,16 +91,16 @@ export default function GettingStartedPage() {
           {/* STEP 1 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 1
               </div>
 
@@ -113,8 +113,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Sign up for Flowex and complete your basic account details.
@@ -122,10 +122,10 @@ export default function GettingStartedPage() {
 
                 <Link
                   href="/signup"
-                  className={`mt-4 inline-flex text-sm font-semibold text-[#4b52f7] ${
+                  className={`mt-4 inline-flex text-sm font-semibold text-brand-primary ${
                     isLoggedIn
-                      ? "app-dark:text-[#7c83ff]"
-                      : "dark:text-[#7c83ff]"
+                      ? "app-dark:text-brand-primary"
+                      : "app-dark:text-brand-primary"
                   }`}
                 >
                   Create account →
@@ -140,16 +140,16 @@ export default function GettingStartedPage() {
           {/* STEP 2 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 2
               </div>
 
@@ -162,8 +162,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   From your dashboard, open the Lead Capture automation to manage
@@ -179,16 +179,16 @@ export default function GettingStartedPage() {
           {/* STEP 3 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 3
               </div>
 
@@ -201,8 +201,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Use a Flowex form or connect a valid website or form source so
@@ -218,16 +218,16 @@ export default function GettingStartedPage() {
           {/* STEP 4 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 4
               </div>
 
@@ -240,8 +240,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Connect the destination you want Flowex to use for your leads,
@@ -257,16 +257,16 @@ export default function GettingStartedPage() {
           {/* STEP 5 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 5
               </div>
 
@@ -279,8 +279,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Set your automatic response, company notification, and follow-up
@@ -296,16 +296,16 @@ export default function GettingStartedPage() {
           {/* STEP 6 */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] font-bold text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-primary   font-bold text-gray-100">
                 6
               </div>
 
@@ -318,8 +318,8 @@ export default function GettingStartedPage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Save your changes and make sure the automation is active. You can
@@ -337,10 +337,10 @@ export default function GettingStartedPage() {
         {/* NEXT */}
 
         <div
-          className={`mt-12 rounded-3xl border border-gray-200 bg-white p-8 ${
+          className={`mt-12 rounded-3xl border border-border-subtle bg-white p-8 ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -351,8 +351,8 @@ export default function GettingStartedPage() {
           <p
             className={`mt-2 text-sm leading-6 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             Learn more about how leads enter Flowex and how the lead capture workflow works.
@@ -360,7 +360,7 @@ export default function GettingStartedPage() {
 
           <Link
             href="/resources/lead-capture"
-            className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] px-5 py-2.5 text-sm font-bold text-white"
+            className="mt-5 inline-flex rounded-xl bg-brand-primary   px-5 py-2.5 text-sm font-bold text-gray-100"
           >
             Open Lead Capture Guide
           </Link>

@@ -3,22 +3,40 @@
 @custom-variant app-dark (&:where(.app-dark, .app-dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f8f9f8;
+  --foreground: #1f2933;
+  --surface: #ffffff;
+  --surface-subtle: #f1f3f2;
+  --border: #e3e7e4;
+  --muted: #66716a;
+  --brand-primary: #14532d;
+}
+
+.app-dark {
+  color-scheme: dark;
+  --background: #111312;
+  --foreground: #e5e7e6;
+  --surface: #1b1e1c;
+  --surface-subtle: #242825;
+  --border: #303632;
+  --muted: #a1a8a3;
+}
+
+.app-dark .text-brand-primary {
+  color: color-mix(in srgb, var(--brand-primary) 28%, white);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-border-subtle: var(--border);
+  --color-muted: var(--muted);
+  --color-brand-primary: var(--brand-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -26,49 +44,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
 @keyframes float1 {
-
-  0%,100%{
-    transform:translate(0,0);
-  }
-
-  50%{
-    transform:translate(50px,-30px);
-  }
-
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(50px, -30px); }
 }
 
 @keyframes float2 {
-
-  0%,100%{
-    transform:translate(0,0);
-  }
-
-  50%{
-    transform:translate(-40px,35px);
-  }
-
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-40px, 35px); }
 }
 
 @keyframes float3 {
-
-  0%,100%{
-    transform:translate(-50%,0);
-  }
-
-  50%{
-    transform:translate(calc(-50% + 25px),-40px);
-  }
-
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(calc(-50% + 25px), -40px); }
 }
-@keyframes dashboard{
 
-  0%,100%{
-    transform:translateY(0px);
-  }
-
-  50%{
-    transform:translateY(-8px);
-  }
-
+@keyframes dashboard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }

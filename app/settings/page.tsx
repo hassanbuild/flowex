@@ -85,17 +85,17 @@ function SettingsPageContent() {
 
   return (
     <RouteGuard access="signed-in">
-      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
+      <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
 
       {/* ================= NAVBAR ================= */}
 
-      <header className="border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <header className="border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
 
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
           <Link href={returnPath}>
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={120}
               height={34}
@@ -105,7 +105,7 @@ function SettingsPageContent() {
 
           <Link
             href={returnPath}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+            className="rounded-xl border border-border-subtle bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface"
           >
             Back
           </Link>
@@ -120,25 +120,25 @@ function SettingsPageContent() {
 
         <div className="mx-auto max-w-3xl">
 
-          <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+          <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
             SETTINGS
           </p>
 
-          <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
             Preferences
           </h1>
 
-          <p className="mt-2 text-gray-500 app-dark:text-slate-400">
+          <p className="mt-2 text-gray-500 app-dark:text-muted">
             Control how Flowex communicates with you.
           </p>
 
           {/* ================= GENERAL ================= */}
 
-          <div className="mt-8 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="mt-8 rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle app-dark:bg-surface">
 
             <div className="mb-2">
 
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 app-dark:text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted app-dark:text-slate-500">
                 General
               </p>
 
@@ -146,21 +146,21 @@ function SettingsPageContent() {
 
             {/* THEME */}
 
-            <div className="flex items-center justify-between gap-6 border-b border-gray-100 py-6 first:pt-3 app-dark:border-slate-800">
+            <div className="flex items-center justify-between gap-6 border-b border-border-subtle py-6 first:pt-3 app-dark:border-border-subtle">
 
               <div>
 
-                <h2 className="font-bold app-dark:text-white">
+                <h2 className="font-bold app-dark:text-gray-100">
                   Theme
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                   Choose how Flowex appears across your account.
                 </p>
 
               </div>
 
-              <div className="flex rounded-xl border border-gray-200 bg-gray-50 p-1 app-dark:border-slate-700 app-dark:bg-[#0b0f14]">
+              <div className="flex rounded-xl border border-border-subtle bg-gray-50 p-1 app-dark:border-border-subtle app-dark:bg-surface">
 
                 <button
                   type="button"
@@ -168,8 +168,8 @@ function SettingsPageContent() {
                   aria-label="Use light theme"
                   className={`flex h-9 w-10 items-center justify-center rounded-lg text-lg transition ${
                     theme === "light"
-                      ? "bg-white text-gray-900 shadow-sm app-dark:bg-slate-700 app-dark:text-white"
-                      : "text-gray-400 hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:text-slate-300"
+                      ? "bg-white text-foreground shadow-sm app-dark:bg-slate-700 app-dark:text-gray-100"
+                      : "text-muted hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:text-muted"
                   }`}
                 >
                   ☀
@@ -181,8 +181,8 @@ function SettingsPageContent() {
                   aria-label="Use dark theme"
                   className={`flex h-9 w-10 items-center justify-center rounded-lg text-lg transition ${
                     theme === "dark"
-                      ? "bg-white text-gray-900 shadow-sm app-dark:bg-slate-700 app-dark:text-white"
-                      : "text-gray-400 hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:text-slate-300"
+                      ? "bg-white text-foreground shadow-sm app-dark:bg-slate-700 app-dark:text-gray-100"
+                      : "text-muted hover:text-gray-700 app-dark:text-slate-500 app-dark:hover:text-muted"
                   }`}
                 >
                   ☾
@@ -214,7 +214,7 @@ function SettingsPageContent() {
 
           {/* ================= PRO PREFERENCES ================= */}
 
-          <div className="relative mt-6 overflow-hidden rounded-[28px] border border-gray-200 bg-white shadow-sm transition-colors duration-300 app-dark:border-slate-800 app-dark:bg-[#11161d]">
+          <div className="relative mt-6 overflow-hidden rounded-[28px] border border-border-subtle bg-white shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
 
             <div
               className={`p-6 sm:p-8 ${
@@ -226,7 +226,7 @@ function SettingsPageContent() {
 
               <div className="mb-2">
 
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400 app-dark:text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted app-dark:text-slate-500">
                   Pro Preferences
                 </p>
 
@@ -262,19 +262,19 @@ function SettingsPageContent() {
             </div>
 
             {!hasPremiumAccess && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/55 px-6 text-center backdrop-blur-[2px] app-dark:bg-[#0b0f14]/65">
+              <div className="absolute inset-0 flex items-center justify-center bg-white/55 px-6 text-center backdrop-blur-[2px] app-dark:bg-surface/65">
 
-                <div className="max-w-sm rounded-2xl border border-gray-200 bg-white/95 p-6 shadow-xl app-dark:border-slate-700 app-dark:bg-[#11161d]/95">
+                <div className="max-w-sm rounded-2xl border border-border-subtle bg-white/95 p-6 shadow-sm app-dark:border-border-subtle app-dark:bg-surface/95">
 
-                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 text-lg text-white">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary    text-lg text-gray-100">
                     ✦
                   </div>
 
-                  <h3 className="mt-4 text-lg font-bold app-dark:text-white">
+                  <h3 className="mt-4 text-lg font-bold app-dark:text-gray-100">
                     Pro Preferences
                   </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-slate-400">
+                  <p className="mt-2 text-sm leading-6 text-gray-500 app-dark:text-muted">
                     Upgrade your Flowex plan to manage lead, automation and billing preferences.
                   </p>
 
@@ -284,7 +284,7 @@ function SettingsPageContent() {
                         ? "/upgrade?from=lead-capture"
                         : "/upgrade"
                     }
-                    className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5"
+                    className="mt-5 inline-flex rounded-xl bg-brand-primary    px-5 py-2.5 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5"
                   >
                     Upgrade Plan
                   </Link>
@@ -303,7 +303,7 @@ function SettingsPageContent() {
             <button
               type="button"
               onClick={saveSettings}
-              className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+              className="rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
             >
               Save Preferences
             </button>
@@ -341,15 +341,15 @@ function SettingRow({
   onClick: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-6 border-b border-gray-100 py-6 last:border-b-0 app-dark:border-slate-800">
+    <div className="flex items-center justify-between gap-6 border-b border-border-subtle py-6 last:border-b-0 app-dark:border-border-subtle">
 
       <div>
 
-        <h2 className="font-bold app-dark:text-white">
+        <h2 className="font-bold app-dark:text-gray-100">
           {title}
         </h2>
 
-        <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+        <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
           {description}
         </p>
 
@@ -360,7 +360,7 @@ function SettingRow({
         onClick={onClick}
         className={`relative h-7 w-12 shrink-0 rounded-full transition ${
           enabled
-            ? "bg-emerald-500"
+            ? "bg-surface-subtle"
             : "bg-gray-300 app-dark:bg-slate-600"
         }`}
       >

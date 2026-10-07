@@ -9,27 +9,27 @@ export default function AutomationGuidePage() {
 
   return (
     <main
-      className={`min-h-screen bg-[#fbfcfd] text-gray-900 transition-colors duration-300 ${
+      className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${
         isLoggedIn
-          ? "app-dark:bg-[#0b0f14] app-dark:text-slate-100"
-          : "dark:bg-[#0b0f14] dark:text-slate-100"
+          ? "app-dark:bg-surface app-dark:text-gray-100"
+          : "app-dark:bg-surface app-dark:text-gray-100"
       }`}
     >
 
       {/* NAVBAR */}
 
       <nav
-        className={`border-b border-gray-200/70 bg-white/85 backdrop-blur-xl ${
+        className={`border-b border-border-subtle/70 bg-white/85 backdrop-blur-xl ${
           isLoggedIn
-            ? "app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
-            : "dark:border-slate-800/80 dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]"
+            ? "app-dark:border-border-subtle/80 app-dark:bg-surface"
+            : "app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
         <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
 
           <Link href="/">
             <Image
-              src="/flowex-logo.png"
+              src="/flowex-logo-brand.png"
               alt="Flowex"
               width={115}
               height={32}
@@ -39,10 +39,10 @@ export default function AutomationGuidePage() {
 
           <Link
             href="/resources"
-            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-gray-900 ${
+            className={`text-sm font-semibold text-gray-500 transition-colors hover:text-foreground ${
               isLoggedIn
-                ? "app-dark:text-slate-200 app-dark:hover:text-white"
-                : "dark:text-slate-200 dark:hover:text-white"
+                ? "app-dark:text-gray-100 app-dark:hover:text-gray-100"
+                : "app-dark:text-gray-100 app-dark:hover:text-gray-100"
             }`}
           >
             ← Resources
@@ -55,13 +55,13 @@ export default function AutomationGuidePage() {
 
       <section className="mx-auto max-w-4xl px-6 py-20">
 
-        <div className="mb-6 inline-flex rounded-full bg-gradient-to-r from-[#00c297] to-[#4b52f7] p-[1px]">
+        <div className="mb-6 inline-flex rounded-full bg-surface   p-[1px]">
 
           <div
             className={`rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 ${
               isLoggedIn
-                ? "app-dark:bg-[#0b0f14] app-dark:text-white"
-                : "dark:bg-[#0b0f14] dark:text-white"
+                ? "app-dark:bg-surface app-dark:text-gray-100"
+                : "app-dark:bg-surface app-dark:text-gray-100"
             }`}
           >
             Automation Guide
@@ -71,7 +71,7 @@ export default function AutomationGuidePage() {
 
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
           Control how your automation{" "}
-          <span className="bg-gradient-to-r from-[#00c297] to-[#4b52f7] bg-clip-text text-transparent">
+          <span className="bg-surface    ">
             works.
           </span>
         </h1>
@@ -79,8 +79,8 @@ export default function AutomationGuidePage() {
         <p
           className={`mt-5 max-w-2xl text-base leading-7 text-gray-500 ${
             isLoggedIn
-              ? "app-dark:text-slate-400"
-              : "dark:text-slate-400"
+              ? "app-dark:text-muted"
+              : "app-dark:text-muted"
           }`}
         >
           Configure how Flowex responds to leads, notifies your team, follows up,
@@ -94,20 +94,20 @@ export default function AutomationGuidePage() {
           {/* RESPONSE */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface   text-lg ${
                   isLoggedIn
-                    ? "app-dark:from-[#00c297]/40 app-dark:to-[#4b52f7]/40"
-                    : "dark:from-[#00c297]/40 dark:to-[#4b52f7]/40"
+                    ? " "
+                    : " "
                 }`}
               >
                 💬
@@ -122,8 +122,8 @@ export default function AutomationGuidePage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Choose a pre-built response or create a personalized message
@@ -140,20 +140,20 @@ export default function AutomationGuidePage() {
           {/* NOTIFICATION */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface   text-lg ${
                   isLoggedIn
-                    ? "app-dark:from-[#00c297]/40 app-dark:to-[#4b52f7]/40"
-                    : "dark:from-[#00c297]/40 dark:to-[#4b52f7]/40"
+                    ? " "
+                    : " "
                 }`}
               >
                 ✉️
@@ -168,8 +168,8 @@ export default function AutomationGuidePage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Set the business email that should receive a notification when
@@ -185,20 +185,20 @@ export default function AutomationGuidePage() {
           {/* FOLLOW-UP */}
 
           <div
-            className={`rounded-3xl border border-gray-200 bg-white p-7 ${
+            className={`rounded-3xl border border-border-subtle bg-white p-7 ${
               isLoggedIn
-                ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-                : "dark:border-slate-800 dark:bg-[#11161d]"
+                ? "app-dark:border-border-subtle app-dark:bg-surface"
+                : "app-dark:border-border-subtle app-dark:bg-surface"
             }`}
           >
 
             <div className="flex items-start gap-4">
 
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-cyan-100 text-lg ${
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-surface   text-lg ${
                   isLoggedIn
-                    ? "app-dark:from-[#00c297]/40 app-dark:to-[#4b52f7]/40"
-                    : "dark:from-[#00c297]/40 dark:to-[#4b52f7]/40"
+                    ? " "
+                    : " "
                 }`}
               >
                 ↻
@@ -213,8 +213,8 @@ export default function AutomationGuidePage() {
                 <p
                   className={`mt-2 leading-7 text-gray-500 ${
                     isLoggedIn
-                      ? "app-dark:text-slate-400"
-                      : "dark:text-slate-400"
+                      ? "app-dark:text-muted"
+                      : "app-dark:text-muted"
                   }`}
                 >
                   Configure a follow-up so leads can receive another message after
@@ -232,10 +232,10 @@ export default function AutomationGuidePage() {
         {/* SAVE CHANGES */}
 
         <div
-          className={`mt-12 rounded-3xl border border-gray-200 bg-white p-8 ${
+          className={`mt-12 rounded-3xl border border-border-subtle bg-white p-8 ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -246,15 +246,15 @@ export default function AutomationGuidePage() {
           <p
             className={`mt-3 leading-7 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             When you update your automation settings, use Save Changes to keep
             the current configuration.
           </p>
 
-          <div className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] px-5 py-2.5 text-sm font-bold text-white">
+          <div className="mt-5 inline-flex rounded-xl bg-brand-primary   px-5 py-2.5 text-sm font-bold text-gray-100">
             Save Changes
           </div>
 
@@ -263,10 +263,10 @@ export default function AutomationGuidePage() {
         {/* PAUSE / RESUME */}
 
         <div
-          className={`mt-6 rounded-3xl border border-gray-200 bg-white p-8 ${
+          className={`mt-6 rounded-3xl border border-border-subtle bg-white p-8 ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -277,8 +277,8 @@ export default function AutomationGuidePage() {
           <p
             className={`mt-3 leading-7 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             You can temporarily stop the automation without deleting your setup.
@@ -287,13 +287,13 @@ export default function AutomationGuidePage() {
 
           <div className="mt-6 flex flex-wrap gap-3">
 
-            <div className="inline-flex rounded-full bg-gradient-to-r from-[#00c297] to-[#4b52f7] p-[1px]">
+            <div className="inline-flex rounded-full bg-surface   p-[1px]">
 
               <span
                 className={`rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-700 ${
                   isLoggedIn
-                    ? "app-dark:bg-[#0b0f14] app-dark:text-white"
-                    : "dark:bg-[#0b0f14] dark:text-white"
+                    ? "app-dark:bg-surface app-dark:text-gray-100"
+                    : "app-dark:bg-surface app-dark:text-gray-100"
                 }`}
               >
                 ● Active
@@ -302,10 +302,10 @@ export default function AutomationGuidePage() {
             </div>
 
             <div
-              className={`inline-flex rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 ${
+              className={`inline-flex rounded-full border border-border-subtle px-4 py-2 text-sm font-semibold text-gray-500 ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700 app-dark:text-slate-300"
-                  : "dark:border-slate-700 dark:text-slate-300"
+                  ? "app-dark:border-border-subtle app-dark:text-muted"
+                  : "app-dark:border-border-subtle app-dark:text-muted"
               }`}
             >
               Paused
@@ -318,10 +318,10 @@ export default function AutomationGuidePage() {
         {/* SIMPLE WORKFLOW */}
 
         <div
-          className={`mt-12 rounded-3xl border border-gray-200 bg-white p-8 ${
+          className={`mt-12 rounded-3xl border border-border-subtle bg-white p-8 ${
             isLoggedIn
-              ? "app-dark:border-slate-800 app-dark:bg-[#11161d]"
-              : "dark:border-slate-800 dark:bg-[#11161d]"
+              ? "app-dark:border-border-subtle app-dark:bg-surface"
+              : "app-dark:border-border-subtle app-dark:bg-surface"
           }`}
         >
 
@@ -332,8 +332,8 @@ export default function AutomationGuidePage() {
           <p
             className={`mt-3 leading-7 text-gray-500 ${
               isLoggedIn
-                ? "app-dark:text-slate-400"
-                : "dark:text-slate-400"
+                ? "app-dark:text-muted"
+                : "app-dark:text-muted"
             }`}
           >
             Flowex is designed so you can manage the important parts of your
@@ -343,48 +343,48 @@ export default function AutomationGuidePage() {
           <div className="mt-7 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
 
             <div
-              className={`rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold ${
+              className={`rounded-xl border border-border-subtle px-4 py-3 text-sm font-semibold ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700"
-                  : "dark:border-slate-700"
+                  ? "app-dark:border-border-subtle"
+                  : "app-dark:border-border-subtle"
               }`}
             >
               Capture
             </div>
 
-            <span className="rotate-90 text-gray-400 sm:rotate-0">
+            <span className="rotate-90 text-muted sm:rotate-0">
               →
             </span>
 
             <div
-              className={`rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold ${
+              className={`rounded-xl border border-border-subtle px-4 py-3 text-sm font-semibold ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700"
-                  : "dark:border-slate-700"
+                  ? "app-dark:border-border-subtle"
+                  : "app-dark:border-border-subtle"
               }`}
             >
               Respond
             </div>
 
-            <span className="rotate-90 text-gray-400 sm:rotate-0">
+            <span className="rotate-90 text-muted sm:rotate-0">
               →
             </span>
 
             <div
-              className={`rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold ${
+              className={`rounded-xl border border-border-subtle px-4 py-3 text-sm font-semibold ${
                 isLoggedIn
-                  ? "app-dark:border-slate-700"
-                  : "dark:border-slate-700"
+                  ? "app-dark:border-border-subtle"
+                  : "app-dark:border-border-subtle"
               }`}
             >
               Notify
             </div>
 
-            <span className="rotate-90 text-gray-400 sm:rotate-0">
+            <span className="rotate-90 text-muted sm:rotate-0">
               →
             </span>
 
-            <div className="rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] px-4 py-3 text-sm font-bold text-white">
+            <div className="rounded-xl bg-brand-primary   px-4 py-3 text-sm font-bold text-gray-100">
               Follow Up
             </div>
 
@@ -398,7 +398,7 @@ export default function AutomationGuidePage() {
 
           <Link
             href="/resources"
-            className="inline-flex rounded-xl bg-gradient-to-r from-[#00c297] to-[#4b52f7] px-5 py-2.5 text-sm font-bold text-white"
+            className="inline-flex rounded-xl bg-brand-primary   px-5 py-2.5 text-sm font-bold text-gray-100"
           >
             Back to Resources
           </Link>

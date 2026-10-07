@@ -155,13 +155,13 @@ export default function PublicFlowexFormPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#f5f5f5]" />
+      <main className="min-h-screen bg-background" />
     );
   }
 
   if (notFound) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5] px-4 text-gray-900">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
         <div className="text-center">
           <h1 className="text-2xl font-semibold">
             Form not found

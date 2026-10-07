@@ -322,17 +322,17 @@ export default function ConnectionsPage() {
 
   return (
     <RouteGuard access="premium">
-      <main className="min-h-screen bg-[#f8fafc] text-gray-900 transition-colors duration-300 app-dark:bg-[#0b0f14] app-dark:text-slate-100">
-      <header className="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-slate-800/80 app-dark:bg-[linear-gradient(90deg,#0b0f14_0%,#172033_8%,#252b70_25%,#006454_50%,#252b70_75%,#172033_92%,#0b0f14_100%)]">
+      <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
           <div className="flex items-center gap-6">
             <Link href="/dashboard">
-              <Image src="/flowex-logo.png" alt="Flowex" width={120} height={34} priority />
+              <Image src="/flowex-logo-brand.png" alt="Flowex" width={120} height={34} priority />
             </Link>
             <div className="hidden h-6 w-px bg-gray-200 sm:block app-dark:bg-slate-700" />
             <Link
               href="/dashboard"
-              className="hidden text-sm font-medium text-gray-500 transition hover:text-gray-900 sm:block app-dark:text-slate-300 app-dark:hover:text-white"
+              className="hidden text-sm font-medium text-gray-500 transition hover:text-foreground sm:block app-dark:text-muted app-dark:hover:text-gray-100"
             >
               ← Dashboard
             </Link>
@@ -342,7 +342,7 @@ export default function ConnectionsPage() {
             <button
               type="button"
               aria-label="Open account menu"
-              className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 font-bold text-white shadow-md transition hover:scale-105"
+              className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-brand-primary    font-bold text-gray-100 shadow-md transition hover:scale-105"
             >
               {profileImage ? (
                 <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
@@ -351,34 +351,34 @@ export default function ConnectionsPage() {
               )}
             </button>
 
-            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-gray-200 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-slate-700 app-dark:bg-[#11161d]">
+            <div className="invisible absolute right-0 top-12 z-50 w-56 translate-y-2 rounded-2xl border border-border-subtle bg-white p-2 opacity-0 shadow-sm transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 app-dark:border-border-subtle app-dark:bg-surface">
               <div className="px-3 py-2">
-                <p className="text-sm font-semibold app-dark:text-white">{name}</p>
-                <p className="truncate text-xs text-gray-400 app-dark:text-slate-400">{email}</p>
-                <p className="mt-1 text-xs font-semibold text-emerald-600 app-dark:text-emerald-400">
+                <p className="text-sm font-semibold app-dark:text-gray-100">{name}</p>
+                <p className="truncate text-xs text-muted app-dark:text-muted">{email}</p>
+                <p className="mt-1 text-xs font-semibold text-brand-primary app-dark:text-brand-primary">
                   {plan === "trial" ? "Flowex Pro Trial" : "Flowex Pro"}
                 </p>
               </div>
 
               <div className="my-1 h-px bg-gray-100 app-dark:bg-slate-700" />
 
-              <Link href="/account?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800">
+              <Link href="/account?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface">
                 Account
               </Link>
-              <Link href="/connections" className="block rounded-xl bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-900 app-dark:bg-slate-800 app-dark:text-white">
+              <Link href="/connections" className="block rounded-xl bg-gray-50 px-3 py-2.5 text-sm font-semibold text-foreground app-dark:bg-surface app-dark:text-gray-100">
                 Connections
               </Link>
-              <Link href="/billing?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800">
+              <Link href="/billing?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface">
                 Plan & Billing
               </Link>
-              <Link href="/settings?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800">
+              <Link href="/settings?from=connections" className="block rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface">
                 Settings
               </Link>
 
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-600 transition hover:bg-gray-50 app-dark:text-slate-300 app-dark:hover:bg-slate-800"
+                className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm text-muted transition hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
               >
                 <span>Theme</span>
                 <span>{theme === "dark" ? "☾" : "☀"}</span>
@@ -403,18 +403,18 @@ export default function ConnectionsPage() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-semibold text-emerald-600 app-dark:text-emerald-400">
+              <p className="text-sm font-semibold text-brand-primary app-dark:text-brand-primary">
                 ACCOUNT
               </p>
-              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-white">
+              <h1 className="mt-2 text-3xl font-black sm:text-4xl app-dark:text-gray-100">
                 Connections
               </h1>
-              <p className="mt-2 max-w-2xl text-gray-500 app-dark:text-slate-400">
+              <p className="mt-2 max-w-2xl text-gray-500 app-dark:text-muted">
                 Manage the accounts connected to Flowex. Connections are shared across all of your Lead Flows.
               </p>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 shadow-sm app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-300">
+            <div className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-muted shadow-sm app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
               {loading ? "Checking..." : `${connectedCount} of ${connections.length} connected`}
             </div>
           </div>
@@ -425,13 +425,13 @@ export default function ConnectionsPage() {
             </div>
           )}
 
-          <div className="mt-8 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm app-dark:border-slate-700 app-dark:bg-[#11161d]">
+          <div className="mt-8 overflow-hidden rounded-3xl border border-border-subtle bg-white shadow-sm app-dark:border-border-subtle app-dark:bg-surface">
             {connections.map((connection, index) => (
               <div
                 key={connection.key}
                 className={`flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between ${
                   index !== connections.length - 1
-                    ? "border-b border-gray-100 app-dark:border-slate-800"
+                    ? "border-b border-border-subtle app-dark:border-border-subtle"
                     : ""
                 }`}
               >
@@ -439,14 +439,14 @@ export default function ConnectionsPage() {
                   <ProviderLogo provider={connection.key} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-bold app-dark:text-white">{connection.name}</p>
+                      <p className="font-bold app-dark:text-gray-100">{connection.name}</p>
                       {!loading && connection.connected && (
-                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-600 app-dark:bg-emerald-500/10 app-dark:text-emerald-400">
+                        <span className="rounded-full bg-surface-subtle px-2 py-1 text-[11px] font-bold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
                           Connected
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-sm text-gray-500 app-dark:text-slate-400">
+                    <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">
                       {connection.connected && connection.detail
                         ? connection.detail
                         : connection.description}
@@ -456,13 +456,13 @@ export default function ConnectionsPage() {
 
                 <div className="flex shrink-0 items-center gap-2">
                   {loading ? (
-                    <div className="h-9 w-24 animate-pulse rounded-xl bg-gray-100 app-dark:bg-slate-800" />
+                    <div className="h-9 w-24 animate-pulse rounded-xl bg-gray-100 app-dark:bg-surface" />
                   ) : connection.connected ? (
                     <button
                       type="button"
                       onClick={() => void disconnectProvider(connection.key)}
                       disabled={Boolean(busyProvider)}
-                      className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-red-500/30 app-dark:bg-[#11161d] app-dark:text-red-400 app-dark:hover:bg-red-500/10"
+                      className="rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 app-dark:border-red-500/30 app-dark:bg-surface app-dark:text-red-400 app-dark:hover:bg-red-500/10"
                     >
                       {busyProvider === connection.key ? "Disconnecting..." : "Disconnect"}
                     </button>
@@ -471,7 +471,7 @@ export default function ConnectionsPage() {
                       type="button"
                       onClick={() => void connectProvider(connection.key)}
                       disabled={Boolean(busyProvider)}
-                      className="rounded-xl bg-gradient-to-r from-emerald-500 via-cyan-400 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-xl bg-brand-primary    px-4 py-2 text-sm font-semibold text-gray-100 shadow-md transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {busyProvider === connection.key ? "Connecting..." : "Connect"}
                     </button>
@@ -481,7 +481,7 @@ export default function ConnectionsPage() {
             ))}
           </div>
 
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500 app-dark:border-slate-700 app-dark:bg-[#11161d] app-dark:text-slate-400">
+          <div className="mt-5 rounded-2xl border border-border-subtle bg-gray-50 px-5 py-4 text-sm text-gray-500 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted">
             Disconnecting an account removes its Flowex connection and stored authorization. It does not delete your external Sheets, Airtable bases, Excel workbooks, Notion databases or HubSpot data.
           </div>
         </div>
