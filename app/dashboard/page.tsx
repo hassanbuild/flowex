@@ -587,7 +587,7 @@ export default function DashboardPage() {
 
             {/* LINKS */}
 
-            <div className="flex items-center gap-6 text-sm font-medium text-gray-500 app-dark:text-slate-200">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium text-gray-500 app-dark:text-slate-200">
 
   <Link
     href="/dashboard"
@@ -615,6 +615,27 @@ export default function DashboardPage() {
     className="transition hover:text-gray-900 app-dark:hover:text-white"
   >
     Billing
+  </Link>
+
+  <Link
+    href="/resources"
+    className="transition hover:text-gray-900 app-dark:hover:text-white"
+  >
+    Resources & Help
+  </Link>
+
+  <Link
+    href="/privacy"
+    className="transition hover:text-gray-900 app-dark:hover:text-white"
+  >
+    Privacy
+  </Link>
+
+  <Link
+    href="/terms"
+    className="transition hover:text-gray-900 app-dark:hover:text-white"
+  >
+    Terms
   </Link>
 
 </div>
