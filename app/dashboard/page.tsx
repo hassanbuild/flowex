@@ -360,7 +360,7 @@ export default function DashboardPage() {
 
             {/* LEAD CAPTURE */}
 
-            <div className="group relative overflow-hidden rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-sm app-dark:border-border-subtle app-dark:bg-surface  app-dark:hover:border-border-subtle">
+            <div className="flowex-premium-surface group relative overflow-hidden rounded-[28px] border border-border-subtle p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-sm app-dark:border-border-subtle app-dark:hover:border-border-subtle">
 
               <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-surface-subtle/30 blur-3xl app-dark:bg-surface-subtle/10" />
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { FlowexBrand } from "@/components/FlowexBrand";
 import RouteGuard from "@/components/RouteGuard";
 
 export default function Home() {
@@ -63,13 +64,7 @@ return (
 
         <div className="mx-auto flex h-[55px] max-w-8xl items-center justify-between px-6 lg:px-8">
 
-          <Image
-            src="/flowex-logo-brand.png"
-            alt="Flowex"
-            width={125}
-            height={34}
-            priority
-          />
+          <FlowexBrand priority />
 
           <div className="hidden items-center gap-10 lg:flex">
 

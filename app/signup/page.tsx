@@ -14,6 +14,7 @@ import {
 
 import RouteGuard from "@/components/RouteGuard";
 import { createClient } from "@/lib/supabase/client";
+import { FlowexBrand } from "@/components/FlowexBrand";
 
 const AUTH_RETURN_KEY =
   "flowex-auth-return-to";
@@ -298,13 +299,7 @@ function SignupPageContent() {
           <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
             <Link href="/">
-              <Image
-                src="/flowex-logo-brand.png"
-                alt="Flowex"
-                width={120}
-                height={34}
-                priority
-              />
+              <FlowexBrand priority />
             </Link>
 
             <p className="text-sm text-gray-500 app-dark:text-gray-100">

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useAppTheme } from "@/components/AppThemeProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
+import { FlowexBrand } from "@/components/FlowexBrand";
 
 const navigation = [
   { href: "/dashboard", label: "Dashboard", icon: "▦" },
@@ -71,7 +72,7 @@ export function FlowexAppShell() {
       <aside className={`flowex-app-shell px-4 py-5 ${isMobileMenuOpen ? "is-open" : ""}`} aria-label="Application navigation">
       <div className="flex items-center justify-between px-2">
         <Link href="/dashboard" className="flex h-11 items-center" aria-label="Flowex dashboard" onClick={closeMobileMenu}>
-        <span className="flowex-brand-mark" aria-hidden="true" />
+        <FlowexBrand />
         </Link>
         <button type="button" className="flowex-mobile-menu-close" onClick={closeMobileMenu} aria-label="Close navigation menu">×</button>
       </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
+import { FlowexBrand } from "@/components/FlowexBrand";
 import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 function BillingPageContent() {
@@ -66,13 +67,7 @@ function BillingPageContent() {
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
 
           <Link href={returnPath}>
-            <Image
-              src="/flowex-logo-brand.png"
-              alt="Flowex"
-              width={120}
-              height={34}
-              priority
-            />
+            <FlowexBrand priority />
           </Link>
 
           <Link
@@ -110,7 +105,7 @@ function BillingPageContent() {
 
           {/* CURRENT PLAN */}
 
-          <div className="mt-8 rounded-[28px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle app-dark:bg-surface">
+          <div className="flowex-premium-surface mt-8 rounded-[28px] border border-border-subtle p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle">
 
             <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
 
