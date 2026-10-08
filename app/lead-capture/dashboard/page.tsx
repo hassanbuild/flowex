@@ -8,6 +8,67 @@ import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
 import { createClient } from "@/lib/supabase/client";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
+
+type LeadTrendPoint = {
+  label: string;
+  value: number;
+};
+
+function buildLeadTrend(
+  leads: { created_at: string }[]
+): LeadTrendPoint[] {
+  const days = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (13 - index));
+    return date;
+  });
+
+  return days.map((date) => {
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return {
+      label: date.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      value: leads.filter((lead) => {
+        const capturedAt = new Date(lead.created_at);
+        return capturedAt >= date && capturedAt < nextDay;
+      }).length,
+    };
+  });
+}
+
+function LeadTrendChart({ points }: { points: LeadTrendPoint[] }) {
+  const maximum = Math.max(1, ...points.map((point) => point.value));
+  const coordinates = points.map((point, index) => {
+    const x = 24 + (index / Math.max(1, points.length - 1)) * 512;
+    const y = 142 - (point.value / maximum) * 104;
+    return `${x},${y}`;
+  }).join(" ");
+  const fillCoordinates = `24,142 ${coordinates} 536,142`;
+
+  return (
+    <div className="mt-5" aria-label="Leads captured during the last 14 days">
+      <svg viewBox="0 0 560 166" className="h-36 w-full overflow-visible sm:h-44" role="img">
+        {[38, 90, 142].map((y) => (
+          <line key={y} x1="24" x2="536" y1={y} y2={y} stroke="currentColor" className="text-border-subtle" strokeDasharray="3 5" />
+        ))}
+        <polygon points={fillCoordinates} fill="currentColor" className="text-brand-primary/10" />
+        <polyline points={coordinates} fill="none" stroke="currentColor" className="text-brand-primary" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        {points.map((point, index) => {
+          const x = 24 + (index / Math.max(1, points.length - 1)) * 512;
+          const y = 142 - (point.value / maximum) * 104;
+          return <circle key={point.label} cx={x} cy={y} r="3.5" fill="currentColor" className="text-brand-primary" />;
+        })}
+      </svg>
+      <div className="flex justify-between px-1 text-xs text-muted">
+        <span>{points[0]?.label}</span>
+        <span>{points[Math.floor(points.length / 2)]?.label}</span>
+        <span>{points.at(-1)?.label}</span>
+      </div>
+    </div>
+  );
+}
 
 export default function LeadCaptureDashboard() {
   const { theme, toggleTheme } = useAppTheme();
@@ -90,6 +151,9 @@ export default function LeadCaptureDashboard() {
 
   const [isLoadingLeadData, setIsLoadingLeadData] =
     useState(false);
+
+  const [leadTrend, setLeadTrend] =
+    useState<LeadTrendPoint[]>([]);
 
   const hasPremiumAccess =
     plan === "trial" || plan === "pro";
@@ -485,6 +549,7 @@ export default function LeadCaptureDashboard() {
           setTotalLeads(0);
           setRecentLeads([]);
           setActivity([]);
+          setLeadTrend([]);
           return;
         }
 
@@ -526,6 +591,7 @@ export default function LeadCaptureDashboard() {
           totalResult,
           todayResult,
           recentResult,
+          trendResult,
         ] =
           await Promise.all([
             supabase
@@ -588,6 +654,21 @@ export default function LeadCaptureDashboard() {
                 }
               )
               .limit(4),
+
+            supabase
+              .from("leads")
+              .select("created_at")
+              .eq("user_id", user.id)
+              .eq("lead_flow_id", selectedLeadFlowId)
+              .gte(
+                "created_at",
+                (() => {
+                  const trendStart = new Date();
+                  trendStart.setHours(0, 0, 0, 0);
+                  trendStart.setDate(trendStart.getDate() - 13);
+                  return trendStart.toISOString();
+                })()
+              ),
           ]);
 
         if (cancelled) {
@@ -654,6 +735,12 @@ export default function LeadCaptureDashboard() {
           )
         );
 
+        setLeadTrend(
+          buildLeadTrend(
+            trendResult.data || []
+          )
+        );
+
         setIsLoadingLeadData(
           false
         );
@@ -678,6 +765,7 @@ export default function LeadCaptureDashboard() {
 
   return (
     <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
 
       {/* ================= NAVBAR ================= */}
 
@@ -852,7 +940,7 @@ export default function LeadCaptureDashboard() {
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
 
                 <button
                   type="button"
@@ -866,9 +954,9 @@ export default function LeadCaptureDashboard() {
                     isLoadingLeadFlows ||
                     leadFlows.length === 0
                   }
-                  className="flex min-w-[190px] items-center justify-between gap-3 rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
+                  className="flex w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm font-semibold text-gray-700 outline-none transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[190px] app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:hover:bg-brand-primary"
                 >
-                  <span>
+                  <span className="min-w-0 truncate">
                     {isLoadingLeadFlows
                       ? "Loading Lead Flows..."
                       : selectedLeadFlow?.name ||
@@ -883,7 +971,7 @@ export default function LeadCaptureDashboard() {
                 </button>
 
                 {isLeadFlowMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-full min-w-[220px] overflow-hidden rounded-2xl border border-border-subtle bg-white p-2 shadow-sm app-dark:border-border-subtle app-dark:bg-surface">
+                  <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-full min-w-0 overflow-hidden rounded-2xl border border-border-subtle bg-white p-2 shadow-sm sm:min-w-[220px] app-dark:border-border-subtle app-dark:bg-surface">
 
                     {leadFlows.map(
                       (flow) => (
@@ -902,7 +990,7 @@ export default function LeadCaptureDashboard() {
                               : "text-muted hover:bg-gray-50 app-dark:text-muted app-dark:hover:bg-surface"
                           }`}
                         >
-                          <span>
+                          <span className="min-w-0 truncate">
                             {flow.name}
                           </span>
 
@@ -1075,6 +1163,21 @@ export default function LeadCaptureDashboard() {
             </div>
 
           </div>
+
+          <section className="mt-6 rounded-[26px] border border-border-subtle bg-white p-6 shadow-sm transition-colors duration-300 app-dark:border-border-subtle app-dark:bg-surface">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold app-dark:text-gray-100">Lead trend</h2>
+                <p className="mt-1 text-sm text-gray-500 app-dark:text-muted">Leads captured in this Lead Flow over the last 14 days.</p>
+              </div>
+              <span className="rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-brand-primary app-dark:bg-surface-subtle/10">Last 14 days</span>
+            </div>
+            {isLoadingLeadData ? (
+              <div className="mt-5 h-44 animate-pulse rounded-xl bg-surface-subtle" />
+            ) : (
+              <LeadTrendChart points={leadTrend} />
+            )}
+          </section>
 
           {/* ================= AUTOMATION STATUS ================= */}
 
@@ -1314,8 +1417,8 @@ export default function LeadCaptureDashboard() {
       </section>
 
       {isLeadFlowNameModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[28px] border border-border-subtle bg-white p-7 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 px-4 py-4 backdrop-blur-sm">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[28px] border border-border-subtle bg-white p-5 shadow-md sm:p-7 app-dark:border-border-subtle app-dark:bg-surface">
             <h2 className="text-2xl font-black app-dark:text-gray-100">
               Name your Lead Flow
             </h2>

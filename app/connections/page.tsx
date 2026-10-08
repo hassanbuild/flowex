@@ -8,6 +8,7 @@ import { useAppTheme } from "@/components/AppThemeProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
 import { createClient } from "@/lib/supabase/client";
 import RouteGuard from "@/components/RouteGuard";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 type ProviderKey = "sheets" | "airtable" | "excel" | "notion" | "hubspot";
 
@@ -323,6 +324,7 @@ export default function ConnectionsPage() {
   return (
     <RouteGuard access="premium">
       <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
       <header className="sticky top-0 z-50 border-b border-border-subtle/70 bg-white/90 backdrop-blur-xl transition-colors duration-300 app-dark:border-border-subtle/80 app-dark:bg-surface">
         <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-6 lg:px-8">
           <div className="flex items-center gap-6">

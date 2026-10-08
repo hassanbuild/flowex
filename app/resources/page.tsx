@@ -76,7 +76,7 @@ export default function ResourcesPage() {
             : "border-border-subtle/70 bg-white/85 app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
-        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-4 sm:px-6">
 
           <Link href={backPath}>
             <Image
@@ -104,7 +104,7 @@ export default function ResourcesPage() {
 
       {/* HERO */}
 
-      <section className="mx-auto max-w-7xl px-6 pb-14 pt-24 text-center">
+      <section className="mx-auto max-w-7xl px-4 pb-12 pt-20 text-center sm:px-6 sm:pb-14 sm:pt-24">
 
         <div className="mx-auto mb-5 inline-flex rounded-full bg-surface   p-[1px]">
 
@@ -142,7 +142,7 @@ export default function ResourcesPage() {
 
       {/* RESOURCES */}
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24">
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
 
@@ -206,7 +206,7 @@ export default function ResourcesPage() {
 
       {/* SUPPORT CTA */}
 
-      <section className="mx-auto max-w-5xl px-6 pb-24">
+      <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6 sm:pb-24">
 
         <div
           className={`rounded-3xl border border-border-subtle bg-white px-8 py-10 text-center ${
@@ -252,7 +252,7 @@ export default function ResourcesPage() {
         }`}
       >
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
 
           <div className="flex items-center gap-4">
 

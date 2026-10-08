@@ -4,23 +4,24 @@
 
 :root {
   color-scheme: light;
-  --background: #f8f9f8;
-  --foreground: #1f2933;
+  --background: #f7f9f8;
+  --foreground: #17201c;
   --surface: #ffffff;
-  --surface-subtle: #f1f3f2;
-  --border: #e3e7e4;
-  --muted: #66716a;
-  --brand-primary: #14532d;
+  --surface-subtle: #edf3ef;
+  --border: #dfe7e2;
+  --muted: #68736d;
+  --brand-primary: #10b981;
+  --brand-strong: #059669;
 }
 
 .app-dark {
   color-scheme: dark;
-  --background: #111312;
-  --foreground: #e5e7e6;
-  --surface: #1b1e1c;
-  --surface-subtle: #242825;
-  --border: #303632;
-  --muted: #a1a8a3;
+  --background: #0c110f;
+  --foreground: #edf3ef;
+  --surface: #121a16;
+  --surface-subtle: #1a2520;
+  --border: #2a3831;
+  --muted: #9ba8a0;
 }
 
 .app-dark .text-brand-primary {
@@ -42,7 +43,156 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--brand-primary) 24%, transparent);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand-primary) 36%, transparent);
+  outline-offset: 2px;
+}
+
+.flowex-brand-mark {
+  background: var(--brand-primary);
+  display: block;
+  height: 34px;
+  width: 34px;
+  mask: url("/flowex-logo-brand.png") center / contain no-repeat;
+  -webkit-mask: url("/flowex-logo-brand.png") center / contain no-repeat;
+}
+
+img[alt="Flowex"] {
+  height: 2rem !important;
+  width: 2rem !important;
+  flex: none;
+  object-fit: contain;
+}
+
+.flowex-app-shell {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 60;
+  display: none;
+  width: 248px;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(22px);
+}
+
+.flowex-mobile-menu-trigger,
+.flowex-mobile-menu-close,
+.flowex-mobile-menu-backdrop {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  main:has(.flowex-app-shell) > header,
+  main:has(.flowex-app-shell) > nav {
+    display: none;
+  }
+
+  .flowex-mobile-menu-trigger {
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: 0.75rem;
+    z-index: 70;
+    display: inline-flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    color: var(--foreground);
+    box-shadow: 0 10px 24px -16px rgba(10, 34, 22, 0.5);
+    backdrop-filter: blur(18px);
+    font-size: 1.2rem;
+  }
+
+  .flowex-mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 71;
+    display: block;
+    visibility: hidden;
+    border: 0;
+    background: rgba(5, 12, 8, 0.46);
+    opacity: 0;
+    transition: opacity 180ms ease, visibility 180ms ease;
+  }
+
+  .flowex-mobile-menu-backdrop.is-open {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .flowex-app-shell {
+    z-index: 72;
+    display: flex;
+    width: min(18rem, calc(100vw - 3rem));
+    max-width: 100%;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .flowex-app-shell.is-open {
+    transform: translateX(0);
+  }
+
+  .flowex-mobile-menu-close {
+    display: inline-flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.625rem;
+    color: var(--muted);
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  main:has(.flowex-app-shell) {
+    padding-left: 248px;
+  }
+
+  main:has(.flowex-app-shell) > header {
+    display: none;
+  }
+
+  .flowex-app-shell {
+    display: flex;
+  }
+}
+
+.flowex-glass {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  box-shadow: 0 18px 48px -32px rgba(10, 34, 22, 0.34);
+  backdrop-filter: blur(18px);
+}
+
+.app-dark .flowex-glass {
+  box-shadow: 0 18px 48px -32px rgba(0, 0, 0, 0.75);
 }
 
 @keyframes float1 {

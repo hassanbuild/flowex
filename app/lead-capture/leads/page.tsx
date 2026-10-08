@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 type LeadStatus = "new" | "contacted" | "closed";
 
@@ -350,6 +351,7 @@ export default function LeadsPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
 
       {/* ================= NAVBAR ================= */}
 

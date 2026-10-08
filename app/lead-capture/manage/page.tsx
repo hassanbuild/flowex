@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 type SourceType = "flowex" | "external";
 type StorageType =
@@ -6219,6 +6220,7 @@ export default function ManageLeadCapturePage() {
       onChangeCapture={handleManageInteraction}
       className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100"
     >
+      <FlowexAppShell />
 
       {/* NAVBAR */}
 
@@ -8261,8 +8263,8 @@ export default function ManageLeadCapturePage() {
               )}
 
               {showNotionRemoveDialog && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
-                  <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-4">
+                  <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface">
                     <h3 className="text-lg font-bold app-dark:text-gray-100">
                       Remove Notion destination?
                     </h3>
@@ -8314,8 +8316,8 @@ export default function ManageLeadCapturePage() {
               )}
 
               {showExcelRemoveDialog && (
-                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4">
-                  <div className="w-full max-w-md rounded-2xl border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-4">
+                  <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface">
                     <h3 className="text-lg font-bold app-dark:text-gray-100">
                       Remove Excel destination?
                     </h3>
@@ -8366,11 +8368,11 @@ export default function ManageLeadCapturePage() {
 
               {showAirtableRemoveDialog && (
                 <div
-                  className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+                  className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 py-4 backdrop-blur-sm"
                   onClick={() => setShowAirtableRemoveDialog(false)}
                 >
                   <div
-                    className="w-full max-w-md rounded-[24px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface"
+                    className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[24px] border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <h3 className="text-lg font-bold app-dark:text-gray-100">Remove Airtable destination?</h3>
@@ -8422,7 +8424,7 @@ export default function ManageLeadCapturePage() {
 
               {showMoreDestinations && (
                 <div
-                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 px-4 py-4 backdrop-blur-sm"
                   onClick={() =>
                     setShowMoreDestinations(
                       false
@@ -8430,7 +8432,7 @@ export default function ManageLeadCapturePage() {
                   }
                 >
                   <div
-                    className="w-full max-w-xl rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface"
+                    className="max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-[26px] border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface"
                     onClick={(
                       event
                     ) =>
@@ -9388,9 +9390,9 @@ export default function ManageLeadCapturePage() {
 
 
       {showCreatedSheetDeleteDialog && (
-        <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-sm">
 
-          <div className="w-full max-w-md rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[26px] border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface">
 
             <h3 className="text-xl font-bold app-dark:text-gray-100">
               Remove this sheet?
@@ -9458,9 +9460,9 @@ export default function ManageLeadCapturePage() {
       )}
 
       {showUnsavedDialog && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-sm">
 
-          <div className="w-full max-w-md rounded-[26px] border border-border-subtle bg-white p-6 shadow-md app-dark:border-border-subtle app-dark:bg-surface">
+          <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[26px] border border-border-subtle bg-white p-5 shadow-md sm:p-6 app-dark:border-border-subtle app-dark:bg-surface">
 
             <h3 className="text-xl font-bold app-dark:text-gray-100">
               Save your changes?
@@ -9562,8 +9564,8 @@ export default function ManageLeadCapturePage() {
       )}
 
       {(hasUnsavedChanges || universalSaveError) && (
-        <div className="fixed bottom-6 left-1/2 z-[120] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-border-subtle bg-white/95 p-3 shadow-md backdrop-blur app-dark:border-border-subtle app-dark:bg-surface/95">
-          <div className="flex items-center justify-between gap-3">
+        <div className="fixed bottom-4 left-1/2 z-[120] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-border-subtle bg-white/95 p-3 shadow-md backdrop-blur sm:bottom-6 app-dark:border-border-subtle app-dark:bg-surface/95">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <p className={`text-sm font-semibold ${universalSaveError ? "text-red-600 app-dark:text-red-400" : "text-gray-700 app-dark:text-gray-100"}`}>
               {universalSaveError || "You have unsaved changes to this Lead Flow."}
             </p>

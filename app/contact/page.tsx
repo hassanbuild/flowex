@@ -32,7 +32,7 @@ export default function ContactPage() {
             : "app-dark:border-border-subtle/80 app-dark:bg-surface"
         }`}
       >
-        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-4 sm:px-6">
 
           <Link href={backPath}>
             <Image
@@ -60,7 +60,7 @@ export default function ContactPage() {
 
       {/* CONTENT */}
 
-      <section className="mx-auto max-w-5xl px-6 py-20">
+      <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-20">
 
         <div className="mx-auto max-w-2xl text-center">
 
@@ -98,7 +98,7 @@ export default function ContactPage() {
         {/* FORM */}
 
         <div
-          className={`mx-auto mt-12 max-w-2xl rounded-3xl border border-border-subtle bg-white p-8 ${
+          className={`mx-auto mt-10 max-w-2xl rounded-3xl border border-border-subtle bg-white p-5 sm:mt-12 sm:p-8 ${
             isLoggedIn
               ? "app-dark:border-border-subtle app-dark:bg-surface"
               : "app-dark:border-border-subtle app-dark:bg-surface"
@@ -212,7 +212,7 @@ export default function ContactPage() {
         }`}
       >
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
 
           <div className="flex items-center gap-4">
 

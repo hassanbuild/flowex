@@ -610,10 +610,10 @@ export default function CheckoutPage() {
 
       {showAuthChoice && (
 
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4 py-4 backdrop-blur-sm">
 
           <div
-            className={`w-full max-w-md rounded-[24px] border border-border-subtle bg-white p-6 text-center shadow-md ${darkCard}`}
+            className={`max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[24px] border border-border-subtle bg-white p-5 text-center shadow-md sm:p-6 ${darkCard}`}
           >
 
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-primary    text-xl text-gray-100">

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useAppTheme } from "@/components/AppThemeProvider";
 import RouteGuard from "@/components/RouteGuard";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 function SettingsPageContent() {
   const searchParams = useSearchParams();
@@ -86,6 +87,7 @@ function SettingsPageContent() {
   return (
     <RouteGuard access="signed-in">
       <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
 
       {/* ================= NAVBAR ================= */}
 

@@ -121,7 +121,7 @@ return (
 
       {/* ================= HERO ================= */}
 
-      <section className="mx-auto max-w-7xl px-8 pt-16 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-12 pt-16 sm:px-8">
 
         <div className="grid items-center gap-20 lg:grid-cols-2">
 
@@ -135,7 +135,7 @@ return (
              </span>
            </span>
 
-            <h1 className="mt-1 text-5xl font-black leading-tight md:text-6xl">
+            <h1 className="mt-1 text-4xl font-black leading-tight sm:text-5xl md:text-6xl">
 
               Never Lose
 
@@ -191,7 +191,7 @@ return (
   <div className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-surface    blur-3xl" />
 
   {/* Dashboard Card */}
-  <div className="animate-[dashboard_8s_ease-in-out_infinite] rounded-[36px] border border-white/50 bg-white/90 app-dark:border-border-subtle/70 app-dark:bg-surface/90 p-8  backdrop-blur">
+  <div className="animate-[dashboard_8s_ease-in-out_infinite] rounded-[36px] border border-white/50 bg-white/90 p-5 backdrop-blur sm:p-8 app-dark:border-border-subtle/70 app-dark:bg-surface/90">
 
     <div className="mb-8 flex items-center justify-between">
 
@@ -217,7 +217,7 @@ return (
 
       {/* Stats */}
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3 sm:gap-4">
 
         <div className="rounded-2xl bg-surface-subtle p-4 app-dark:bg-surface">
           <p className="text-xs text-gray-500 app-dark:text-muted">Leads</p>
@@ -303,7 +303,7 @@ return (
 >
      <div className="pointer-events-none absolute left-1/2 top-1/2 -z-0 h-[350px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface-subtle/20 blur-[120px]" />
 
-    <div className="relative z-10 mx-auto max-w-6xl px-8">
+    <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-8">
 
     <div className="mt-1 grid gap-5 lg:grid-cols-3">
 
@@ -719,7 +719,7 @@ return (
 
     </div>
 
-    <div className="mx-auto mt-6 max-w-3xl rounded-[26px] border border-border-subtle/80 bg-white/90 app-dark:border-border-subtle app-dark:bg-surface/90 px-8 py-6 shadow-sm backdrop-blur">
+    <div className="mx-auto mt-6 max-w-3xl rounded-[26px] border border-border-subtle/80 bg-white/90 px-5 py-6 shadow-sm backdrop-blur sm:px-8 app-dark:border-border-subtle app-dark:bg-surface/90">
 
       <div className="grid items-center gap-8 md:grid-cols-[0.8fr_1.2fr]">
 
@@ -759,7 +759,7 @@ return (
 
         <div>
 
-          <div className="grid grid-cols-2 gap-x-5 gap-y-2.5 text-sm text-gray-700 app-dark:text-gray-100">
+          <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 text-sm text-gray-700 min-[480px]:grid-cols-2 app-dark:text-gray-100">
 
             <span>✓ Unlimited Leads</span>
             <span>✓ Instant Replies</span>
@@ -794,7 +794,7 @@ return (
 
 <section id="faq" className=" py-9">
 
-  <div className="mx-auto max-w-6xl px-8">
+  <div className="mx-auto max-w-6xl px-4 sm:px-8">
 
     <div className="text-center">
 
@@ -863,7 +863,7 @@ return (
 {/* ================= FOOTER ================= */}
 
 <footer className="border-t border-border-subtle/70 bg-white/85 backdrop-blur-xl app-dark:border-border-subtle/80 app-dark:bg-surface">
-  <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+  <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-6 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
 
     {/* LEFT */}
 

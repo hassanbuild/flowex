@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 function BillingPageContent() {
   const { plan } = useAppAccount();
@@ -56,6 +57,7 @@ function BillingPageContent() {
   return (
     <RouteGuard access="signed-in">
       <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
 
       {/* NAVBAR */}
 

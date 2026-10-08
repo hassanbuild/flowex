@@ -26,7 +26,7 @@ export default function LegalPage({
   return (
     <main className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${isLoggedIn ? "app-dark:bg-surface app-dark:text-gray-100" : "app-dark:bg-surface app-dark:text-gray-100"}`}>
       <nav className={`border-b border-border-subtle/70 bg-white/85 backdrop-blur-xl ${isLoggedIn ? "app-dark:border-border-subtle/80 app-dark:bg-surface" : "app-dark:border-border-subtle/80 app-dark:bg-surface"}`}>
-        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex h-[55px] max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href={backPath} aria-label="Flowex home">
             <Image src="/flowex-logo-brand.png" alt="Flowex" width={115} height={32} priority />
           </Link>
@@ -36,7 +36,7 @@ export default function LegalPage({
         </div>
       </nav>
 
-      <article className="mx-auto max-w-4xl px-6 py-14 sm:py-20">
+      <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-20">
         <div className="mb-6 inline-flex rounded-full bg-surface   p-[1px]">
           <span className={`rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-gray-700 ${isLoggedIn ? "app-dark:bg-surface app-dark:text-gray-100" : "app-dark:bg-surface app-dark:text-gray-100"}`}>
             {label}
@@ -58,7 +58,7 @@ export default function LegalPage({
       </article>
 
       <footer className={`border-t border-border-subtle/70 bg-white/85 backdrop-blur-xl ${isLoggedIn ? "app-dark:border-border-subtle/80 app-dark:bg-surface" : "app-dark:border-border-subtle/80 app-dark:bg-surface"}`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center sm:px-6 md:flex-row md:justify-between md:text-left">
           <div className="flex items-center gap-4">
             <Image src="/flowex-logo-brand.png" alt="Flowex" width={110} height={30} />
             <span className={`hidden text-sm text-muted lg:block ${isLoggedIn ? "app-dark:text-gray-100" : "app-dark:text-gray-100"}`}>Automate your business.</span>

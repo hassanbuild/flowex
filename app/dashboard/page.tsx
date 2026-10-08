@@ -10,6 +10,7 @@ import { useAppTheme } from "@/components/AppThemeProvider";
 import { useAppAccount } from "@/components/AppAccountProvider";
 import { useFlowexLogout } from "@/components/useFlowexLogout";
 import RouteGuard from "@/components/RouteGuard";
+import { FlowexAppShell } from "@/components/FlowexAppShell";
 
 export default function DashboardPage() {
   const { theme, toggleTheme } =
@@ -148,6 +149,7 @@ export default function DashboardPage() {
     <RouteGuard access="premium">
       
     <main className="min-h-screen bg-background text-foreground transition-colors duration-300 app-dark:bg-surface app-dark:text-gray-100">
+      <FlowexAppShell />
 
       {/* ================= NAVBAR ================= */}
 
