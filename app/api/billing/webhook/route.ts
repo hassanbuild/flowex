@@ -20,18 +20,8 @@ function getFlowexPlan(
     return "trial";
   }
 
-  /*
-    A cancelled subscription remains valid until ends_at.
-
-    If the customer cancels during the trial,
-    keep them on the trial plan until that period ends.
-  */
-  if (
-    status === "cancelled" &&
-    trialEndsAt &&
-    new Date(trialEndsAt).getTime() > Date.now()
-  ) {
-    return "trial";
+  if (status === "cancelled") {
+    return "free";
   }
 
   /*
@@ -43,7 +33,6 @@ function getFlowexPlan(
   */
   if (
     status === "active" ||
-    status === "cancelled" ||
     status === "past_due" ||
     status === "unpaid" ||
     status === "paused"

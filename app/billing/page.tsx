@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -8,9 +8,13 @@ import { useAppAccount } from "@/components/AppAccountProvider";
 import RouteGuard from "@/components/RouteGuard";
 import { FlowexBrand } from "@/components/FlowexBrand";
 import { FlowexAppShell } from "@/components/FlowexAppShell";
+import { createClient } from "@/lib/supabase/client";
 
 function BillingPageContent() {
   const { plan } = useAppAccount();
+  const [supabase] = useState(() => createClient());
+  const [billingAction, setBillingAction] = useState<"update_payment_method" | "customer_portal" | null>(null);
+  const [billingError, setBillingError] = useState("");
   const searchParams = useSearchParams();
 
 
@@ -53,6 +57,32 @@ function BillingPageContent() {
     hasPremiumAccess
       ? "Monthly"
       : "—";
+
+  const openLemonSqueezy = async (
+    action: "update_payment_method" | "customer_portal"
+  ) => {
+    setBillingError("");
+    setBillingAction(action);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Please sign in again to manage billing.");
+      }
+      const response = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (!response.ok || typeof data.url !== "string") {
+        throw new Error(data.error || "Could not open Lemon Squeezy billing.");
+      }
+      window.location.assign(data.url);
+    } catch (error) {
+      setBillingError(error instanceof Error ? error.message : "Could not open Lemon Squeezy billing.");
+      setBillingAction(null);
+    }
+  };
 
 
   return (
@@ -215,8 +245,13 @@ function BillingPageContent() {
                 Manage Subscription
               </Link>
             ) : (
-              <button className="mt-7 rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5">
-                Manage Subscription
+              <button
+                type="button"
+                onClick={() => void openLemonSqueezy("customer_portal")}
+                disabled={billingAction !== null}
+                className="flowex-primary-button mt-7 rounded-xl px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {billingAction === "customer_portal" ? "Opening..." : "Manage Subscription"}
               </button>
             )}
 
@@ -240,8 +275,13 @@ function BillingPageContent() {
 
               </div>
 
-              <button className="rounded-xl border border-border-subtle bg-white px-4 py-2.5 text-sm font-semibold text-muted transition hover:bg-gray-50 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-muted app-dark:hover:bg-surface">
-                Update Card
+              <button
+                type="button"
+                onClick={() => void openLemonSqueezy("update_payment_method")}
+                disabled={!hasPremiumAccess || billingAction !== null}
+                className="flowex-primary-button rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {billingAction === "update_payment_method" ? "Opening..." : "Update Card"}
               </button>
 
             </div>
@@ -290,6 +330,12 @@ function BillingPageContent() {
 
           </div>
 
+          {billingError && (
+            <p className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 app-dark:border-red-500/30 app-dark:bg-red-500/10 app-dark:text-red-400">
+              {billingError}
+            </p>
+          )}
+
           {/* FUTURE PLANS */}
 
           <div className="mt-6 rounded-[28px] border border-border-subtle bg-surface    p-6 shadow-sm transition-colors duration-300 sm:p-8 app-dark:border-border-subtle   ">
@@ -308,7 +354,7 @@ function BillingPageContent() {
 
               </div>
 
-              <span className="rounded-full bg-brand-primary px-4 py-2 text-xs font-semibold text-gray-100 app-dark:bg-white app-dark:text-foreground">
+              <span className="flowex-primary-button cursor-not-allowed rounded-full px-4 py-2 text-xs font-semibold text-white opacity-75">
                 Coming Soon
               </span>
 
