@@ -30,7 +30,10 @@ export async function GET(request: Request) {
 
   const supabase = createAdminClient();
   const { data: actions, error } = await supabase.rpc("claim_due_lead_outbox", { p_limit: BATCH_SIZE });
-  if (error) return NextResponse.json({ success: false, error: "Outbox claim failed." }, { status: 500 });
+  if (error) {
+    console.error("Flowex lead outbox claim failed:", { code: error.code || "unknown" });
+    return NextResponse.json({ success: false, error: "Outbox claim failed." }, { status: 500 });
+  }
 
   let succeeded = 0;
   let retried = 0;
@@ -44,7 +47,13 @@ export async function GET(request: Request) {
         status: "succeeded", completed_at: new Date().toISOString(), claim_token: null, claimed_at: null,
         last_error_code: null, updated_at: new Date().toISOString(),
       }).eq("id", action.id).eq("status", "processing").eq("claim_token", action.claim_token);
-      if (settleError) continue; // Stale-claim recovery will safely retry; provider idempotency is best-effort.
+      if (settleError) {
+        console.error("Flowex lead outbox success settlement failed:", {
+          eventId: action.id, leadId: action.lead_id, provider: action.provider,
+          attempt: action.attempts, code: settleError.code || "unknown",
+        });
+        continue;
+      }
       succeeded += 1;
     } catch (error) {
       if (error instanceof OutboxDeliveryError) {
@@ -54,6 +63,7 @@ export async function GET(request: Request) {
         failureCode = "network_error";
       }
       const shouldRetry = retryable && action.attempts < MAX_ATTEMPTS;
+      const safeFailureCode = failureCode.slice(0, 100).toLowerCase().replace(/[^a-z0-9_.-]/g, "_");
       const update = shouldRetry
         ? {
             status: "pending",
@@ -61,7 +71,7 @@ export async function GET(request: Request) {
             claim_token: null,
             claimed_at: null,
             completed_at: null,
-            last_error_code: failureCode.slice(0, 100).toLowerCase().replace(/[^a-z0-9_.-]/g, "_"),
+            last_error_code: safeFailureCode,
             updated_at: new Date().toISOString(),
           }
         : {
@@ -69,7 +79,7 @@ export async function GET(request: Request) {
             claim_token: null,
             claimed_at: null,
             completed_at: new Date().toISOString(),
-            last_error_code: failureCode.slice(0, 100).toLowerCase().replace(/[^a-z0-9_.-]/g, "_"),
+            last_error_code: safeFailureCode,
             updated_at: new Date().toISOString(),
           };
       const { error: settleError } = await supabase.from("lead_outbox").update(update)
@@ -77,9 +87,68 @@ export async function GET(request: Request) {
       if (!settleError) {
         if (shouldRetry) retried += 1;
         else blocked += 1;
+        console.error("Flowex lead outbox delivery failed:", {
+          eventId: action.id, leadId: action.lead_id, provider: action.provider,
+          attempt: action.attempts, retryable, status: shouldRetry ? "retrying" : "blocked",
+          reason: safeFailureCode,
+        });
+      } else {
+        console.error("Flowex lead outbox failure settlement failed:", {
+          eventId: action.id, leadId: action.lead_id, provider: action.provider,
+          attempt: action.attempts, code: settleError.code || "unknown",
+        });
       }
     }
   }
 
   return NextResponse.json({ success: true, claimed: actions?.length || 0, succeeded, retried, blocked });
+}
+
+export async function POST(request: Request) {
+  if (!authorized(request)) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  const rawBody = await request.text();
+  if (rawBody.length > 4096) return NextResponse.json({ error: "Replay request is too large." }, { status: 413 });
+  let body: { eventIds?: unknown; confirmPossibleDuplicate?: unknown } | null;
+  try {
+    body = JSON.parse(rawBody || "null");
+  } catch {
+    return NextResponse.json({ error: "Invalid replay request." }, { status: 400 });
+  }
+  const eventIds = Array.isArray(body?.eventIds) ? [...new Set(body.eventIds)] : [];
+  if (
+    body?.confirmPossibleDuplicate !== true ||
+    eventIds.length < 1 || eventIds.length > BATCH_SIZE ||
+    eventIds.some((id) => typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))
+  ) {
+    return NextResponse.json({ error: "Provide 1–5 eventIds and confirmPossibleDuplicate: true." }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+  const { data: candidates, error: lookupError } = await supabase.from("lead_outbox")
+    .select("id,attempts").in("id", eventIds as string[]).eq("status", "blocked");
+  if (lookupError) {
+    console.error("Flowex lead outbox replay lookup failed:", { code: lookupError.code || "unknown" });
+    return NextResponse.json({ error: "Could not identify blocked outbox events." }, { status: 500 });
+  }
+  const previousAttempts = new Map((candidates || []).map((event) => [event.id, event.attempts]));
+  const { data, error } = await supabase.from("lead_outbox").update({
+    status: "pending", attempts: 0, next_attempt_at: new Date().toISOString(),
+    claim_token: null, claimed_at: null, completed_at: null, updated_at: new Date().toISOString(),
+  }).in("id", eventIds as string[]).eq("status", "blocked")
+    .select("id,lead_id,provider,attempts,last_error_code");
+
+  if (error) {
+    console.error("Flowex lead outbox replay failed:", { code: error.code || "unknown" });
+    return NextResponse.json({ error: "Could not replay blocked outbox events." }, { status: 500 });
+  }
+
+  for (const event of data || []) {
+    console.warn("Flowex lead outbox event replayed:", {
+      eventId: event.id, leadId: event.lead_id, provider: event.provider,
+      previousAttempts: previousAttempts.get(event.id) ?? null,
+      attempt: 0, previousReason: event.last_error_code,
+    });
+  }
+  return NextResponse.json({ replayed: data?.length || 0, eventIds: (data || []).map((event) => event.id) });
 }

@@ -6,6 +6,16 @@ type SendNotificationEmailInput = {
   idempotencyKey?: string;
 };
 
+export class NotificationEmailError extends Error {
+  constructor(
+    public readonly code: string,
+    public readonly retryable: boolean,
+    public readonly fallbackSafe: boolean,
+  ) {
+    super(code);
+  }
+}
+
 export async function sendNotificationEmail({
   to,
   subject,
@@ -16,10 +26,8 @@ export async function sendNotificationEmail({
   const apiKey = process.env.RESEND_API_KEY?.trim() || "";
   const from = process.env.RESEND_FROM_EMAIL?.trim() || "";
 
-  if (!apiKey) throw new Error("RESEND_API_KEY is not configured.");
-  if (!from) throw new Error("RESEND_FROM_EMAIL is not configured.");
-
-  let lastError = "Resend rejected the notification email.";
+  if (!apiKey) throw new NotificationEmailError("resend_not_configured", false, true);
+  if (!from) throw new NotificationEmailError("resend_sender_not_configured", false, true);
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const response = await fetch("https://api.resend.com/emails", {
@@ -33,19 +41,17 @@ export async function sendNotificationEmail({
       cache: "no-store",
     });
 
-    const result = await response.json().catch(() => null);
+    if (response.ok) return response.json().catch(() => null);
 
-    if (response.ok) return result;
-
-    lastError =
-      result && typeof result.message === "string"
-        ? result.message
-        : `Resend rejected the notification email (${response.status}).`;
-
-    // Retry only temporary failures / rate limits. Never retry permanent 4xx errors.
-    if (response.status !== 429 && response.status < 500) break;
+    const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+    const fallbackSafe = response.status >= 400 && response.status < 500 && ![408, 409, 429].includes(response.status);
+    if (!retryable) {
+      throw new NotificationEmailError(`resend_${response.status}`, false, fallbackSafe);
+    }
     if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    if (attempt === 2) {
+      throw new NotificationEmailError(`resend_${response.status}`, true, false);
+    }
   }
-
-  throw new Error(lastError);
+  throw new NotificationEmailError("resend_request_failed", true, false);
 }

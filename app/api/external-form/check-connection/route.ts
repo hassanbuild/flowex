@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requirePremiumAccess } from "@/lib/billing/plan";
-import { isSafeExternalUrl } from "@/lib/external-form/browser-security";
+import { externalUrlHostname, isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { consumeExternalFormBrowserCheck } from "@/lib/external-form/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -299,6 +299,11 @@ export async function POST(
       }
 
       if (!(await isSafeExternalUrl(requestUrl))) {
+        console.warn("Flowex external-form request blocked:", {
+          route: "check-connection",
+          hostname: externalUrlHostname(requestUrl),
+          resourceType: request.resourceType(),
+        });
         await request.abort("blockedbyclient");
         return;
       }

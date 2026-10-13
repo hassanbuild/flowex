@@ -8,7 +8,7 @@ import { MICROSOFT_GRAPH_URL, MICROSOFT_PROVIDER, MICROSOFT_SCOPES, MICROSOFT_TO
 import { NOTION_API_URL, NOTION_PROVIDER, NOTION_VERSION } from "@/lib/integrations/notion";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { createStableContactActionUrl } from "@/lib/leads/contact-action";
-import { sendNotificationEmail } from "@/lib/integrations/resend";
+import { NotificationEmailError, sendNotificationEmail } from "@/lib/integrations/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type Lead = {
@@ -279,13 +279,16 @@ async function deliverHubSpot(supabase: ReturnType<typeof createAdminClient>, le
   if (Object.keys(properties).length === 0) fail("hubspot_mapping_empty");
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   if (lead.email) {
-    const search = await fetch(`${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/search`, { method: "POST", headers, body: JSON.stringify({ filterGroups: [{ filters: [{ propertyName: "email", operator: "EQ", value: lead.email }] }], properties: ["email"], limit: 1 }), cache: "no-store" });
-    const found = await providerJson(search, "hubspot_search");
-    const results = Array.isArray(found.results) ? found.results as Array<{ id?: string }> : [];
-    if (results[0]?.id) {
-      const update = await fetch(`${HUBSPOT_API_URL}/crm/objects/2026-03/contacts/${encodeURIComponent(results[0].id)}`, { method: "PATCH", headers, body: JSON.stringify({ properties }), cache: "no-store" });
-      await providerJson(update, "hubspot"); return;
-    }
+    properties.email = lead.email;
+    const upsert = await fetch(`${HUBSPOT_API_URL}/crm/v3/objects/contacts/batch/upsert`, {
+      method: "POST", headers,
+      body: JSON.stringify({ inputs: [{ id: lead.email, idProperty: "email", properties }] }),
+      cache: "no-store",
+    });
+    const result = await providerJson(upsert, "hubspot");
+    const upserted = Array.isArray(result.results) ? result.results[0] as { id?: unknown } | undefined : undefined;
+    if (!upserted || typeof upserted.id !== "string") fail("hubspot_upsert_incomplete", true);
+    return;
   }
   const response = await fetch(`${HUBSPOT_API_URL}/crm/objects/2026-03/contacts`, { method: "POST", headers, body: JSON.stringify({ properties }), cache: "no-store" });
   await providerJson(response, "hubspot");
@@ -344,8 +347,13 @@ async function deliverTeamNotification(supabase: ReturnType<typeof createAdminCl
   const html = `${escapeHtml(message).replace(/\r?\n/g, "<br>")}<p style="margin-top:24px"><a href="${escapeHtml(actionUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Contacted</a></p>`;
   try {
     await sendNotificationEmail({ to: recipient, subject, text, html, idempotencyKey: `flowex-outbox-${action.id}` });
-  } catch {
-    await sendGmail(supabase, lead, action, { to: recipient, subject, text, htmlBody: html });
+  } catch (error) {
+    if (error instanceof NotificationEmailError && error.fallbackSafe) {
+      await sendGmail(supabase, lead, action, { to: recipient, subject, text, htmlBody: html });
+      return;
+    }
+    if (error instanceof NotificationEmailError) fail(error.code, error.retryable);
+    throw error;
   }
 }
 

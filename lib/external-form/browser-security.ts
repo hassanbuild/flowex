@@ -17,7 +17,7 @@ function isPublicIPv4(ip: string) {
     (a === 100 && b >= 64 && b <= 127) ||
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    (a === 192 && b === 0) ||
     (a === 192 && b === 88 && c === 99) ||
     (a === 192 && b === 168) ||
     (a === 198 && (b === 18 || b === 19)) ||
@@ -95,11 +95,14 @@ function isPublicIPv6(ip: string) {
   }
 
   const firstGroup = Number.parseInt(value[0], 16);
+  const secondGroup = Number.parseInt(value[1], 16);
 
   return (
     firstGroup >= 0x2000 &&
     firstGroup < 0x4000 &&
-    !(value[0] === "2001" && value[1] === "0db8")
+    !(value[0] === "2001" && secondGroup <= 0x01ff) &&
+    value[0] !== "2002" &&
+    !(value[0] === "3fff" && secondGroup <= 0x0fff)
   );
 }
 
@@ -154,5 +157,13 @@ export async function isSafeExternalUrl(value: string) {
     return addresses.length > 0 && addresses.every((entry) => isPublicAddress(entry.address));
   } catch {
     return false;
+  }
+}
+
+export function externalUrlHostname(value: string) {
+  try {
+    return new URL(value).hostname.toLowerCase().slice(0, 253);
+  } catch {
+    return "invalid-url";
   }
 }
