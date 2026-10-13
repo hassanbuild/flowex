@@ -31,7 +31,7 @@ type AccountContextType = {
   setPlan: (plan: Plan) => void;
   setIsLoggedIn: (loggedIn: boolean) => void;
 
-  saveAccount: () => Promise<void>;
+  saveAccount: () => Promise<{ emailChangePending: boolean }>;
 };
 
 const AccountContext =
@@ -358,13 +358,41 @@ export function AppAccountProvider({
         userError ||
         !user
       ) {
-        console.error(
-          "Flowex save account error:",
-          userError?.message ||
-            "No authenticated user."
+        throw new Error(
+          userError?.message || "Your session could not be verified."
         );
+      }
 
-        return;
+      const normalizedEmail = email.trim();
+      if (!normalizedEmail) {
+        throw new Error("Enter a valid email address.");
+      }
+
+      if (profileImage?.startsWith("data:")) {
+        const dataUrlMatch = profileImage.match(
+          /^data:image\/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})$/i
+        );
+        const imageSize = dataUrlMatch
+          ? Math.floor((dataUrlMatch[2].length * 3) / 4) - (dataUrlMatch[2].endsWith("==") ? 2 : dataUrlMatch[2].endsWith("=") ? 1 : 0)
+          : Number.POSITIVE_INFINITY;
+        if (!dataUrlMatch || imageSize > 2 * 1024 * 1024) {
+          throw new Error("Profile images must be valid PNG, JPEG, WebP, or GIF files no larger than 2 MB.");
+        }
+      }
+
+      const emailChangePending = normalizedEmail.toLowerCase() !== (user.email || "").toLowerCase();
+
+      const { error: authUpdateError, data: authUpdateData } =
+        await supabase.auth.updateUser({
+          ...(emailChangePending ? { email: normalizedEmail } : {}),
+          data: {
+            full_name: name.trim(),
+            avatar_url: profileImage,
+          },
+        });
+
+      if (authUpdateError) {
+        throw new Error(authUpdateError.message);
       }
 
       const {
@@ -388,39 +416,12 @@ export function AppAccountProvider({
           );
 
       if (error) {
-        console.error(
-          "Flowex profile update error:",
-          error.message
-        );
-
-        return;
+        throw new Error(error.message);
       }
 
-      /*
-        Keep Supabase Auth metadata aligned with
-        the profile name.
-
-        Email remains controlled by Auth itself.
-      */
-
-      const {
-        error: metadataError,
-      } =
-        await supabase.auth.updateUser({
-          data: {
-            full_name:
-              name.trim(),
-            avatar_url:
-              profileImage,
-          },
-        });
-
-      if (metadataError) {
-        console.error(
-          "Flowex auth metadata update error:",
-          metadataError.message
-        );
-      }
+      return {
+        emailChangePending: emailChangePending && Boolean(authUpdateData.user.new_email),
+      };
     };
 
   /*

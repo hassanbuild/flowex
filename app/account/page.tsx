@@ -34,11 +34,28 @@ function AccountPageContent() {
 
   const [showAvatars, setShowAvatars] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [accountMessage, setAccountMessage] = useState("");
 
 
-  const saveChanges = () => {
-    saveAccount();
-    alert("Changes saved!");
+  const saveChanges = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setAccountMessage("");
+    try {
+      const result = await saveAccount();
+      setAccountMessage(
+        result.emailChangePending
+          ? "Profile saved. Confirm the email change using the verification message from Supabase."
+          : "Changes saved."
+      );
+    } catch (error) {
+      setAccountMessage(
+        error instanceof Error ? error.message : "Could not save your changes. Please try again."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const deleteAccount = async () => {
@@ -223,20 +240,28 @@ function AccountPageContent() {
 
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
                       className="hidden"
                       onChange={(e) => {
-                        const file = e.target.files?.[0];
+                        const input = e.currentTarget;
+                        const file = input.files?.[0];
 
                         if (!file) return;
+                        if (!new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]).has(file.type) || file.size > 2 * 1024 * 1024) {
+                          setAccountMessage("Choose a PNG, JPEG, WebP, or GIF image no larger than 2 MB.");
+                          input.value = "";
+                          return;
+                        }
 
                         const reader = new FileReader();
 
-                        reader.onloadend = () => {
-                          setProfileImage(
-                            reader.result as string
-                          );
+                        reader.onload = () => {
+                          if (typeof reader.result === "string") {
+                            setProfileImage(reader.result);
+                            setAccountMessage("");
+                          }
                         };
+                        reader.onerror = () => setAccountMessage("Could not read that image. Please try another file.");
 
                         reader.readAsDataURL(file);
                       }}
@@ -399,6 +424,10 @@ function AccountPageContent() {
 
             <div className="flex flex-col-reverse gap-3 border-t border-border-subtle pt-6 sm:flex-row sm:items-center sm:justify-between app-dark:border-border-subtle">
 
+              <p role="status" aria-live="polite" className="text-sm text-muted sm:max-w-md">
+                {accountMessage}
+              </p>
+
               {/* DELETE */}
 
               <button
@@ -415,9 +444,10 @@ function AccountPageContent() {
               <button
                 type="button"
                 onClick={saveChanges}
-                className="rounded-xl bg-brand-primary    px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5"
+                disabled={isSaving}
+                className="rounded-xl bg-brand-primary px-6 py-3 text-sm font-semibold text-gray-100 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
               >
-                Save Changes
+                {isSaving ? "Saving…" : "Save Changes"}
               </button>
 
             </div>

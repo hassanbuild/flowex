@@ -8,10 +8,7 @@ const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
 
 type FlowexPlan = "free" | "trial" | "pro";
 
-function getFlowexPlan(
-  status: string,
-  trialEndsAt: string | null
-): FlowexPlan {
+function getFlowexPlan(status: string): FlowexPlan {
   if (status === "expired") {
     return "free";
   }
@@ -131,11 +128,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const customData =
-      payload?.meta?.custom_data ?? {};
-
-    let userId =
-      typeof customData.user_id === "string"
+    const customData = payload?.meta?.custom_data ?? {};
+    const checkoutUserId =
+      typeof customData.user_id === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(customData.user_id)
         ? customData.user_id
         : null;
 
@@ -150,37 +146,25 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    /*
-      Later subscription webhooks normally carry the
-      custom checkout data too.
+    const { data: existingSubscription, error: lookupError } = await supabase
+      .from("subscriptions")
+      .select("user_id")
+      .eq("lemon_squeezy_subscription_id", subscriptionId)
+      .maybeSingle();
 
-      As an extra safeguard, if user_id is ever absent,
-      recover the Flowex user from the stored Lemon
-      Squeezy subscription ID.
-    */
-    if (!userId) {
-      const {
-        data: existingSubscription,
-        error: lookupError,
-      } = await supabase
-        .from("subscriptions")
-        .select("user_id")
-        .eq(
-          "lemon_squeezy_subscription_id",
-          subscriptionId
-        )
-        .maybeSingle();
-
-      if (lookupError) {
-        console.error(
-          "Flowex subscription lookup error:",
-          lookupError.message
-        );
-      }
-
-      userId =
-        existingSubscription?.user_id ?? null;
+    if (lookupError) {
+      console.error("Flowex subscription lookup error:", lookupError.message);
+      return NextResponse.json({ error: "Subscription ownership could not be verified." }, { status: 500 });
     }
+
+    const mappedUserId = existingSubscription?.user_id ?? null;
+    if (mappedUserId && checkoutUserId && mappedUserId !== checkoutUserId) {
+      console.error("Flowex webhook subscription owner mismatch:", subscriptionId);
+      return NextResponse.json({ error: "Subscription ownership mismatch." }, { status: 400 });
+    }
+
+    const userId = mappedUserId ??
+      (eventName === "subscription_created" ? checkoutUserId : null);
 
     if (!userId) {
       console.error(
@@ -243,10 +227,7 @@ export async function POST(request: NextRequest) {
     const cancelled =
       Boolean(attributes.cancelled);
 
-    const flowexPlan = getFlowexPlan(
-      status,
-      trialEndsAt
-    );
+    const flowexPlan = getFlowexPlan(status);
 
     const variantId =
       attributes.variant_id != null

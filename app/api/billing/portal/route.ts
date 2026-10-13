@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
   const { data: subscription, error: subscriptionError } = await supabase
     .from("subscriptions")
-    .select("lemon_squeezy_subscription_id")
+    .select("lemon_squeezy_subscription_id, lemon_squeezy_customer_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -46,11 +46,28 @@ export async function POST(request: NextRequest) {
   );
   const lemonData = await lemonResponse.json().catch(() => null);
   const url = lemonData?.data?.attributes?.urls?.[body.action];
+  const returnedSubscriptionId = lemonData?.data?.id?.toString();
+  const returnedCustomerId = lemonData?.data?.attributes?.customer_id?.toString();
+  let billingUrl: URL | null = null;
+  if (typeof url === "string") {
+    try {
+      billingUrl = new URL(url);
+    } catch {
+      billingUrl = null;
+    }
+  }
 
-  if (!lemonResponse.ok || typeof url !== "string") {
+  if (
+    !lemonResponse.ok ||
+    returnedSubscriptionId !== subscription.lemon_squeezy_subscription_id ||
+    (subscription.lemon_squeezy_customer_id && returnedCustomerId !== subscription.lemon_squeezy_customer_id) ||
+    !billingUrl ||
+    billingUrl.protocol !== "https:" ||
+    !(billingUrl.hostname === "lemonsqueezy.com" || billingUrl.hostname.endsWith(".lemonsqueezy.com"))
+  ) {
     console.error("Flowex could not retrieve a Lemon Squeezy billing URL.", lemonResponse.status);
     return NextResponse.json({ error: "Could not open Lemon Squeezy billing." }, { status: 502 });
   }
 
-  return NextResponse.json({ url });
+  return NextResponse.json({ url: billingUrl.toString() });
 }
