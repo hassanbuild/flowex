@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePremiumAccess } from "@/lib/billing/plan";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 import {
   AIRTABLE_API_URL,
   AIRTABLE_PROVIDER,
@@ -913,20 +914,21 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Flowex could not update Airtable.";
-
+    const message = error instanceof Error ? error.message : "";
     const needsAirtableConnection =
       message === "AIRTABLE_NOT_CONNECTED" ||
       message === "AIRTABLE_RECONNECT";
+
+    console.error("Flowex Airtable destination error:", {
+      ...safeErrorMetadata(error),
+      needsAirtableConnection,
+    });
 
     return NextResponse.json(
       {
         error: needsAirtableConnection
           ? "Connect your Airtable account first."
-          : message,
+          : "Flowex could not update Airtable.",
         needsAirtableConnection,
       },
       { status: needsAirtableConnection ? 409 : 500 }

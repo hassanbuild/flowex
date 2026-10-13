@@ -4,6 +4,7 @@ import { requirePremiumAccess } from "@/lib/billing/plan";
 import { externalUrlHostname, isSafeExternalUrl } from "@/lib/external-form/browser-security";
 import { consumeExternalFormBrowserCheck } from "@/lib/external-form/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -671,7 +672,7 @@ export async function POST(
   } catch (error) {
     console.error(
       "Flowex external form inspection error:",
-      error
+      safeErrorMetadata(error)
     );
 
     return NextResponse.json(

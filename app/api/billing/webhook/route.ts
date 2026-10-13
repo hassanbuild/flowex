@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -153,7 +154,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (lookupError) {
-      console.error("Flowex subscription lookup error:", lookupError.message);
+      console.error("Flowex subscription lookup error:", safeErrorMetadata(lookupError));
       return NextResponse.json({ error: "Subscription ownership could not be verified." }, { status: 500 });
     }
 
@@ -281,7 +282,7 @@ export async function POST(request: NextRequest) {
     if (syncError) {
       console.error(
         "Flowex subscription sync error:",
-        syncError.message
+        safeErrorMetadata(syncError)
       );
 
       return NextResponse.json(
@@ -298,7 +299,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error(
       "Flowex Lemon Squeezy webhook error:",
-      error
+      safeErrorMetadata(error)
     );
 
     return NextResponse.json(

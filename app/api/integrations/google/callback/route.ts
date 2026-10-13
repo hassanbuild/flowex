@@ -7,6 +7,7 @@ import {
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 
@@ -230,7 +231,7 @@ export async function GET(
   } catch (error) {
     console.error(
       "Flowex Google callback error:",
-      error
+      safeErrorMetadata(error)
     );
 
     manageUrl.searchParams.set(

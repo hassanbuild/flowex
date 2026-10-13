@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePremiumAccess } from "@/lib/billing/plan";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 import {
   HUBSPOT_API_URL,
@@ -657,15 +658,19 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Flowex HubSpot destination error:", error);
+    console.error("Flowex HubSpot destination error:", safeErrorMetadata(error));
+    const safeMessages = [
+      "Connect your HubSpot account first.",
+      "Reconnect your HubSpot account.",
+      "HubSpot is ready, but Flowex could not save this destination.",
+    ];
+    const safeMessage =
+      error instanceof Error && safeMessages.includes(error.message)
+        ? error.message
+        : "Flowex could not update HubSpot.";
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Flowex could not update HubSpot.",
-      },
+      { error: safeMessage },
       { status: 500 }
     );
   }

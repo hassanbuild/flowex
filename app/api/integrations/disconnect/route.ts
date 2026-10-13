@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requirePremiumAccess } from "@/lib/billing/plan";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 
@@ -194,7 +195,7 @@ export async function POST(
   ) {
     console.error(
       "Flowex destination cleanup error:",
-      destinationError
+      safeErrorMetadata(destinationError)
     );
 
     return NextResponse.json(
@@ -235,7 +236,7 @@ export async function POST(
   ) {
     console.error(
       "Flowex OAuth-state cleanup error:",
-      oauthStateError
+      safeErrorMetadata(oauthStateError)
     );
   }
 
@@ -273,7 +274,7 @@ export async function POST(
   ) {
     console.error(
       "Flowex integration cleanup error:",
-      connectionError
+      safeErrorMetadata(connectionError)
     );
 
     return NextResponse.json(

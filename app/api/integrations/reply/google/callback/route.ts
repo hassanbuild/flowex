@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 
@@ -270,7 +271,7 @@ export async function GET(
   ) {
     console.error(
       "Flowex reply email callback error:",
-      error
+      safeErrorMetadata(error)
     );
 
     manageUrl.searchParams.set(

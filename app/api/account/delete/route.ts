@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     if (deleteError) {
       console.error(
         "Flowex account deletion error:",
-        deleteError.message
+        safeErrorMetadata(deleteError)
       );
 
       return NextResponse.json(
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       deleted: true,
     });
   } catch (error) {
-    console.error("Flowex account deletion error:", error);
+    console.error("Flowex account deletion error:", safeErrorMetadata(error));
 
     return NextResponse.json(
       { error: "Flowex could not delete this account." },

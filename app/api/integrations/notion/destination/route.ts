@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePremiumAccess } from "@/lib/billing/plan";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 import {
   NOTION_API_URL,
@@ -960,15 +961,19 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Flowex Notion destination error:", error);
+    console.error("Flowex Notion destination error:", safeErrorMetadata(error));
+    const safeMessages = [
+      "Connect your Notion workspace first.",
+      "Notion created the database, but Flowex could not identify its data source.",
+      "Notion is ready, but Flowex could not save this destination.",
+    ];
+    const safeMessage =
+      error instanceof Error && safeMessages.includes(error.message)
+        ? error.message
+        : "Flowex could not update Notion.";
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Flowex could not update Notion.",
-      },
+      { error: safeMessage },
       { status: 500 }
     );
   }

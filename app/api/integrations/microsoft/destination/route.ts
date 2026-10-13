@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePremiumAccess } from "@/lib/billing/plan";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 import {
   MICROSOFT_GRAPH_URL,
@@ -943,15 +944,21 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (error) {
-    console.error("Flowex Microsoft Excel destination error:", error);
+    console.error("Flowex Microsoft Excel destination error:", safeErrorMetadata(error));
+    const safeMessages = [
+      "Connect your Microsoft account first.",
+      "Reconnect your Microsoft account.",
+      "Flowex could not find a worksheet in this workbook.",
+      "Microsoft could not create the workbook.",
+      "Excel is ready, but Flowex could not save this destination.",
+    ];
+    const safeMessage =
+      error instanceof Error && safeMessages.includes(error.message)
+        ? error.message
+        : "Flowex could not update Microsoft Excel.";
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Flowex could not update Microsoft Excel.",
-      },
+      { error: safeMessage },
       { status: 500 }
     );
   }

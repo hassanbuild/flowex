@@ -7,6 +7,7 @@ import {
 } from "@/lib/integrations/hubspot";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptOAuthCredentials } from "@/lib/integrations/oauth-credentials";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 
@@ -123,7 +124,7 @@ export async function GET(request: Request) {
     manageUrl.searchParams.set("hubspot", "connected");
     return NextResponse.redirect(manageUrl);
   } catch (error) {
-    console.error("Flowex HubSpot callback error:", error);
+    console.error("Flowex HubSpot callback error:", safeErrorMetadata(error));
     manageUrl.searchParams.set("hubspot", "error");
     return NextResponse.redirect(manageUrl);
   }

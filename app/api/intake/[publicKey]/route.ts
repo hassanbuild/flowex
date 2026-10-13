@@ -28,6 +28,7 @@ import {
 } from "@/lib/integrations/hubspot";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { sendNotificationEmail } from "@/lib/integrations/resend";
 import { createContactActionUrl } from "@/lib/leads/contact-action";
@@ -2114,7 +2115,7 @@ async function sendTeamNotificationEmail(
   } catch (resendError) {
     console.error(
       "Flowex Resend notification delivery error; trying Gmail fallback:",
-      resendError
+      safeErrorMetadata(resendError)
     );
 
     await sendGmailMessage(supabase, lead.userId, {

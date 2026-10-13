@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createGoogleOAuthClient } from "@/lib/integrations/google";
 import { encryptOAuthCredentials, readOAuthCredentials } from "@/lib/integrations/oauth-credentials";
 import { createContactActionUrl } from "@/lib/leads/contact-action";
+import { safeErrorMetadata } from "@/lib/server/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -236,7 +237,7 @@ export async function GET(
   if (cleanupError) {
     console.error(
       "Flowex lead retention cleanup error:",
-      cleanupError.message
+      safeErrorMetadata(cleanupError)
     );
   }
 
@@ -313,7 +314,7 @@ export async function GET(
       failed += 1;
       console.error(
         "Flowex follow-up claim error:",
-        claimError.message
+        safeErrorMetadata(claimError)
       );
       continue;
     }
@@ -520,7 +521,7 @@ export async function GET(
         if (releaseError) {
           console.error(
             "Flowex follow-up claim release error:",
-            releaseError.message
+            safeErrorMetadata(releaseError)
           );
         }
       }
@@ -528,7 +529,7 @@ export async function GET(
       failed += 1;
       console.error(
         "Flowex follow-up delivery error:",
-        error
+        safeErrorMetadata(error)
       );
     }
   }
