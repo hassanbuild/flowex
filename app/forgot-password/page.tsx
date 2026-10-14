@@ -1,15 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { FlowexBrand } from "@/components/FlowexBrand";
 import { createClient } from "@/lib/supabase/client";
+
+const PASSWORD_RESET_COOLDOWN_MS = 60_000;
+const PASSWORD_RESET_REQUESTED_AT_KEY = "flowex_password_reset_requested_at";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [isCooldownLoaded, setIsCooldownLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedTimestamp = window.localStorage.getItem(PASSWORD_RESET_REQUESTED_AT_KEY);
+      const requestedAt = storedTimestamp ? Number(storedTimestamp) : NaN;
+
+      if (Number.isFinite(requestedAt) && requestedAt > 0) {
+        const remainingMs = requestedAt + PASSWORD_RESET_COOLDOWN_MS - Date.now();
+        if (remainingMs > 0) {
+          setCooldownUntil(requestedAt + PASSWORD_RESET_COOLDOWN_MS);
+          setRemainingSeconds(Math.ceil(remainingMs / 1000));
+        } else {
+          window.localStorage.removeItem(PASSWORD_RESET_REQUESTED_AT_KEY);
+        }
+      } else if (storedTimestamp) {
+        window.localStorage.removeItem(PASSWORD_RESET_REQUESTED_AT_KEY);
+      }
+    } catch {
+      setError("Your browser couldn't restore the resend timer. You can still request a reset link.");
+    } finally {
+      setIsCooldownLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cooldownUntil === null) return;
+
+    const updateCountdown = () => {
+      const remaining = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
+      setRemainingSeconds(remaining);
+      if (remaining === 0) {
+        setCooldownUntil(null);
+        try {
+          window.localStorage.removeItem(PASSWORD_RESET_REQUESTED_AT_KEY);
+        } catch {}
+      }
+    };
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(timer);
+  }, [cooldownUntil]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -25,10 +73,21 @@ export default function ForgotPasswordPage() {
         "/reset-password",
         process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
       ).toString();
-      await supabase.auth.resetPasswordForEmail(
+      const { error: recoveryError } = await supabase.auth.resetPasswordForEmail(
         email.trim(),
         { redirectTo }
       );
+      if (recoveryError) {
+        setError("We couldn't send a reset link right now. Please try again later.");
+        return;
+      }
+
+      const requestedAt = Date.now();
+      try {
+        window.localStorage.setItem(PASSWORD_RESET_REQUESTED_AT_KEY, String(requestedAt));
+      } catch {}
+      setCooldownUntil(requestedAt + PASSWORD_RESET_COOLDOWN_MS);
+      setRemainingSeconds(60);
       setMessage(
         "If an account exists for this email, we’ve sent you a password reset link. Check your inbox."
       );
@@ -76,10 +135,14 @@ export default function ForgotPasswordPage() {
               {error && <p role="alert" className="text-sm leading-6 text-red-600 app-dark:text-red-400">{error}</p>}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full rounded-xl bg-brand-primary py-3.5 font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSubmitting || !isCooldownLoaded || remainingSeconds > 0}
+                className="w-full rounded-xl bg-brand-primary py-3.5 font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 disabled:opacity-70 disabled:shadow-none disabled:hover:translate-y-0 app-dark:disabled:bg-gray-700 app-dark:disabled:text-gray-300"
               >
-                {isSubmitting ? "Sending..." : "Send Reset Link"}
+                {isSubmitting
+                  ? "Sending..."
+                  : remainingSeconds > 0
+                    ? `Resend Reset Link (${remainingSeconds}s)`
+                    : "Send Reset Link"}
               </button>
             </form>
             <Link href="/login" className="mt-5 block text-center text-sm font-semibold text-gray-500 transition hover:text-brand-primary app-dark:text-muted">
