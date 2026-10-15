@@ -22,7 +22,7 @@ export function useFlowexLogout() {
 
       const { error } =
         await supabase.auth.signOut({
-          scope: "local",
+          scope: "global",
         });
 
       if (error) {

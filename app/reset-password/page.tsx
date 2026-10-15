@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { FlowexBrand } from "@/components/FlowexBrand";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
   const [supabase] = useState(() => createClient());
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [email, setEmail] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,20 +19,31 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [updated, setUpdated] = useState(false);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setHasRecoverySession(true);
-        setIsCheckingSession(false);
-      }
-    });
-    const timeout = window.setTimeout(() => setIsCheckingSession(false), 4000);
+  const handleVerifyCode = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isVerifyingCode) return;
 
-    return () => {
-      window.clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+    setError("");
+    setIsVerifyingCode(true);
+    try {
+      const { data, error: verificationError } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: recoveryCode.trim(),
+        type: "recovery",
+      });
+
+      if (verificationError || !data.session) {
+        setError("We couldn't verify that code. Check the email and code, or request a new reset email.");
+        return;
+      }
+
+      setHasRecoverySession(true);
+    } catch {
+      setError("We couldn't verify that code. Check the email and code, or request a new reset email.");
+    } finally {
+      setIsVerifyingCode(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,9 +85,7 @@ export default function ResetPasswordPage() {
             <p className="mt-3 text-gray-500 app-dark:text-muted">Choose a new password for your Flowex account.</p>
           </div>
           <div className="rounded-[28px] border border-border-subtle/80 bg-white/90 p-7 backdrop-blur-xl app-dark:border-border-subtle app-dark:bg-surface/95">
-            {isCheckingSession ? (
-              <p role="status" className="text-center text-sm text-gray-500 app-dark:text-muted">Verifying your reset link...</p>
-            ) : updated ? (
+            {updated ? (
               <div className="text-center">
                 <h2 className="text-xl font-bold text-foreground app-dark:text-gray-100">Password updated successfully</h2>
                 <p role="status" className="mt-3 text-sm leading-6 text-gray-500 app-dark:text-muted">
@@ -145,12 +156,53 @@ export default function ResetPasswordPage() {
                 </button>
               </form>
             ) : (
-              <div className="text-center">
-                <p role="alert" className="text-sm leading-6 text-gray-500 app-dark:text-muted">This password reset link is invalid or has expired. Request a new one to continue.</p>
-                <Link href="/forgot-password" className="mt-5 inline-flex font-semibold text-brand-primary">Request a new reset link</Link>
+              <div>
+                <p className="mb-5 text-center text-sm leading-6 text-gray-500 app-dark:text-muted">
+                  Enter the code we sent to your email.
+                </p>
+                <form onSubmit={handleVerifyCode} className="space-y-5">
+                  <div>
+                    <label htmlFor="recoveryEmail" className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">Email</label>
+                    <input
+                      id="recoveryEmail"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                      autoComplete="email"
+                      disabled={isVerifyingCode}
+                      className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="recoveryCode" className="mb-2 block text-sm font-semibold text-gray-700 app-dark:text-gray-100">Recovery Code</label>
+                    <input
+                      id="recoveryCode"
+                      type="text"
+                      value={recoveryCode}
+                      onChange={(event) => setRecoveryCode(event.target.value)}
+                      required
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      disabled={isVerifyingCode}
+                      className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:opacity-60 app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100 app-dark:placeholder:text-muted app-dark:focus:border-brand-primary app-dark:focus:ring-brand-primary/10"
+                    />
+                  </div>
+                  {error && <p role="alert" className="text-sm leading-6 text-red-600 app-dark:text-red-400">{error}</p>}
+                  <button
+                    type="submit"
+                    disabled={isVerifyingCode}
+                    className="w-full rounded-xl bg-brand-primary py-3.5 font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isVerifyingCode ? "Verifying..." : "Verify Code"}
+                  </button>
+                </form>
+                <Link href="/forgot-password" className="mt-5 block text-center text-sm font-semibold text-gray-500 transition hover:text-brand-primary app-dark:text-muted">
+                  Request a new reset email
+                </Link>
               </div>
             )}
-            {!isCheckingSession && !updated && (
+            {!updated && (
               <Link href="/login" className="mt-5 block text-center text-sm font-semibold text-gray-500 transition hover:text-brand-primary app-dark:text-muted">Back to Login</Link>
             )}
           </div>
