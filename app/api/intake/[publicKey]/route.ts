@@ -2555,6 +2555,30 @@ export async function POST(
       p_display_name: displayName,
     });
 
+  if (saveLeadError?.code === "P1001") {
+    return json(
+      { success: false, error: "Monthly lead limit reached." },
+      429,
+      allowedOrigin
+    );
+  }
+
+  if (saveLeadError?.code === "P1002") {
+    return json(
+      { success: false, error: "Lead intake is temporarily unavailable." },
+      503,
+      allowedOrigin
+    );
+  }
+
+  if (saveLeadError?.code === "P1003") {
+    return json(
+      { success: false, error: "Lead submission is unavailable." },
+      403,
+      allowedOrigin
+    );
+  }
+
   if (saveLeadError || !savedLeadId) {
     console.error(
       "Flowex lead and outbox save failed:",

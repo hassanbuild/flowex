@@ -216,6 +216,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const subscriptionStartedAt =
+      eventName === "subscription_created" &&
+      typeof attributes.created_at === "string" &&
+      !Number.isNaN(new Date(attributes.created_at).getTime())
+        ? attributes.created_at
+        : null;
+
+    if (eventName === "subscription_created" && !subscriptionStartedAt) {
+      return NextResponse.json(
+        { error: "Invalid subscription payload." },
+        { status: 400 }
+      );
+    }
+
     const trialEndsAt =
       attributes.trial_ends_at ?? null;
 
@@ -276,6 +290,7 @@ export async function POST(request: NextRequest) {
         p_cancel_at_period_end: cancelled,
         p_plan: flowexPlan,
         p_provider_updated_at: providerUpdatedAt,
+        p_subscription_started_at: subscriptionStartedAt,
       }
     );
 
