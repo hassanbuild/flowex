@@ -35,10 +35,10 @@ function UpgradePageContent() {
 
   const buttonLabel =
     plan === "trial"
-      ? "7-Day Trial Active"
+      ? "3-Day Trial Active"
       : plan === "pro"
         ? "Current Plan"
-        : "Start 7-Day Free Trial";
+        : "Start 3-Day Free Trial";
 
   return (
     <RouteGuard access="signed-in">
@@ -125,12 +125,8 @@ function UpgradePageContent() {
 
                 <div className="mt-5 flex items-end gap-2">
 
-                  <span className="text-lg text-muted line-through app-dark:text-slate-500">
-                    $15
-                  </span>
-
                   <span className="text-5xl font-black app-dark:text-gray-100">
-                    $10
+                    $15
                   </span>
 
                   <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">

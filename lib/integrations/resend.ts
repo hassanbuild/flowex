@@ -1,5 +1,6 @@
 type SendNotificationEmailInput = {
   to: string;
+  replyTo?: string;
   subject: string;
   text: string;
   html?: string;
@@ -18,6 +19,7 @@ export class NotificationEmailError extends Error {
 
 export async function sendNotificationEmail({
   to,
+  replyTo,
   subject,
   text,
   html,
@@ -37,7 +39,14 @@ export async function sendNotificationEmail({
         "Content-Type": "application/json",
         ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       },
-      body: JSON.stringify({ from, to: [to], subject, text, ...(html ? { html } : {}) }),
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject,
+        text,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(html ? { html } : {}),
+      }),
       cache: "no-store",
     });
 

@@ -266,7 +266,7 @@ export default function Home() {
   href="/checkout"
   className="rounded-2xl bg-brand-primary    px-8 py-4 text-center font-semibold text-gray-100 shadow-sm transition hover:-translate-y-1"
 >
-  Start 7-Day Free Trial
+  Start 3-Day Free Trial
 </Link>
 
             </div>
@@ -275,7 +275,7 @@ export default function Home() {
 
               <span>✓ Setup in 2 Minutes</span>
 
-              <span>✓ 7-Day Free Trial</span>
+              <span>✓ 3-Day Free Trial</span>
 
               <span>✓ Cancel Anytime</span>
 
@@ -463,12 +463,8 @@ export default function Home() {
 
         <div className="mt-8 flex items-end gap-3">
 
-          <span className="text-2xl text-muted app-dark:text-slate-500 line-through">
-            $15
-          </span>
-
           <span className="text-5xl font-black">
-            $10
+            $15
           </span>
 
           <span className="pb-2 text-gray-500 app-dark:text-muted">
@@ -476,15 +472,9 @@ export default function Home() {
           </span>
 
         </div>
-         <div className="mt-3 inline-flex rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
-           <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
-             • 33% OFF
-           </span>
-         </div>
-
         <div className="mt-5 space-y-2 text-gray-700 app-dark:text-gray-100">
 
-          <p>✓ Unlimited Leads</p>
+          <p>✓ 3,000 leads/month across all 3 flows</p>
 
           <p>✓ Instant Customer Replies</p>
 
@@ -500,11 +490,11 @@ export default function Home() {
   href="/checkout"
   className="mt-10 block w-full rounded-2xl bg-brand-primary    py-3.5 text-center font-semibold text-gray-100 transition hover:scale-[1.02]"
 >
-  Start 7-Day Free Trial
+  Start 3-Day Free Trial
 </Link>
 
         <p className="mt-4 text-center text-sm text-gray-500 app-dark:text-muted">
-         7-day free trial • Cancel anytime
+         3-day free trial • Cancel anytime
         </p>
 
       </div>
@@ -833,12 +823,8 @@ export default function Home() {
 
           <div className="mt-3 flex items-end justify-center gap-2 md:justify-start">
 
-            <span className="text-lg text-muted app-dark:text-slate-500 line-through">
-              $15
-            </span>
-
             <span className="text-5xl font-black">
-              $10
+              $15
             </span>
 
             <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">
@@ -846,12 +832,6 @@ export default function Home() {
             </span>
 
           </div>
-
-          <div className="mt-3 inline-flex rounded-full bg-surface-subtle px-3 py-1 text-sm font-semibold text-brand-primary app-dark:bg-surface   app-dark:p-[1px]">
-            <span className="rounded-full app-dark:bg-surface app-dark:px-[11px] app-dark:py-[3px] app-dark:text-gray-100">
-             • Save 33%
-           </span>
-         </div>
 
         </div>
 
@@ -861,7 +841,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 gap-x-5 gap-y-2.5 text-sm text-gray-700 min-[480px]:grid-cols-2 app-dark:text-gray-100">
 
-            <span>✓ Unlimited Leads</span>
+            <span>✓ 3,000 leads/month across all 3 flows</span>
             <span>✓ Instant Replies</span>
             <span>✓ CRM Integration</span>
             <span>✓ Notifications</span>
@@ -874,11 +854,11 @@ export default function Home() {
   href="/checkout"
   className="mt-5 block w-full rounded-xl bg-brand-primary    py-3 text-center font-semibold text-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-0.5"
 >
-  Start 7-Day Free Trial
+  Start 3-Day Free Trial
 </Link>
 
           <p className="mt-2 text-center text-xs text-muted app-dark:text-slate-500">
-            7-day free trial • Cancel anytime
+            3-day free trial • Cancel anytime
           </p>
 
         </div>

@@ -404,7 +404,7 @@ export default function CheckoutPage() {
                     <h2 className={`mt-0.5 text-base font-bold ${darkTitle}`}>Choose your plan</h2>
                   </div>
                   <span className="rounded-full bg-surface-subtle px-3 py-1 text-[10px] font-bold text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary app-dark:bg-surface-subtle/10 app-dark:text-brand-primary">
-                    7 DAYS FREE
+                    3 DAYS FREE
                   </span>
                 </div>
 
@@ -528,7 +528,7 @@ export default function CheckoutPage() {
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-brand-primary">Flowex Pro</p>
                       <h2 className="mt-1 text-xl font-black">Every lead. Automated.</h2>
-                      <p className="mt-1 text-[11px] text-muted">7-day free trial included</p>
+                      <p className="mt-1 text-[11px] text-muted">3-day free trial included</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted line-through">$25</p>
@@ -572,7 +572,7 @@ export default function CheckoutPage() {
                       I agree to the{" "}
                       <Link href="/terms" target="_blank" className="font-semibold text-brand-primary hover:underline">Terms of Service</Link>
                       {" "}and{" "}
-                      <Link href="/privacy" target="_blank" className="font-semibold text-brand-primary hover:underline">Privacy Policy</Link>, and authorize {billingInterval === "monthly" ? "$15/month" : "$120/year"} after my 7-day free trial unless cancelled beforehand.
+                      <Link href="/privacy" target="_blank" className="font-semibold text-brand-primary hover:underline">Privacy Policy</Link>, and authorize {billingInterval === "monthly" ? "$15/month" : "$120/year"} after my 3-day free trial unless cancelled beforehand.
                     </span>
                   </label>
 
@@ -592,7 +592,7 @@ export default function CheckoutPage() {
                       disabled={isRedirecting}
                       className="w-full rounded-xl bg-brand-primary    py-2.5 text-sm font-bold text-gray-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isRedirecting ? "Opening Secure Checkout..." : isLoggedIn ? "Start 7-Day Free Trial" : "Proceed"}
+                      {isRedirecting ? "Opening Secure Checkout..." : isLoggedIn ? "Start 3-Day Free Trial" : "Proceed"}
                     </button>
                   )}
 

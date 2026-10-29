@@ -15,7 +15,7 @@ const sections = [
   {
     title: "3. Plans, trials, payment, cancellation, and refunds",
     content: <>
-      <p>The current checkout offers a seven-day trial followed by the selected monthly or annual subscription, shown at checkout (currently $15 per month or $120 per year). The checkout is processed by Lemon Squeezy. The price and billing terms shown at checkout control your purchase.</p>
+      <p>The current checkout offers a three-day trial followed by the selected monthly or annual subscription, shown at checkout (currently $15 per month or $120 per year). The checkout is processed by Lemon Squeezy. The price and billing terms shown at checkout control your purchase.</p>
       <p>Subscriptions may renew according to the terms presented at checkout. Renewal, cancellation requests and timing, and refund eligibility are governed by the applicable checkout and payment-provider terms and applicable law. Flowex reflects subscription status reported by Lemon Squeezy.</p>
     </>,
   },

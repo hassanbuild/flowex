@@ -48,7 +48,7 @@ function BillingPageContent() {
 
   const nextBillingDate =
     plan === "trial"
-      ? "After 7-day trial"
+      ? "After 3-day trial"
       : plan === "pro"
         ? "Sep 9, 2026"
         : "—";
@@ -160,12 +160,8 @@ function BillingPageContent() {
                 {hasPremiumAccess ? (
                   <div className="flex items-end gap-2 sm:justify-end">
 
-                    <span className="text-xl text-muted line-through app-dark:text-slate-500">
-                      $15
-                    </span>
-
                     <span className="text-4xl font-black app-dark:text-gray-100">
-                      $10
+                      $15
                     </span>
 
                     <span className="pb-1 text-sm text-gray-500 app-dark:text-muted">

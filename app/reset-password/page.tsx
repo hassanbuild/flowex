@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { FlowexBrand } from "@/components/FlowexBrand";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
   const [supabase] = useState(() => createClient());
   const [hasRecoverySession, setHasRecoverySession] = useState(false);
+  const [isCheckingRecovery, setIsCheckingRecovery] = useState(true);
+  const [recoveryLinkError, setRecoveryLinkError] = useState(false);
   const [email, setEmail] = useState("");
   const [recoveryCode, setRecoveryCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
@@ -18,6 +20,96 @@ export default function ResetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [updated, setUpdated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    let recoveryAccepted = false;
+    let callbackTimer: number | undefined;
+
+    const acceptRecoverySession = () => {
+      if (!active) return;
+      recoveryAccepted = true;
+      setHasRecoverySession(true);
+      setIsCheckingRecovery(false);
+      setRecoveryLinkError(false);
+      window.history.replaceState(null, "", window.location.pathname);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY" && session) {
+          acceptRecoverySession();
+        }
+      }
+    );
+
+    const currentUrl = new URL(window.location.href);
+    const hashParams = new URLSearchParams(currentUrl.hash.replace(/^#/, ""));
+    const tokenHash = currentUrl.searchParams.get("token_hash") || hashParams.get("token_hash");
+    const tokenType = currentUrl.searchParams.get("type") || hashParams.get("type");
+    const hashIndicatesRecovery =
+      hashParams.get("type") === "recovery" && hashParams.has("access_token");
+    const hasAuthError =
+      currentUrl.searchParams.has("error") || hashParams.has("error");
+
+    if (tokenHash) {
+      window.history.replaceState(null, "", window.location.pathname);
+      if (tokenType !== "recovery") {
+        setRecoveryLinkError(true);
+        setIsCheckingRecovery(false);
+        return () => {
+          active = false;
+          subscription.unsubscribe();
+        };
+      }
+      void supabase.auth.verifyOtp({ token_hash: tokenHash, type: "recovery" })
+        .then(({ data, error: verificationError }) => {
+          if (!active) return;
+          if (verificationError || !data.session) {
+            setRecoveryLinkError(true);
+            setIsCheckingRecovery(false);
+            return;
+          }
+          acceptRecoverySession();
+        })
+        .catch(() => {
+          if (!active) return;
+          setRecoveryLinkError(true);
+          setIsCheckingRecovery(false);
+        });
+    } else if (hashIndicatesRecovery) {
+      window.history.replaceState(null, "", `${currentUrl.pathname}${currentUrl.search}`);
+      void supabase.auth.getSession().then(({ data, error: sessionError }) => {
+        if (!active) return;
+        if (sessionError || !data.session) {
+          setRecoveryLinkError(true);
+          setIsCheckingRecovery(false);
+          return;
+        }
+        acceptRecoverySession();
+      });
+    } else if (hasAuthError) {
+      window.history.replaceState(null, "", window.location.pathname);
+      setRecoveryLinkError(true);
+      setIsCheckingRecovery(false);
+    } else if (currentUrl.searchParams.has("code")) {
+      // The browser client may finish a same-device PKCE callback asynchronously.
+      callbackTimer = window.setTimeout(() => {
+        if (!active || recoveryAccepted) return;
+        window.history.replaceState(null, "", window.location.pathname);
+        setRecoveryLinkError(true);
+        setIsCheckingRecovery(false);
+      }, 5000);
+    } else {
+      setIsCheckingRecovery(false);
+    }
+
+    return () => {
+      active = false;
+      if (callbackTimer !== undefined) window.clearTimeout(callbackTimer);
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   const handleVerifyCode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,6 +155,12 @@ export default function ResetPasswordPage() {
         return;
       }
 
+      // Leave the recovery session so the Back to Login link can reach the guest-only login page.
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        // Password update already succeeded; keep the success state.
+      }
       setUpdated(true);
     } catch {
       setError("We couldn't update your password. Request a new reset link and try again.");
@@ -93,7 +191,7 @@ export default function ResetPasswordPage() {
                 </p>
                 <Link
                   href="/login"
-                  className="mt-6 inline-flex items-center justify-center rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5"
+                  className="mt-5 inline-flex items-center justify-center text-sm font-semibold text-brand-primary transition hover:underline"
                 >
                   Back to Login
                 </Link>
@@ -155,6 +253,19 @@ export default function ResetPasswordPage() {
                   {isSubmitting ? "Updating..." : "Update Password"}
                 </button>
               </form>
+            ) : isCheckingRecovery ? (
+              <p role="status" className="text-center text-sm text-gray-500 app-dark:text-muted">
+                Verifying your password reset link...
+              </p>
+            ) : recoveryLinkError ? (
+              <div className="text-center">
+                <p role="alert" className="text-sm leading-6 text-gray-500 app-dark:text-muted">
+                  This password reset link is invalid or has expired. Request a new reset email to continue.
+                </p>
+                <Link href="/forgot-password" className="mt-5 inline-block text-sm font-semibold text-brand-primary hover:underline">
+                  Request a new reset email
+                </Link>
+              </div>
             ) : (
               <div>
                 <p className="mb-5 text-center text-sm leading-6 text-gray-500 app-dark:text-muted">

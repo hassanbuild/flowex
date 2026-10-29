@@ -2,10 +2,54 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { useAppAccount } from "@/components/AppAccountProvider";
 
 export default function ContactPage() {
   const { isLoggedIn, plan } = useAppAccount();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitted(false);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+
+      if (!response.ok) {
+        setSubmitError(
+          response.status === 429
+            ? "Please wait before sending another message."
+            : "We couldn't send your message right now. Please try again later."
+        );
+        return;
+      }
+
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+      setSubmitted(true);
+    } catch {
+      setSubmitError("We couldn't send your message right now. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const backPath =
     !isLoggedIn
@@ -105,17 +149,25 @@ export default function ContactPage() {
           }`}
         >
 
+          <form onSubmit={handleSubmit}>
+
           <div className="grid gap-5 sm:grid-cols-2">
 
             <div>
 
-              <label className="text-sm font-semibold">
+              <label htmlFor="contact-name" className="text-sm font-semibold">
                 Name
               </label>
 
               <input
+                id="contact-name"
                 type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 placeholder="Your name"
+                required
+                maxLength={120}
+                disabled={isSubmitting}
                 className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                   isLoggedIn
                     ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
@@ -127,13 +179,20 @@ export default function ContactPage() {
 
             <div>
 
-              <label className="text-sm font-semibold">
+              <label htmlFor="contact-email" className="text-sm font-semibold">
                 Email
               </label>
 
               <input
+                id="contact-email"
                 type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
+                required
+                maxLength={254}
+                autoComplete="email"
+                disabled={isSubmitting}
                 className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                   isLoggedIn
                     ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
@@ -147,13 +206,19 @@ export default function ContactPage() {
 
           <div className="mt-5">
 
-            <label className="text-sm font-semibold">
+            <label htmlFor="contact-subject" className="text-sm font-semibold">
               Subject
             </label>
 
             <input
+              id="contact-subject"
               type="text"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
               placeholder="What do you need help with?"
+              required
+              maxLength={160}
+              disabled={isSubmitting}
               className={`mt-2 w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                 isLoggedIn
                   ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
@@ -165,13 +230,19 @@ export default function ContactPage() {
 
           <div className="mt-5">
 
-            <label className="text-sm font-semibold">
+            <label htmlFor="contact-message" className="text-sm font-semibold">
               Message
             </label>
 
             <textarea
+              id="contact-message"
               rows={6}
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
               placeholder="Tell us more..."
+              required
+              maxLength={8000}
+              disabled={isSubmitting}
               className={`mt-2 w-full resize-none rounded-xl border border-border-subtle bg-white px-4 py-3 text-sm outline-none transition focus:border-brand-primary ${
                 isLoggedIn
                   ? "app-dark:border-border-subtle app-dark:bg-surface app-dark:text-gray-100"
@@ -182,11 +253,23 @@ export default function ContactPage() {
           </div>
 
           <button
-            type="button"
-            className="mt-6 w-full rounded-xl bg-brand-primary   py-3 text-sm font-bold text-gray-100 transition-opacity hover:opacity-90"
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 w-full rounded-xl bg-brand-primary py-3 text-sm font-bold text-gray-100 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Send Message
+            {isSubmitting ? "Sending..." : "Send Message"}
           </button>
+
+          {submitted && (
+            <p role="status" className="mt-3 text-center text-sm text-brand-primary">
+              Thanks for reaching out. Your message has been sent to Flowex Support.
+            </p>
+          )}
+          {submitError && (
+            <p role="alert" className="mt-3 text-center text-sm text-red-600 app-dark:text-red-400">
+              {submitError}
+            </p>
+          )}
 
           <p
             className={`mt-3 text-center text-xs text-muted ${
@@ -197,6 +280,8 @@ export default function ContactPage() {
           >
             Support replies are sent to the email address you provide.
           </p>
+
+          </form>
 
         </div>
 

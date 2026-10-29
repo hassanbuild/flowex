@@ -134,9 +134,9 @@ function AccountPageContent() {
 
   const planLabel =
     plan === "pro"
-      ? "$10/month"
+      ? "$15/month"
       : plan === "trial"
-        ? "7-day trial"
+        ? "3-day trial"
         : "No active plan";
 
 
